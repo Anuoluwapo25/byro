@@ -34,8 +34,8 @@ const EventSteps = () => {
             {steps.map((step, index) => (
                 <div key={index} className="relative flex flex-col bg-white rounded-lg shadow-lg w-full md:h-fit  md:w-64 p-3">
                     <div className=" flex justify-center items-center text-xl text-blue-700 border-gray-400 font-bold p-5 border-4 rounded-full w-10 h-10">{step.id}</div>
-                    <h3 className="font-bold text-xl">{step.title}</h3>
-                    <p className="text-sm">{step.description}</p>
+                    <h3 className="font-bold text-black text-xl">{step.title}</h3>
+                    <p className="text-sm text-[#5C6C7E]">{step.description}</p>
                     {step?.arrow && <span className="hidden md:block  absolute -right-64 w-full">{step.arrow}</span>}
                     
                 </div>

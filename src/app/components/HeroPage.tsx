@@ -6,7 +6,7 @@ import Link from "next/link";
 const HeroPage = () => {
   return (
     <main className="bg-[#4f8bff]  pt-12 position: relative">
-      <div className="container mx-auto p-4 ">
+      <div className="container mx-auto p-4 space-y-24">
         <h1 className=" text-3xl font-bold text-white text-transform: uppercase w-[100%] sm:text-5xl sm:w-[40%] md:h-0">
           Next-gen ticketing with crypto
         </h1>

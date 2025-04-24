@@ -4,7 +4,7 @@ import Link from 'next/link'
 
 const Footer = () => {
     return (
-        <footer>
+        <footer className='bg-gradient-to-r from-indigo-100 to-pink-100'>
             <div className='flex flex-col justify-center items-center'>
             <div className='flex p-8 space-x-32 justify-center items-center'>
             <div className='space-y-4'>
@@ -15,7 +15,7 @@ const Footer = () => {
                 </div>
                 
                 <div>
-                    <p className='text-sm font-normal'>
+                    <p className='text-base text-[#5C6C7E] font-normal'>
                         Seamless, Secure, and Decentralized Event Ticketing
                     </p>
                 </div>
@@ -41,30 +41,30 @@ const Footer = () => {
 
                 <div className='flex space-x-20 '>
                     <div>
-                        <h5 className='text-lg font-bold mb-5'>About Us</h5>
+                        <h5 className='text-lg text-black font-bold mb-5'>About Us</h5>
                         <Link href="/">
-                        <p className='text-gray-400 text-sm mb-2'>Terms of Use</p>
+                        <p className='text-[#5C6C7E] text-sm mb-2'>Terms of Use</p>
                         </Link>
 
                         <Link href="/">
-                        <p className='text-gray-400 text-sm'>Service Policy</p>
+                        <p className='text-[#5C6C7E] text-sm'>Service Policy</p>
                         </Link>
                     </div>
 
                     <div>
-                        <h5 className='text-lg font-bold mb-5'>Services</h5>
+                        <h5 className='text-lg text-black font-bold mb-5'>Services</h5>
                         <Link href="/">
-                        <p className='text-gray-400 text-sm mb-2'>Event Ticketing</p>
+                        <p className='text-[#5C6C7E] text-sm mb-2'>Event Ticketing</p>
                         </Link>
 
                         <Link href="/">
-                        <p className='text-gray-400 text-sm'>Gaming</p>
+                        <p className='text-[#5C6C7E] text-sm'>Gaming</p>
                         </Link>
                     </div>
                 </div>
             </div>
 
-            <hr className='border-t-2 border-gray-200 w-[80%]' />
+            <hr className='border-t-2 border-black-600 w-[80%]' />
             <p className='text-gray-400 text-xs text-center p-5'>&#169; Byro Africa. All Rights Reserved.</p>
             </div>
         </footer>
