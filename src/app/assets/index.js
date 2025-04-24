@@ -1,0 +1,9 @@
+export { default as BusinessManLaunch } from "./images/business-man-happy-launch.png";
+export { default as ComingSoonTag } from "./images/coming-soon-tag.png";
+export { default as StepOneIcon } from "./images/stepOneIcon.png";
+export { default as StepTwoIcon } from "./images/stepTwoIcon.png";
+export { default as StepThreeIcon } from "./images/stepThreeIcon.png";
+export { default as StepFourIcon } from "./images/stepFourIcon.png";
+export { default as StepFiveIcon } from "./images/stepFiveIcon.png";
+export { default as purpleArrow } from "./images/purpleArrow.png";
+export { default as yellowArrow } from "./images/yellowArrow.png";
