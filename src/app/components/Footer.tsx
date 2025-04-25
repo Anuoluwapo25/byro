@@ -64,7 +64,7 @@ const Footer = () => {
                 </div>
             </div>
 
-            <hr className='border-t-2 border-black-600 w-[80%]' />
+            <hr className='border-t-2 border-[#5C6C7E] w-[80%]' />
             <p className='text-gray-400 text-xs text-center p-5'>&#169; Byro Africa. All Rights Reserved.</p>
             </div>
         </footer>

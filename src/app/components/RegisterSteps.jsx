@@ -48,7 +48,7 @@ const RegisterSteps = () => {
             >
               <span className="text-2xl mr-4">{step.icon}</span>
               <div>
-                <h3 className="font-semibold">{step.title}</h3>
+                <h3 className="font-semibold text-black">{step.title}</h3>
                 <p className="text-gray-600">{step.description}</p>
                 {step?.addOns && <p className="text-gray-600">{step.addOns}</p>}
               </div>
@@ -56,7 +56,7 @@ const RegisterSteps = () => {
           ))}
         </div>
         <div className="text-center mt-8 pr-10 md:mt-0">
-          <h2 className="text-sm font-bold">ORGANIZE AN EVENT IN JUST</h2>
+          <h2 className="text-sm text-black font-bold">ORGANIZE AN EVENT IN JUST</h2>
           <h1 className="text-5xl font-bold text-blue-600">5 Steps</h1>
           <button className="mt-4 px-8 py-3 bg-green-500 text-white font-semibold rounded-full shadow-md hover:bg-green-600">
             Register

@@ -18,7 +18,8 @@ const Navbar = () => {
             <nav className='flex space-x-10'>
                 <Link href="/" className='text-[#5C6C7E] text-base'>Home</Link>
                 <Link href="/about" className='text-[#5C6C7E] text-base'>Events</Link>
-                <Link href="/services" className='text-[#5C6C7E] text-base'>About Us</Link>
+                <Link href="/services" className='text-[#5C6C7E] text-base'>FAQs</Link>
+                <Link href="/services" className='text-[#5C6C7E] text-base'>Commnunity</Link>
             </nav>
 
             {/* <div>
