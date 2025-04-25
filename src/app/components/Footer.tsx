@@ -5,8 +5,10 @@ import Link from 'next/link'
 const Footer = () => {
     return (
         <footer className='bg-gradient-to-r from-indigo-100 to-pink-100'>
-            <div className='flex-col md:flex-row justify-center items-center'>
-            <div className='flex p-8 space-x-32 justify-center items-center'>
+
+            <div className='justify-center items-center md:p-5'>
+            <div className='flex flex-row md:flex-col p-8 space-x-32 justify-center items-center md:mx-auto'>
+
             <div className='space-y-4'>
                 <div className='logo'>
                     <Link href="/">
@@ -37,9 +39,9 @@ const Footer = () => {
                         <Image src="/assets/images/x.png" alt="" width={20} height={100} />
                     </Link>
                 </div>
-            </div>
+                </div>
 
-                <div className='flex space-x-20 '>
+                <div className=' flex space-x-20 '>
                     <div>
                         <h5 className='text-lg text-black font-bold mb-5'>About Us</h5>
                         <Link href="/">
@@ -61,10 +63,10 @@ const Footer = () => {
                         <p className='text-[#5C6C7E] text-sm'>Gaming</p>
                         </Link>
                     </div>
-                </div>
+            </div>
             </div>
 
-            <hr className='border-t-2 border-[#5C6C7E] w-[80%]' />
+            <hr className='border-t-2 border-[#5C6C7E] w-[80%] mx-auto' />
             <p className='text-gray-400 text-xs text-center p-5'>&#169; Byro Africa. All Rights Reserved.</p>
             </div>
         </footer>
