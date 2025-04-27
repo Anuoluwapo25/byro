@@ -5,71 +5,99 @@ import Link from 'next/link'
 const Footer = () => {
     return (
         <footer className='bg-gradient-to-r from-indigo-100 to-pink-100'>
-
-            <div className='justify-center items-center md:p-5'>
-            <div className='flex flex-row p-8 space-x-32 justify-center items-center md:mx-auto'>
-
-            <div className='space-y-4'>
-                <div className='logo'>
-                    <Link href="/">
-                    <Image src="/assets/images/logo.svg" alt="byro logo" width={100} height={40} />
-                    </Link>
-                </div>
-                
-                <div>
-                    <p className='text-base text-[#5C6C7E] font-normal'>
-                        Seamless, Secure, and Decentralized Event Ticketing
-                    </p>
-                </div>
-
-                {/* here */}
-                </div>
-
-                <div className=' flex space-x-20 '>
-                    <div>
-                        <h5 className='text-lg text-black font-bold mb-5'>About Us</h5>
-                        <Link href="/">
-                        <p className='text-[#5C6C7E] text-sm mb-2'>Terms of Use</p>
-                        </Link>
-
-                        <Link href="/">
-                        <p className='text-[#5C6C7E] text-sm'>Service Policy</p>
-                        </Link>
+            <div className='container mx-auto px-4 py-8'>
+                {/* Main Content */}
+                <div className='flex flex-col md:flex-row md:justify-between md:items-start space-y-8 md:space-y-0 md:space-x-8'>
+                    {/* Logo and Description */}
+                    <div className='space-y-4 max-w-md'>
+                        <div className='logo'>
+                            <Link href="/">
+                                <Image 
+                                    src="/assets/images/logo.svg" 
+                                    alt="byro logo" 
+                                    width={100} 
+                                    height={40} 
+                                />
+                            </Link>
+                        </div>
+                        <p className='text-base text-[#5C6C7E] font-normal'>
+                            Seamless, Secure, and Decentralized Event Ticketing
+                        </p>
                     </div>
 
-                    <div>
-                        <h5 className='text-lg text-black font-bold mb-5'>Services</h5>
-                        <Link href="/">
-                        <p className='text-[#5C6C7E] text-sm mb-2'>Event Ticketing</p>
-                        </Link>
+                    {/* Links Section */}
+                    <div className='flex flex-col md:flex-row md:space-x-20 space-y-8 md:space-y-0'>
+                        <div>
+                            <h5 className='text-lg text-black font-bold mb-4'>About Us</h5>
+                            <div className='space-y-2'>
+                                <Link href="/">
+                                    <p className='text-[#5C6C7E] text-sm hover:text-blue-600 transition-colors'>Terms of Use</p>
+                                </Link>
+                                <Link href="/">
+                                    <p className='text-[#5C6C7E] text-sm hover:text-blue-600 transition-colors'>Service Policy</p>
+                                </Link>
+                            </div>
+                        </div>
 
-                        <Link href="/">
-                        <p className='text-[#5C6C7E] text-sm'>Gaming</p>
-                        </Link>
+                        <div>
+                            <h5 className='text-lg text-black font-bold mb-4'>Services</h5>
+                            <div className='space-y-2'>
+                                <Link href="/">
+                                    <p className='text-[#5C6C7E] text-sm hover:text-blue-600 transition-colors'>Event Ticketing</p>
+                                </Link>
+                                <Link href="/">
+                                    <p className='text-[#5C6C7E] text-sm hover:text-blue-600 transition-colors'>Gaming</p>
+                                </Link>
+                            </div>
+                        </div>
                     </div>
-            </div>
-            </div>
+                </div>
 
-            <div className='flex space-x-1 justify-center items-center p-5'>
-                    <Link href="/">
-                        <Image src="/assets/images/telegram.png" alt="" width={30} height={50} />
+                {/* Social Media Icons */}
+                <div className='flex justify-center space-x-6 py-8'>
+                    <Link href="/" className='hover:opacity-80 transition-opacity'>
+                        <Image 
+                            src="/assets/images/telegram.png" 
+                            alt="Telegram" 
+                            width={30} 
+                            height={30} 
+                            className="w-8 h-8"
+                        />
                     </Link>
-                    
-                    <Link href="/">
-                        <Image src="/assets/images/facebook.png" alt="" width={30} height={100} />
+                    <Link href="/" className='hover:opacity-80 transition-opacity'>
+                        <Image 
+                            src="/assets/images/facebook.png" 
+                            alt="Facebook" 
+                            width={30} 
+                            height={30} 
+                            className="w-8 h-8"
+                        />
                     </Link>
-                    
-                    <Link href="/">
-                        <Image src="/assets/images/youtube.png" alt="" width={30} height={100} />
+                    <Link href="/" className='hover:opacity-80 transition-opacity'>
+                        <Image 
+                            src="/assets/images/youtube.png" 
+                            alt="YouTube" 
+                            width={30} 
+                            height={30} 
+                            className="w-8 h-8"
+                        />
                     </Link>
-                    
-                    <Link href="/">
-                        <Image src="/assets/images/x.png" alt="" width={30} height={100} />
+                    <Link href="/" className='hover:opacity-80 transition-opacity'>
+                        <Image 
+                            src="/assets/images/x.png" 
+                            alt="X (Twitter)" 
+                            width={30} 
+                            height={30} 
+                            className="w-8 h-8"
+                        />
                     </Link>
                 </div>
 
-            <hr className='border-t-2 border-[#5C6C7E] w-[80%] mx-auto' />
-            <p className='text-gray-400 text-xs text-center p-5'>&#169; Byro Africa. All Rights Reserved.</p>
+                {/* Divider and Copyright */}
+                <hr className='border-t border-[#5C6C7E] w-full max-w-4xl mx-auto opacity-30' />
+                <p className='text-gray-400 text-xs text-center py-4'>
+                    &#169; Byro Africa. All Rights Reserved.
+                </p>
             </div>
         </footer>
     )
