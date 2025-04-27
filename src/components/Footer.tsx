@@ -7,7 +7,7 @@ const Footer = () => {
         <footer className='bg-gradient-to-r from-indigo-100 to-pink-100'>
 
             <div className='justify-center items-center md:p-5'>
-            <div className='flex flex-row md:flex-col p-8 space-x-32 justify-center items-center md:mx-auto'>
+            <div className='flex flex-row p-8 space-x-32 justify-center items-center md:mx-auto'>
 
             <div className='space-y-4'>
                 <div className='logo'>
@@ -22,23 +22,7 @@ const Footer = () => {
                     </p>
                 </div>
 
-                <div className='flex space-x-1'>
-                    <Link href="/">
-                        <Image src="/assets/images/telegram.png" alt="" width={20} height={50} />
-                    </Link>
-                    
-                    <Link href="/">
-                        <Image src="/assets/images/facebook.png" alt="" width={20} height={100} />
-                    </Link>
-                    
-                    <Link href="/">
-                        <Image src="/assets/images/youtube.png" alt="" width={20} height={100} />
-                    </Link>
-                    
-                    <Link href="/">
-                        <Image src="/assets/images/x.png" alt="" width={20} height={100} />
-                    </Link>
-                </div>
+                {/* here */}
                 </div>
 
                 <div className=' flex space-x-20 '>
@@ -65,6 +49,24 @@ const Footer = () => {
                     </div>
             </div>
             </div>
+
+            <div className='flex space-x-1 justify-center items-center p-5'>
+                    <Link href="/">
+                        <Image src="/assets/images/telegram.png" alt="" width={30} height={50} />
+                    </Link>
+                    
+                    <Link href="/">
+                        <Image src="/assets/images/facebook.png" alt="" width={30} height={100} />
+                    </Link>
+                    
+                    <Link href="/">
+                        <Image src="/assets/images/youtube.png" alt="" width={30} height={100} />
+                    </Link>
+                    
+                    <Link href="/">
+                        <Image src="/assets/images/x.png" alt="" width={30} height={100} />
+                    </Link>
+                </div>
 
             <hr className='border-t-2 border-[#5C6C7E] w-[80%] mx-auto' />
             <p className='text-gray-400 text-xs text-center p-5'>&#169; Byro Africa. All Rights Reserved.</p>

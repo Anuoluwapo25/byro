@@ -1,5 +1,5 @@
 import React from "react";
-import {purpleArrow, yellowArrow} from "../assets/index"
+import {purpleArrow, yellowArrow} from "../app/assets/index"
 import Image from "next/image";
 
 const steps = [

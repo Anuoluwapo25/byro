@@ -1,5 +1,5 @@
 import React from "react";
-import {StepOneIcon, StepTwoIcon, StepThreeIcon, StepFourIcon, StepFiveIcon } from "../assets/index";
+import {StepOneIcon, StepTwoIcon, StepThreeIcon, StepFourIcon, StepFiveIcon } from "../app/assets/index";
 import Image from "next/image";
 
 const steps = [

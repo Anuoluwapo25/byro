@@ -1,5 +1,5 @@
 import React from "react";
-import { BusinessManLaunch, ComingSoonTag } from "../assets/index";
+import { BusinessManLaunch, ComingSoonTag } from "../app/assets/index";
 import Image from "next/image";
 
 
