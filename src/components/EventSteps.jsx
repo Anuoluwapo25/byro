@@ -14,7 +14,7 @@ const steps = [
     id: 2,
     title: "Pay Securely with Crypto",
     description:
-      "Complete your purchase using Stablecoins or your local currency. Your transaction is secured with blockchain technology.",
+      "Complete your purchase using Stablecoins or fiat. Your transaction is secured with blockchain technology.",
     arrow: <Image src={yellowArrow} alt="yellowArrow" />
   },
   {
