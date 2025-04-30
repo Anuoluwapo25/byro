@@ -3,7 +3,8 @@
 import React, { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Wallet } from '@coinbase/onchainkit/wallet';
+import GetStarted from '../components/GetStarted';
+// import { Wallet } from '@coinbase/onchainkit/wallet';
 
 const Navbar = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -24,7 +25,7 @@ const Navbar = () => {
                     />
                 </Link>
                 <div className="md:hidden">
-                    <Wallet />
+                    <GetStarted />
                 </div>
             </div>
 
@@ -96,7 +97,7 @@ const Navbar = () => {
 
             {/* Desktop Wallet */}
             <div className="hidden md:block">
-                <Wallet />
+                <GetStarted />
             </div>
         </header>
     )

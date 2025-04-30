@@ -26,7 +26,7 @@ const steps = [
 ];
 
 const EventSteps = () => {
-  return (
+  return ( 
     <div className="p-8 bg-blue-600">
         <div className="container mx-auto md:p-8">
         <h2 className="text-2xl font-semibold text-center text-white py-5">Book an Event in Just 3 Steps</h2>
