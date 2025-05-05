@@ -10,6 +10,13 @@ export default {
   safelist: ['dark'], 
   theme: {
     extend: {
+      screens: {
+        'xs': '320px',
+        'sm': '375px',
+        'md': '768px',
+        'lg': '1024px',
+        'xl': '1280px',
+      },
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",

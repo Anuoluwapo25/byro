@@ -1,15 +1,33 @@
-
 import Footer from '../components/Footer'
 import HeroPage from '../components/HeroPage';
 import EventSteps from '../components/EventSteps';
 import RegisterSteps from '../components/RegisterSteps';
 import Navbar from '../components/Navbar';
+// import LoginButton from '../components/LoginButton';
 
 
 export default function Home() {
   return (
   
-      // <div className="flex flex-col min-h-screen font-sans dark:bg-background dark:text-white bg-white text-black">
+      <>
+      <Navbar />
+        <HeroPage />
+        <RegisterSteps />
+        <EventSteps />
+        <Footer />
+      </>
+
+        
+      
+
+
+
+
+  );
+}
+
+
+   // <div className="flex flex-col min-h-screen font-sans dark:bg-background dark:text-white bg-white text-black">
       //   <header className="pt-4 pr-4">
       //     <div className="flex justify-end">
       //       <div className="wallet-container">
@@ -40,22 +58,3 @@ export default function Home() {
       //     </div>
       //   </header>
       // </div>
-
-      <>
-      <Navbar />
-        <HeroPage />
-        <RegisterSteps />
-        <EventSteps />
-        <Footer />
-      </>
-
-        
-      
-
-
-
-
-
-
-  );
-}
