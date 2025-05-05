@@ -7,3 +7,4 @@ export { default as StepFourIcon } from "./images/stepFourIcon.png";
 export { default as StepFiveIcon } from "./images/stepFiveIcon.png";
 export { default as purpleArrow } from "./images/purpleArrow.png";
 export { default as yellowArrow } from "./images/yellowArrow.png";
+export { default as ManSeating } from "./images/man-seating.png";

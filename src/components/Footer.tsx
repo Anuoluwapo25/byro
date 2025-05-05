@@ -53,7 +53,7 @@ const Footer = () => {
                             className="w-8 h-8"
                         />
                     </Link>
-                    <Link href="/" className='hover:opacity-80 transition-opacity'>
+                    <Link href="https://x.com/usebyro" className='hover:opacity-80 transition-opacity'>
                         <Image 
                             src="/assets/images/x.png" 
                             alt="X (Twitter)" 
