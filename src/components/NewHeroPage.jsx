@@ -17,7 +17,7 @@ const NewHeroPage = () => {
             <div className="max-w-6xl mx-auto">
 
                 {/* Hero Section */}
-                <section className="py-10 md:py-16 flex flex-col-reverse md:flex-row items-center justify-between gap-8 md:gap-12">
+                <section className="py-10 md:py-16 flex flex-col-reverse md:flex-row items-center mx-auto justify-between gap-8 md:gap-12">
                     
                     {/* Text Section */}
                     <div className="md:w-1/2 space-y-6">
@@ -52,7 +52,7 @@ const NewHeroPage = () => {
                     </div>
 
                     {/* Image Section */}
-                    <div className="md:w-1/2 flex justify-center">
+                    <div className="hidden md:flex md:w-1/2 justify-center">
                         <Image
                             src={ManSeating}
                             alt="Man Seating"
