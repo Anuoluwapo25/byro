@@ -8,3 +8,6 @@ export { default as StepFiveIcon } from "./images/stepFiveIcon.png";
 export { default as purpleArrow } from "./images/purpleArrow.png";
 export { default as yellowArrow } from "./images/yellowArrow.png";
 export { default as ManSeating } from "./images/man-seating.png";
+export { default as Schedule } from "./images/Schedule.png"
+export { default as Location } from "./images/Location.png"
+export { default as Transfer } from "./images/Transfer.png"

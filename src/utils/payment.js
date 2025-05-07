@@ -18,7 +18,7 @@ const createPaymentLink = async ({ amount, description, name }) => {
       message: 'Payment link created successfully'
     };
   } catch (error) {
-    console.error('Error creating payment link:', error.response?.data || error.message);
+    console.error(error)
     throw new Error(error.response?.data?.message || 'Failed to create payment link');
   }
 };
