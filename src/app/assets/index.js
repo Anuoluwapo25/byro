@@ -8,3 +8,5 @@ export { default as StepFiveIcon } from "./images/stepFiveIcon.png";
 export { default as purpleArrow } from "./images/purpleArrow.png";
 export { default as yellowArrow } from "./images/yellowArrow.png";
 export { default as ManSeating } from "./images/man-seating.png";
+export { default as eventImage } from "./images/eventImage.png";
+export { default as emptyEventImg } from "./images/emptystate.png";
