@@ -9,6 +9,7 @@ import {
   fetchUpcomingEvents,
   fetchPastEvents,
 } from "../../services/eventServices";
+import { mainBg } from "../assets";
 
 export default function EventsPage() {
   const [activeTab, setActiveTab] = useState("upcoming");
@@ -60,30 +61,38 @@ export default function EventsPage() {
   // Show loading state
   if (loading) {
     return (
-      <div className="max-w-6xl mx-auto p-6">
-        <div className="flex items-center gap-4 mb-6">
-          <h1 className="text-4xl font-extrabold">Events</h1>
-          <EventsTabs activeTab={activeTab} onTabChange={handleTabChange} />
-        </div>
-        <div className="flex justify-center items-center h-64">
-          <p>Loading events...</p>
+      <div className="bg-main-section bg-fixed bg-cover bg-center bg-no-repeat h-screen">
+        <div className="max-w-6xl mx-auto p-6">
+          <div className="flex items-center gap-4 mb-6">
+            <h1 className="text-4xl font-extrabold">Events</h1>
+            <EventsTabs activeTab={activeTab} onTabChange={handleTabChange} />
+          </div>
+          <div className="flex justify-center items-center h-64">
+            <p>Loading events...</p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      <div className="flex items-center gap-4 mb-6">
-        <h1 className="text-4xl font-extrabold">Events</h1>
-        <EventsTabs activeTab={activeTab} onTabChange={handleTabChange} />
-      </div>
+    <div className="relative bg-main-section bg-fixed bg-cover bg-center bg-no-repeat h-screen">
+      {/* Soft overlay */}
+      <div className="absolute inset-0 bg-gradient-to-r from-indigo-100/70 to-pink-100/70 z-0" />
 
-      {showEmptyState ? (
-        <EmptyState onCreateEvent={handleCreateEvent} />
-      ) : (
-        <EventsContainer events={events} onCreateEvent={handleCreateEvent} />
-      )}
+      {/* Content goes here */}
+      <div className="relative z-10 max-w-6xl mx-auto p-6">
+        <div className="flex items-center gap-4 mb-6">
+          <h1 className="text-4xl font-extrabold">Events</h1>
+          <EventsTabs activeTab={activeTab} onTabChange={handleTabChange} />
+        </div>
+
+        {showEmptyState ? (
+          <EmptyState onCreateEvent={handleCreateEvent} />
+        ) : (
+          <EventsContainer events={events} onCreateEvent={handleCreateEvent} />
+        )}
+      </div>
     </div>
   );
 }

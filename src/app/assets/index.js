@@ -10,7 +10,7 @@ export { default as yellowArrow } from "./images/yellowArrow.png";
 export { default as ManSeating } from "./images/man-seating.png";
 export { default as eventImage } from "./images/eventImage.png";
 export { default as emptyEventImg } from "./images/emptystate.png";
-
+export { default as mainBg } from "./images/mainsection.png";
 export { default as Schedule } from "./images/Schedule.png";
 export { default as Location } from "./images/Location.png";
 export { default as Transfer } from "./images/Transfer.png";

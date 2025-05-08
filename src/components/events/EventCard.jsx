@@ -1,6 +1,7 @@
 // components/EventCard.jsx
 import { eventImage } from "@/src/app/assets";
 import Image from "next/image";
+import Link from "next/link";
 import React from "react";
 
 const EventCard = ({ event }) => {
@@ -27,11 +28,13 @@ const EventCard = ({ event }) => {
         )}
       </div>
       <div className="p-4">
-        <h3 className="font-medium text-sm">{event.title}</h3>
-        <p className="text-blue-500 text-xs mt-1">{event.date}</p>
-        <p className="text-gray-500 text-xs mt-2">
-          {event.type} - {event.host}
-        </p>
+        <Link href="/viewevent">
+          <h3 className="font-medium text-sm">{event.title}</h3>
+          <p className="text-blue-500 text-xs mt-1">{event.date}</p>
+          <p className="text-gray-500 text-xs mt-2">
+            {event.type} - {event.host}
+          </p>
+        </Link>
       </div>
     </div>
   );
