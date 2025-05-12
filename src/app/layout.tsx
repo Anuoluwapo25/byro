@@ -76,11 +76,11 @@ export default function RootLayout({
         }}
       >
         <AuthProvider>
-          {/* <Providers> */}
-            <Navbar />
-            <main>{children}</main>
-            <Footer />
-          {/* </Providers> */}
+
+          <Navbar />
+          <main>{children}</main>
+          <Footer />
+
         </AuthProvider>
       </body>
     </html>
