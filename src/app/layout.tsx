@@ -3,7 +3,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-// import { Providers } from "./onchain/providers";
+import { Providers } from "./onchain/providers";
 import AuthProvider from "./privy/AuthProvider";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
@@ -76,11 +76,11 @@ export default function RootLayout({
         }}
       >
         <AuthProvider>
-
-          <Navbar />
-          <main>{children}</main>
-          <Footer />
-
+          <Providers>
+            <Navbar />
+            <main>{children}</main>
+            <Footer />
+          </Providers>
         </AuthProvider>
       </body>
     </html>
