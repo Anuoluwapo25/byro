@@ -3,6 +3,7 @@ import NewHeroPage from "../components/NewHeroPage";
 import EventSteps from "../components/EventSteps";
 import RegisterSteps from "../components/RegisterSteps";
 import Navbar from "../components/Navbar";
+import HappeningEvents from "../components/HappeningEvents"
 // import LoginButton from '../components/LoginButton';
 
 export default function Home() {
@@ -10,6 +11,7 @@ export default function Home() {
     <>
       {/* <Navbar /> */}
       <NewHeroPage />
+      <HappeningEvents />
       <RegisterSteps />
       <EventSteps />
       {/* <Footer /> */}

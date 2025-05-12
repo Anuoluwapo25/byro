@@ -61,7 +61,7 @@ const EventCard = ({ event }) => {
         )}
       </div>
       <div className="p-4">
-        <h3 className="font-medium text-sm">{event.title}</h3>
+        <h3 className="font-medium text-sm text-black">{event.title}</h3>
         <p className="text-blue-500 text-xs mt-1">{event.date}</p>
         <p className="text-gray-500 text-xs mt-2">
           {event.type} - {event.host}
