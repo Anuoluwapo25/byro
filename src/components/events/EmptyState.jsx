@@ -1,5 +1,5 @@
 // components/EmptyState.jsx
-import { emptyEventImg } from "@/src/app/assets";
+import { emptyEventImg } from "../../app/assets/index";
 import Image from "next/image";
 import React from "react";
 

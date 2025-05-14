@@ -28,7 +28,7 @@ export const sampleEvents = [
     date: "Saturday, March 18, 9:30PM",
     type: EventType.ONLINE,
     host: "Host Name",
-    isFree: true,
+    isFree: false,
     image: "/images/event-concert.jpg",
     category: "Education",
     location: "Lucknow",
@@ -46,6 +46,83 @@ export const sampleEvents = [
     location: "Lucknow",
   },
 ];
+
+
+export const happeningEvents = [
+  {
+    id: 1,
+    title:
+      "BestSeller Book Bootcamp -write, Market & Publish Your Book -Lucknow",
+    date: "Saturday, March 18, 9:30PM",
+    type: EventType.ONLINE,
+    host: "Host Name",
+    isFree: true,
+    image: "/src/app/assets/images/event-image-fire.png",
+    category: "Education",
+    location: "Lucknow",
+  },
+  {
+    id: 2,
+    title:
+      "BestSeller Book Bootcamp -write, Market & Publish Your Book -Lucknow",
+    date: "Saturday, March 18, 9:30PM",
+    type: EventType.ONLINE,
+    host: "Host Name",
+    isFree: true,
+    image: "/src/appassets/images/event-fire.png",
+    category: "Education",
+    location: "Lucknow",
+  },
+  {
+    id: 3,
+    title:
+      "BestSeller Book Bootcamp -write, Market & Publish Your Book -Lucknow",
+    date: "Saturday, March 18, 9:30PM",
+    type: EventType.ONLINE,
+    host: "Host Name",
+    isFree: true,
+    image: "/src/app/assets/images/eventimage.png",
+    category: "Education",
+    location: "Lucknow",
+  },
+  {
+    id: 4,
+    title:
+      "BestSeller Book Bootcamp -write, Market & Publish Your Book -Lucknow",
+    date: "Saturday, March 18, 9:30PM",
+    type: EventType.ONLINE,
+    host: "Host Name",
+    isFree: true,
+    image: "/src/app/assets/images/eventimage.png",
+    category: "Education",
+    location: "Lucknow",
+  },
+  {
+    id: 5,
+    title:
+      "BestSeller Book Bootcamp -write, Market & Publish Your Book -Lucknow",
+    date: "Saturday, March 18, 9:30PM",
+    type: EventType.ONLINE,
+    host: "Host Name",
+    isFree: true,
+    image: "/src/app/assets/images/eventimage.png",
+    category: "Education",
+    location: "Lucknow",
+  },
+  {
+    id: 6,
+    title:
+      "BestSeller Book Bootcamp -write, Market & Publish Your Book -Lucknow",
+    date: "Saturday, March 18, 9:30PM",
+    type: EventType.ONLINE,
+    host: "Host Name",
+    isFree: true,
+    image: "/src/app/assets/images/eventimage.png",
+    category: "Education",
+    location: "Lucknow",
+  },
+];
+
 
 /**
  * Fetch all events
@@ -77,6 +154,23 @@ export const fetchUpcomingEvents = async () => {
     }, 500);
   });
 };
+
+/**
+ * Fetch events happening around me
+ * @returns {Promise<Array>} - Promise resolving to array of upcoming events
+ */
+export const fetchHappeningEvents = async () => {
+  // In a real app, you would make an API call with filters
+  // return await fetch('/api/events?status=upcoming').then(res => res.json());
+
+  // For demo purposes, return empty array to show empty state
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(happeningEvents);
+    }, 500); // Simulating API call latency
+  });
+};
+
 
 /**
  * Fetch past events

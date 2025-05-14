@@ -1,5 +1,5 @@
 // components/EventCard.jsx
-import { eventImage } from "@/src/app/assets";
+import { eventImage } from "../../app/assets/index";
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
