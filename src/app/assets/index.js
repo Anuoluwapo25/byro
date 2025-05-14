@@ -15,3 +15,6 @@ export { default as Schedule } from "./images/Schedule.png";
 export { default as Location } from "./images/Location.png";
 export { default as Transfer } from "./images/Transfer.png";
 export { default as nft } from "./images/NFT.png";
+export { default as globeTime } from "./images/globe-time.svg";
+export { default as publicSymbol } from "./images/public-symbol.png";
+export { default as eventFrame } from "./images/event-frame.png";

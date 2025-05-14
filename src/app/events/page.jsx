@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation"; // For App Router
 import EventsContainer from "../../components/events/EventsContainer";
 import EmptyState from "../../components//events/EmptyState";
 import EventsTabs from "../../components/events/EventsTabs";
@@ -16,6 +17,7 @@ export default function EventsPage() {
   const [upcomingEvents, setUpcomingEvents] = useState([]);
   const [pastEvents, setPastEvents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     // Load initial data
@@ -44,11 +46,11 @@ export default function EventsPage() {
 
   const handleCreateEvent = () => {
     // In a real app, this would likely open a modal or navigate to a create event page
-    console.log("Create event clicked");
-    alert("Create event functionality would open here");
+    // console.log("Create event clicked");
+    // alert("Create event functionality would open here");
 
     // In a real application, you might use a modal or redirect:
-    // router.push('/events/create');
+    router.push("/events/create");
     // or
     // setShowCreateEventModal(true);
   };
@@ -61,7 +63,7 @@ export default function EventsPage() {
   // Show loading state
   if (loading) {
     return (
-      <div className="bg-main-section bg-fixed bg-cover bg-center bg-no-repeat h-screen">
+      <div className="bg-main-section bg-fixed bg-cover bg-center bg-no-repeat min-h-screen">
         <div className="max-w-6xl mx-auto p-6">
           <div className="flex items-center gap-4 mb-6">
             <h1 className="text-4xl font-extrabold">Events</h1>
