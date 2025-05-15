@@ -21,6 +21,9 @@ export default {
         background: "var(--background)",
         foreground: "var(--foreground)",
       },
+      backgroundImage: {
+        'main-section': "url('/assets/mainsection.png')",
+      },
     },
   },
   plugins: [],
