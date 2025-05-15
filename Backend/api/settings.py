@@ -11,9 +11,22 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+from dotenv import load_dotenv
+
+load_dotenv() 
+
+
+
+# BlockRadar  and Privy Settings
+BLOCKRADAR_API_KEY = os.environ.get('BLOCKRADAR_API_KEY')
+PRIVY_APP_ID = os.environ.get('PRIVY_APP_ID')
+PRIVY_APP_SECRET = os.environ.get('PRIVY_APP_SECRET')
+FRONTEND_URL = os.environ.get('FRONTEND_URL')
 
 
 # Quick-start development settings - unsuitable for production
@@ -37,9 +50,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'corsheaders',
+    'bryo',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
+    # 'bryo.middleware.PrivyAuthMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -121,3 +139,30 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SECURE = os.getenv('ENVIRONMENT') == 'production'
+
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000", 
+    'https://www.byro.africa',
+    'https://byro-two.vercel.app',
+    'http://localhost:3000',
+]
+
+
+CORS_ALLOW_CREDENTIALS = True
+
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
