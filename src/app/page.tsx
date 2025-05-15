@@ -6,15 +6,17 @@ import RegisterSteps from "../components/RegisterSteps";
 import HappeningEvents from "../components/HappeningEvents"
 
 
+
 export default function Home() {
   return (
     <>
-     
+
       <NewHeroPage />
+
       <HappeningEvents />
       <RegisterSteps />
       <EventSteps />
-      
+
     </>
   );
 }

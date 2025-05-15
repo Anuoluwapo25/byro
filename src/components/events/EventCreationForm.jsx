@@ -1,5 +1,5 @@
 "use client";
-import { eventFrame, globeTime, publicSymbol } from "@/src/app/assets";
+import { eventFrame, globeTime, publicSymbol } from "/src/app/assets";
 import Image from "next/image";
 import { useState, useRef } from "react";
 
@@ -97,7 +97,7 @@ export default function EventCreationForm() {
                 placeholder="DD-MM-YYYY"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full p-3 border border-gray-200 rounded-lg pl-10"
+                className="w-full p-3 border border-gray-200 rounded-lg pl-10 focus:text-black"
               />
               <div className="absolute left-3 top-3.5 text-gray-400">
                 <svg

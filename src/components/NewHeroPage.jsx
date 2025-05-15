@@ -4,13 +4,38 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { ManSeating } from "../app/assets/index";
 import Stats from "./Stats";
+import axios from "../utils/axios";
+import { toast }  from "react-toastify"
+
 
 const NewHeroPage = () => {
   const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false)
 
-  const handleSubmit = (e) => {
+   const headerConfig = {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }
+
+  const handleSubmit = async (e) => {
+    const data = {
+      email: `${email}`
+    }
+   
     e.preventDefault();
     console.log("Email submitted:", email);
+    try{
+      setLoading(true)
+      const res = await axios.post("/waitlist/", data, headerConfig)
+      console.log(res.data)
+      toast.success("Added to waitlist successfully")
+    }catch (error){
+      console.error(error)
+    }finally {
+      setLoading(false)
+    }
+
   };
 
   return (
@@ -44,17 +69,25 @@ const NewHeroPage = () => {
               <input
                 type="email"
                 placeholder="Email Address..."
-                className="flex-grow border border-[#B7E9D5] bg-[#E8F8F2] px-4 py-3 rounded-full placeholder:text-[#16B979]"
+                className="flex-grow border border-[#16B979] bg-[#E8F8F2] px-4 py-3 rounded-full placeholder:text-[#16B979] focus:border-none focus:text-black "
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
-              <button
+              {loading ? ( <button
                 type="submit"
                 className="bg-[#16B979] px-8 py-4 text-base text-white rounded-full w-full sm:w-auto"
+                
+              >
+                Loading ...
+              </button>) : ( <button
+                type="submit"
+                className="bg-[#16B979] px-8 py-4 text-base text-white rounded-full w-full sm:w-auto"
+                
               >
                 Get Started
-              </button>
+              </button>)}
+             
             </form>
           </div>
   
