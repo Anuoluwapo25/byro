@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 // import { Wallet } from '@coinbase/onchainkit/wallet';
-import LoginButton from "./LoginButton";
+import LoginButton from "./auth/AuthButton";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
