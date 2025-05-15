@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Transfer, Schedule, Location, nft } from "../assets/index";
 import Image from "next/image";
 import { Ticket } from "lucide-react";
-import ErrorBoundary from '../components/ErrorBoundary';
+// import ErrorBoundary from '../components/ErrorBoundary';
 
 const page = () => {
   const [registered, setRegistered] = useState(true);
