@@ -5,8 +5,7 @@ import Image from "next/image";
 import { ManSeating } from "../app/assets/index";
 import Stats from "./Stats";
 import axios from "../utils/axios";
-import { toast }  from "react-toastify"
-
+import { toast } from "react-toastify"
 
 const NewHeroPage = () => {
   const [email, setEmail] = useState("");
@@ -24,7 +23,7 @@ const NewHeroPage = () => {
     }
    
     e.preventDefault();
-    console.log("Email submitted:", email);
+    console.log("Email submitted:", data);
     try{
       setLoading(true)
       const res = await axios.post("/waitlist/", data, headerConfig)
@@ -69,7 +68,7 @@ const NewHeroPage = () => {
               <input
                 type="email"
                 placeholder="Email Address..."
-                className="flex-grow border border-[#16B979] bg-[#E8F8F2] px-4 py-3 rounded-full placeholder:text-[#16B979] focus:border-none focus:text-black "
+                className="flex-grow border border-[#16B979] bg-[#E8F8F2] px-4 py-3 rounded-full placeholder:text-[#16B979] text-black focus:outline-none focus:text-black "
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required

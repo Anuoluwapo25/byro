@@ -19,8 +19,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Byro Africa",
-  description: "Where Every Events Begins",
+  title: "Byro",
+  description: "Where Memories are Created",
   icons: {
     icon: [
       {

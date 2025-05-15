@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const createPaymentLink = async ({ amount, description, name }) => {
   try {
-    const response = await axios.post('http://127.0.0.1:8000/api/payment-links/create/', {
+    const response = await axios.post('https://bryo-dapp.onrender.com/api/payment-links/create/', {
       amount,
       description,
       name
