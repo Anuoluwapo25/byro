@@ -1,6 +1,9 @@
 from rest_framework import serializers
 from django.utils import timezone
-from .models import PaymentSettings, WaitList, PrivyUser, EventTicket, Event
+from .models import PaymentSettings, WaitList, PrivyUser, Ticket, Event, TicketTransfer
+from django.core.mail import send_mail
+from django.urls import reverse
+from django.conf import settings
 
 class PaymentLinkCreateSerializer(serializers.Serializer):
     """Serializer for creating payment links"""
@@ -34,24 +37,24 @@ class WaitListSerializer(serializers.ModelSerializer):
 class PrivyUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = PrivyUser
-        fields = [
-            'id', 'privy_id', 'wallet_address', 
-            'wallet_type', 'email', 'phone'
-        ]
+        fields = ['privy_id', 'email', 'wallet_address', 'created_at']
+        read_only_fields = ['privy_id', 'created_at']
+
 
 
 class EventSerializer(serializers.ModelSerializer):
+    # is_transferable = serializers.BooleanField(source='transferable')
     class Meta:
         model = Event
         fields = [
-            'id', 'name', 'date', 'time_from', 'time_to', 
+            'id', 'name', 'day', 'time_from', 'time_to', 
             'location', 'virtual_link', 'description', 
-            'ticket_price', 'is_transferable', 'capacity', 
+            'ticket_price', 'transferable', 'capacity', 
             'visibility', 'timezone', 'event_image'
         ]
         extra_kwargs = {
             'ticket_price': {'required': False},
-            'is_transferable': {'required': False},
+            'transferable': {'required': False},
             'capacity': {'required': False},
             'virtual_link': {'required': False},
             'description': {'required': False},
@@ -68,16 +71,68 @@ class EventSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("Event date cannot be in the past.")
         
         return data
+    
 
-class EventTicketSerializer(serializers.ModelSerializer):
-    # original_owner = PrivyUser(read_only=True)
-    # current_owner = PrivyUser(read_only=True)
-    event = serializers.StringRelatedField()
 
+
+class TicketSerializer(serializers.ModelSerializer):
+    event_name = serializers.CharField(source='event.name', read_only=True)
+    event_date = serializers.DateField(source='event.day', read_only=True)
+    transferable = serializers.BooleanField(source='event.transferable', read_only=True)
+    
     class Meta:
-        model = EventTicket
+        model = Ticket
         fields = [
-            'id', 'event', 'original_owner', 
-            'current_owner', 'ticket_code', 
-            'status', 'created_at', 'last_transferred_at'
+            'ticket_id', 'event', 'event_name', 'event_date', 
+            'original_owner_name', 'original_owner_email',
+            'current_owner_name', 'current_owner_email',
+            'is_transferred', 'created_at', 'transferable'
         ]
+        read_only_fields = ['ticket_id', 'is_transferred', 'created_at']
+
+class TicketTransferSerializer(serializers.ModelSerializer):
+    ticket_details = TicketSerializer(source='ticket', read_only=True)
+    transfer_link = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = TicketTransfer
+        fields = [
+            'id', 'ticket', 'ticket_details',  # Include both ticket and ticket_details
+            'from_user_name', 'from_user_email',
+            'to_user_name', 'to_user_email',
+            'transfer_key', 'is_accepted', 'transfer_link'
+        ]
+        read_only_fields = ['transfer_key', 'is_accepted', 'ticket']  # Make ticket read-only
+        extra_kwargs = {
+            'ticket': {'required': False}  # Not required in input
+        }
+
+    def get_transfer_link(self, obj):
+        request = self.context.get('request')
+        if request:
+            return request.build_absolute_uri(
+                reverse('accept-transfer', kwargs={'transfer_key': str(obj.transfer_key)})
+            )
+        return None
+    
+    def create(self, validated_data):
+        # Check if ticket is transferable
+        ticket = validated_data['ticket']
+        if not ticket.event.transferable:
+            raise serializers.ValidationError("This ticket is not transferable")
+        
+        # Create transfer
+        transfer = super().create(validated_data)
+        
+        # Send transfer email
+        transfer_link = self.get_transfer_link(transfer)
+        send_mail(
+            f'Ticket Transfer: {ticket.event.name}',
+            f'You have received a ticket transfer. Click here to accept: {transfer_link}',
+            settings.DEFAULT_FROM_EMAIL,
+            [validated_data['to_user_email']],
+            fail_silently=False,
+        )
+        
+        return transfer
+
