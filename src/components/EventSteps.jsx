@@ -1,6 +1,9 @@
+
+
 import React from "react";
 import {purpleArrow, yellowArrow} from "../app/assets/index"
 import Image from "next/image";
+
 
 const steps = [
   {
@@ -26,6 +29,7 @@ const steps = [
 ];
 
 const EventSteps = () => {
+ 
   return ( 
     <div className="p-8 bg-blue-600">
         <div className="container mx-auto md:p-8">
@@ -45,7 +49,9 @@ const EventSteps = () => {
         </div>
       
         <div className="flex justify-end mt-8">
-        <button className="mt-8 px-6 py-2 bg-green-500 text-white font-semibold rounded-full shadow-md hover:bg-green-600">
+        <button 
+        
+        className="mt-8 px-6 py-2 bg-green-500 text-white font-semibold rounded-full shadow-md hover:bg-green-600">
             Coming Soon
         </button>
         </div>

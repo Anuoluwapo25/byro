@@ -3,7 +3,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Providers } from "./onchain/providers";
+// import { Providers } from "./onchain/providers";
 import AuthProvider from "./privy/AuthProvider";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
@@ -68,13 +68,13 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AuthProvider>
-          <Providers>
+          {/* <Providers> */}
             <div className="flex flex-col min-h-screen">
               <Navbar />
               <main className="flex-1">{children}</main>
               <Footer />
             </div>
-          </Providers>
+          {/* </Providers> */}
         </AuthProvider>
       </body>
     </html>

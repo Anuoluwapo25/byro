@@ -79,7 +79,7 @@ export default function PaymentPage() {
                   type="text"
                   id="amount"
                   placeholder="0.00"
-                  className={`block w-full pl-7 pr-12 py-3 border ${
+                  className={`block w-full pl-7 pr-12 py-3 border text-black ${
                     errors.amount
                       ? "border-red-300 focus:ring-red-500 focus:border-red-500"
                       : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
