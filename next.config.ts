@@ -24,7 +24,6 @@ const nextConfig: NextConfig = {
 
   // Enable experimental features if needed
   experimental: {
-    appDir: true, // If using App Router
     serverComponentsExternalPackages: ['your-packages'],
   }
 };
