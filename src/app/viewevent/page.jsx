@@ -1,10 +1,11 @@
 "use client";
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { Transfer, Schedule, Location, nft } from "../assets/index";
 import Image from "next/image";
 import { Ticket } from "lucide-react";
-import RegisterModal from "../../components/auth/RegisterModal"; // Import the modal component
+import RegisterModal from "../../components/auth/RegisterModal";
+import API from '../../services/api';
 // import ErrorBoundary from '../components/ErrorBoundary';
 
 const page = () => {
@@ -13,6 +14,9 @@ const page = () => {
   const [transferEmail, setTransferEmail] = useState("");
   const [transferName, setTransferName] = useState("");
   const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const { id } = useParams();
+  const [eventData, setEventData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const [isOpen, setIsOpen] = useState(false); // modal open state
 
@@ -20,6 +24,33 @@ const page = () => {
   const handleClose = () => setIsOpen(false);
 
   const router = useRouter();
+
+  useEffect(() => {
+    const fetchEventData = async () => {
+      try {
+        setLoading(true);
+        const response = await API.getEvent(id);
+        setEventData(response.data);
+      } catch (error) {
+        console.error("Failed to load event:", error);
+        // Add error state handling here
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchEventData();
+    }
+  }, [id]);
+
+  if (loading) {
+    return <div className="text-center py-10">Loading event details...</div>;
+  }
+
+  if (!eventData) {
+    return <div className="text-center py-10">Event not found</div>;
+  }
 
   const handleTransferClick = () => {
     setShowTransferInput(!showTransferInput);
@@ -70,6 +101,7 @@ const page = () => {
                     d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
                   />
                 </svg>
+
                 <div className="text-white text-xs text-center mt-1">
                   <div>Event</div>
                   <div>Image</div>
@@ -82,7 +114,7 @@ const page = () => {
                   Hosted by
                 </div>
                 <div className="font-medium text-black text-sm mb-1">
-                  Byro office
+                  {eventData.host || "Byro office"}
                 </div>
                 {!registered && (
                   <div className="text-sm text-gray-600 mb-2">
@@ -165,7 +197,9 @@ const page = () => {
               <div className="flex items-center mb-6 bg-gray-50 border-2 rounded-lg w-full max-w-xs">
                 <Ticket className="bg-blue-500 mx-3 transform -rotate-12" />
                 <div className="py-2">
-                  <div className="font-bold text-black text-xl">$100</div>
+                  <div className="font-bold text-black text-xl">
+                    ${eventData.ticket_price || "100"}
+                  </div>
                   <div className="text-xs text-black">USDC ON BASE</div>
                 </div>
               </div>
@@ -176,7 +210,7 @@ const page = () => {
               {/* Event name */}
               <div className="bg-gray-50 border-2 rounded-lg w-full">
                 <h1 className="text-xl font-semibold text-[#2653EB] p-5 text-center md:text-left">
-                  Event Name
+                  {eventData.name || "Event Name"}
                 </h1>
               </div>
 
@@ -192,9 +226,11 @@ const page = () => {
                 </span>
                 <div className="ml-2">
                   <p className="text-lg font-semibold text-black">
-                    Tuesday, 28th April 2025
+                    {formatDate(eventData.day) || "Tuesday, 28th April 2025"}
                   </p>
-                  <p className="text-black">2:00 PM to 4:00 PM</p>
+                  <p className="text-black">
+                    {eventData.time_from} to {eventData.time_to}
+                  </p>
                 </div>
               </div>
 
@@ -210,9 +246,11 @@ const page = () => {
                 </span>
                 <div className="ml-2">
                   <p className="text-lg font-semibold text-black">
-                    Byro Headquarters
+                    {eventData.location || "Byro Headquarters"}
                   </p>
-                  <p className="text-black">Lagos, Nigeria</p>
+                  <p className="text-black">
+                    {eventData.city || "Lagos, Nigeria"}
+                  </p>
                 </div>
               </div>
 
@@ -278,14 +316,7 @@ const page = () => {
               About Event
             </h3>
             <p className="text-base md:text-xl text-gray-600 leading-relaxed">
-              Lorem ipsum dolor sit amet consectetur. Sit elementum enim
-              fermentum at tristique luctus vulputate tellus felis. Rhoncus amet
-              commodo sit aliquam pretium. Sed lacus sed adipiscing sit magna
-              mus eros sit. Lacus molestie in vivamus metus tincidunt. Sem diam
-              neque amet gravida quis. At gravida diam sit lobortis purus sit
-              nullam venenatis. Urna parturient quam integer consectetur in
-              lacus nec. Purus vitae in tellus sit nulla nibh magna. Lacinia
-              semper urna mi cursus libero malesuada eu sit.
+              {eventData.description || "No description available."}
             </p>
           </section>
         </main>
@@ -294,6 +325,16 @@ const page = () => {
       <RegisterModal isOpen={isOpen} onClose={handleClose} />
     </div>
   );
+};
+
+const formatDate = (dateString) => {
+  const options = {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  };
+  return new Date(dateString).toLocaleDateString("en-US", options);
 };
 
 export default page;

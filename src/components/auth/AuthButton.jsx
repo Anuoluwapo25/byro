@@ -1,74 +1,89 @@
-import React, { useEffect } from "react";
+
 import { usePrivy } from "@privy-io/react-auth";
-import GetStarted from "../GetStarted";
+import { useState, useEffect } from "react";
 
-const AuthButton = () => {
-  const {
-    ready,
-    authenticated,
-    login,
-    logout,
-    user,
-    getAccessToken,
-  } = usePrivy();
+export default function AuthButton() {
+  const { ready, authenticated, user, login, getAccessToken, logout } = usePrivy();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
 
-  // Function to send token to backend once authenticated
-  const sendTokenToBackend = async () => {
-    if (!ready || !authenticated) return;
+  // Effect to handle token generation after authentication
+  useEffect(() => {
+    if (authenticated) {
+      const handleTokenGeneration = async () => {
+        try {
+          setLoading(true);
+          const accessToken = await getAccessToken();
+          
+          if (!accessToken) {
+            throw new Error("Failed to generate access token");
+          }
 
+          const response = await fetch("/privy/token/", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`,
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error("Signup failed");
+          }
+
+          setSuccess(true);
+        } catch (err) {
+          setError(err.message || "Signup failed");
+          // Clean up failed auth attempt
+          await logout();
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      handleTokenGeneration();
+    }
+  }, [authenticated, getAccessToken, logout]);
+
+  const handleSignup = async () => {
+    if (!ready) return;
     try {
-      // ✅ Get the Privy access token
-      const accessToken = await getAccessToken();
-      console.log("Privy access token:", accessToken);
-
-      // Send the token to your backend
-      const response = await fetch("http://127.0.0.1:8000/api/token", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({}),  // You can include other data if needed
-      });
-
-      const data = await response.json();
-      console.log("Response from backend:", data);
-    } catch (error) {
-      console.error("Error sending token to backend:", error);
+      setLoading(true);
+      setError(null);
+      await login();
+      // The useEffect will handle the rest after authentication
+    } catch (err) {
+      setError(err.message || "Login failed");
+      setLoading(false);
     }
   };
 
-  useEffect(() => {
-  
-      const createWalletAfterAuthentication = async () => {
-        if (ready && authenticated) {
-          // Proceed to create wallet only if authenticated
-          try {
-            // Trigger wallet creation logic here
-            console.log("Creating wallet...");
-            // Example code: await createWallet();
-          } catch (error) {
-            console.error("Error creating wallet:", error);
-          }
-        } else {
-          console.log("User is not authenticated. Cannot create wallet.");
-        }
-      };
-    
-      createWalletAfterAuthentication();
-    }, [ready, authenticated]); // Ensure it's triggered when user is authenticated
-  return (
-    <div>
-      {authenticated ? (
-        <>
-          <p>Welcome, {user?.email?.address || user?.wallet?.address}</p>
-          <button onClick={logout}>Logout</button>
-        </>
-      ) : (
-        <GetStarted onClick={login} />
-      )}
-    </div>
-  );
-};
+  if (success) {
+    return (
+      <div className="p-4 bg-green-100 text-green-800 rounded">
+        Signup successful! Welcome aboard.
+      </div>
+    );
+  }
 
-export default AuthButton;
+  return (
+    <>
+    
+
+      <button
+        onClick={handleSignup}
+        disabled={loading || !ready}
+        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded disabled:opacity-50"
+      >
+        {loading ? "Processing..." : "Sign Up with Email or Wallet"}
+      </button>
+
+      {authenticated && !success && (
+        <div className="mt-4 p-3 bg-gray-100 rounded">
+          <p>Completing your signup...</p>
+        </div>
+      )}
+    </>
+  );
+}

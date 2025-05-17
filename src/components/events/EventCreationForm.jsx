@@ -1,13 +1,18 @@
 "use client";
 import { eventFrame, globeTime, publicSymbol } from "/src/app/assets";
 import Image from "next/image";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "react-toastify";
+import API from "../../services/api";
+// import axiosInstance from "@/utils/axios";
 
 export default function EventCreationForm() {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [eventName, setEventName] = useState("Event Name");
   const [date, setDate] = useState("29-04-2025");
-  const [timeFrom, setTimeFrom] = useState("02:00 PM");
-  const [timeTo, setTimeTo] = useState("04:00 PM");
+  const [timeFrom, setTimeFrom] = useState("14:00");
+  const [timeTo, setTimeTo] = useState("16:00");
   const [physicalLocation, setPhysicalLocation] = useState("");
   const [virtualLink, setVirtualLink] = useState("");
   const [description, setDescription] = useState("");
@@ -16,12 +21,23 @@ export default function EventCreationForm() {
   const [capacity, setCapacity] = useState("Unlimited");
   const [eventImage, setEventImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+  const [generatedLink, setGeneratedLink] = useState(null);
+  const router = useRouter();
 
   const fileInputRef = useRef(null);
 
   const handleImageClick = () => {
     fileInputRef.current.click();
   };
+
+  useEffect(() => {
+    if (timeFrom >= timeTo) {
+      // Add 1 hour to "Time From" as the default "Time To"
+      const [hours, minutes] = timeFrom.split(":");
+      const newHours = String(parseInt(hours, 10) + 1).padStart(2, "0");
+      setTimeTo(`${newHours}:${minutes}`);
+    }
+  }, [timeFrom, timeTo]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -36,23 +52,81 @@ export default function EventCreationForm() {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // In a real implementation, you would use Axios here
-    console.log("Form submitted with data:", {
-      eventName,
-      date,
-      timeFrom,
-      timeTo,
-      physicalLocation,
-      virtualLink,
-      description,
-      ticketsTransferable,
-      ticketPrice,
-      capacity,
-      eventImage: eventImage ? eventImage.name : null,
-    });
-    ("Event created successfully!");
+
+    if (!eventName.trim()) {
+      toast.error("Event name is required");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      const formData = new FormData();
+
+      // Required fields
+      formData.append("name", eventName);
+      formData.append("day", date.split("-").reverse().join("-")); // Convert DD-MM-YYYY to YYYY-MM-DD
+      formData.append("time_from", convertTo24Hour(timeFrom)); // Convert to 24-hour format
+      formData.append("time_to", convertTo24Hour(timeTo)); // Convert to 24-hour format
+
+      // Optional fields
+      if (physicalLocation) formData.append("location", physicalLocation);
+      if (virtualLink) formData.append("virtual_link", virtualLink);
+      if (description) formData.append("description", description);
+
+      // Boolean/Number fields
+      formData.append("transferable", ticketsTransferable.toString());
+      formData.append(
+        "ticket_price",
+        ticketPrice === "Free" ? "0.00" : ticketPrice
+      );
+      formData.append("capacity", capacity === "Unlimited" ? "1000" : capacity);
+      formData.append("visibility", "public");
+      formData.append("timezone", "GMT+01:00");
+
+      // Image
+      if (eventImage) {
+        formData.append("image", eventImage, eventImage.name);
+      }
+
+      const response = await API.createEvent(formData);
+      const eventId = response.data.id;
+
+      setGeneratedLink(`${window.location.origin}/viewevent/${eventId}`);
+
+      // Option 2: Redirect immediately
+      // router.push(`/viewevent/${eventId}`);
+
+      toast.success("Event created successfully!");
+
+      // Debug log
+      for (let [key, value] of formData.entries()) {
+        console.log(key, value);
+      }
+    } catch (error) {
+      console.error("Full error:", error.response?.data || error.message);
+      toast.error(error.response?.data?.message || "Failed to create event");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Helper function to convert 12-hour time to 24-hour format
+  const convertTo24Hour = (time12h) => {
+    const [time, modifier] = time12h.split(" ");
+    let [hours, minutes] = time.split(":");
+
+    if (hours === "12") {
+      hours = "00";
+    }
+
+    if (modifier === "PM") {
+      hours = parseInt(hours, 10) + 12;
+    }
+
+    return `${hours}:${minutes}:00`;
   };
 
   return (
@@ -90,14 +164,15 @@ export default function EventCreationForm() {
         {/* Date and Time */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div>
-            <label className="font-medium mb-2 block">Day</label>
+            <label className="font-medium mb-2 block text-black">Day</label>
             <div className="relative">
               <input
                 type="text"
                 placeholder="DD-MM-YYYY"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full p-3 border border-gray-200 rounded-lg pl-10 focus:text-black"
+                min={new Date().toISOString().split("T")[0]}
+                className="w-full p-3 border border-gray-200 rounded-lg pl-10 focus:text-black text-black"
               />
               <div className="absolute left-3 top-3.5 text-gray-400">
                 <svg
@@ -135,19 +210,17 @@ export default function EventCreationForm() {
           </div>
 
           <div>
-            <label className="font-medium mb-2 block">Time - From</label>
+            <label className="font-medium mb-2 block text-black">
+              Time - From
+            </label>
             <div className="relative">
-              <select
-                className="w-full p-3 border border-gray-200 rounded-lg appearance-none"
+              <input
+                type="time"
                 value={timeFrom}
                 onChange={(e) => setTimeFrom(e.target.value)}
-              >
-                <option value="02:00 PM">02:00 PM</option>
-                <option value="03:00 PM">03:00 PM</option>
-                <option value="04:00 PM">04:00 PM</option>
-                {/* Additional time options would go here */}
-              </select>
-              <div className="absolute right-3 top-4 pointer-events-none">
+                className="w-full p-3 border border-gray-200 rounded-lg"
+              />
+              {/* <div className="absolute right-3 top-4 pointer-events-none">
                 <svg
                   width="12"
                   height="8"
@@ -163,24 +236,24 @@ export default function EventCreationForm() {
                     strokeLinejoin="round"
                   />
                 </svg>
-              </div>
+              </div> */}
             </div>
           </div>
 
           <div>
-            <label className="font-medium mb-2 block">Time - To</label>
+            <label className="font-medium mb-2 block text-black">
+              Time - To
+            </label>
             <div className="relative">
-              <select
-                className="w-full p-3 border border-gray-200 rounded-lg appearance-none"
+              <input
+                type="time"
                 value={timeTo}
                 onChange={(e) => setTimeTo(e.target.value)}
-              >
-                <option value="03:00 PM">03:00 PM</option>
-                <option value="04:00 PM">04:00 PM</option>
-                <option value="05:00 PM">05:00 PM</option>
-                {/* Additional time options would go here */}
-              </select>
-              <div className="absolute right-3 top-4 pointer-events-none">
+                min={timeFrom} // Ensures "To" time cannot be earlier than "From" time
+                className="w-full p-3 border border-gray-200 rounded-lg"
+              />
+
+              {/* <div className="absolute right-3 top-4 pointer-events-none">
                 <svg
                   width="12"
                   height="8"
@@ -196,14 +269,14 @@ export default function EventCreationForm() {
                     strokeLinejoin="round"
                   />
                 </svg>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
 
         {/* Location */}
         <div className="mb-8">
-          <label className="font-medium mb-2 block">Location</label>
+          <label className="font-medium mb-2 block text-black">Location</label>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="relative">
               <input
@@ -211,7 +284,7 @@ export default function EventCreationForm() {
                 placeholder="Physical location"
                 value={physicalLocation}
                 onChange={(e) => setPhysicalLocation(e.target.value)}
-                className="w-full p-3 border border-gray-200 rounded-lg pl-10"
+                className="w-full p-3 border border-gray-200 rounded-lg pl-10 text-black"
               />
               <div className="absolute left-3 top-3.5 text-gray-400">
                 <svg
@@ -245,7 +318,7 @@ export default function EventCreationForm() {
                 placeholder="Paste virtual link here"
                 value={virtualLink}
                 onChange={(e) => setVirtualLink(e.target.value)}
-                className="w-full p-3 border border-gray-200 rounded-lg pl-10"
+                className="w-full p-3 border border-gray-200 rounded-lg pl-10 text-black"
               />
               <div className="absolute left-3 top-3.5 text-gray-400">
                 <svg
@@ -278,13 +351,15 @@ export default function EventCreationForm() {
         {/* Description and Image */}
         <div className="flex gap-6 mb-8">
           <div className="flex-1">
-            <label className="font-medium mb-2 block">Description</label>
+            <label className="font-medium mb-2 block text-black">
+              Description
+            </label>
             <div className="relative">
               <textarea
                 placeholder="Tell us about the event"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="w-full p-3 border border-gray-200 rounded-lg pl-10 h-16"
+                className="w-full p-3 border border-gray-200 rounded-lg pl-10 h-16 text-black"
               />
               <div className="absolute left-3 top-3.5 text-gray-400">
                 <svg
@@ -336,7 +411,9 @@ export default function EventCreationForm() {
 
         {/* Event Options */}
         <div className="mb-8">
-          <label className="font-medium mb-2 block">Event Options</label>
+          <label className="font-medium mb-2 block text-black">
+            Event Options
+          </label>
           <p className="text-xs text-gray-500 mb-4">
             *All transactions must be made using USDC on Base network*
           </p>
@@ -383,8 +460,12 @@ export default function EventCreationForm() {
                     }
                   }}
                 >
-                  <option value="Free">Free</option>
-                  <option value="Paid">Paid</option>
+                  <option className="text-black" value="Free">
+                    Free
+                  </option>
+                  <option className="text-black" value="Paid">
+                    Paid
+                  </option>
                 </select>
                 {ticketPrice !== "Free" && (
                   <div className="relative">
@@ -394,7 +475,7 @@ export default function EventCreationForm() {
                       step="0.01"
                       value={ticketPrice}
                       onChange={(e) => setTicketPrice(e.target.value)}
-                      className="p-2 border border-gray-200 rounded w-24 pl-6"
+                      className="p-2 border border-gray-200 rounded w-24 pl-6 text-black"
                     />
                     <span className="absolute left-2 top-2 text-gray-500">
                       $
@@ -520,13 +601,52 @@ export default function EventCreationForm() {
         {/* Submit Button */}
         <div>
           <button
+            type="button"
             onClick={handleSubmit}
-            className="bg-gradient-to-r from-[#63D0A5] to-[#16B979] hover:bg-green-500 text-white font-medium py-3 px-8 rounded-full transition-colors"
+            disabled={isSubmitting}
+            className={`bg-gradient-to-r from-[#63D0A5] to-[#16B979] text-white font-medium py-3 px-8 rounded-full transition-colors ${
+              isSubmitting
+                ? "opacity-50 cursor-not-allowed"
+                : "hover:bg-green-500"
+            }`}
           >
-            Create Event
+            {isSubmitting ? "Creating..." : "Create Event"}
           </button>
         </div>
       </div>
+
+      {generatedLink && (
+        <div className="mt-8 p-4 bg-blue-50 rounded-lg">
+          <h3 className="font-medium text-blue-800 mb-2">Your Event Link:</h3>
+          <div className="flex flex-col space-y-4">
+            <div className="flex items-center">
+              <input
+                type="text"
+                value={generatedLink}
+                readOnly
+                className="flex-1 p-2 border border-blue-200 rounded-l-lg bg-white text-black"
+              />
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(generatedLink);
+                  toast.success("Link copied to clipboard!");
+                }}
+                className="bg-blue-500 text-white px-4 py-2 rounded-r-lg hover:bg-blue-600"
+              >
+                Copy
+              </button>
+            </div>
+            <a
+              href={generatedLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-green-500 text-white text-center py-2 px-4 rounded-lg hover:bg-green-600"
+            >
+              View Event Page
+            </a>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

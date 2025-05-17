@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 // import { Wallet } from '@coinbase/onchainkit/wallet';
-import LoginButton from "./auth/AuthButton";
+import AuthButton from "./auth/AuthButton";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -25,7 +25,7 @@ const Navbar = () => {
           />
         </Link>
         <div className="md:hidden">
-          <LoginButton />
+          <AuthButton />
         </div>
       </div>
 
@@ -89,12 +89,12 @@ const Navbar = () => {
 
       {/* Mobile Navigation */}
       <div
-        className={`md:hidden fixed inset-0 bg-white transform ${
-          isMenuOpen ? "translate-x-0" : "translate-x-full"
-        } transition-transform duration-300 ease-in-out z-50`}
+        className={`md:hidden fixed inset-0 bg-white transform ${isMenuOpen ? "translate-x-0" : "translate-x-full"
+          } transition-transform duration-300 ease-in-out z-50`}
       >
         <div className="flex flex-col items-center justify-center h-full space-y-8">
           <button
+
             className="absolute top-4 right-4 text-[#5C6C7E]"
             onClick={toggleMenu}
           >
@@ -146,7 +146,7 @@ const Navbar = () => {
       {/* Desktop Wallet and Login */}
       <div className="hidden md:flex items-center space-x-4">
         {/* <Wallet /> */}
-        <LoginButton />
+        <AuthButton />
       </div>
     </header>
   );
