@@ -15,6 +15,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     <PrivyProvider
       appId={appId}
       config={{
+       
         loginMethods: ['wallet', 'email'],
         appearance: {
           theme: 'light',
