@@ -1,19 +1,23 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.views import APIView
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
-from .models import PaymentSettings
-from .serializers import PaymentLinkCreateSerializer, PaymentSettingsSerializer, WaitListSerializer
-from django.http import JsonResponse
+from rest_framework.decorators import action, api_view, permission_classes
+from .serializers import PaymentLinkCreateSerializer, PaymentSettingsSerializer, WaitListSerializer, EventSerializer, TicketSerializer, TicketTransferSerializer
 from rest_framework.permissions import IsAuthenticated
+from django.http import JsonResponse
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 from django.contrib.auth import login
-from .models import PrivyUser, WaitList, Event
-from .serializers import EventSerializer
+from .models import PrivyUser, WaitList, Event, PaymentSettings, Ticket, TicketTransfer
 from .utils import verify_privy_token
-
+# from django.core.mail import send_mail
+from django.urls import reverse
+# from django.conf import settings
+from django.db import models
+from django.db.models import Q
 import uuid
 import requests
 import os
@@ -137,7 +141,6 @@ def drf_protected_view(request):
 
 class PrivyTokenView(APIView):
     def post(self, request):
-        # Check both header and body for token
         auth_header = request.headers.get('Authorization', '')
         token_from_header = auth_header.split('Bearer ')[1] if 'Bearer ' in auth_header else None
         token_from_body = request.data.get('token')
@@ -151,7 +154,6 @@ class PrivyTokenView(APIView):
             )
 
         try:
-            # First verify with Privy's API
             verify_response = requests.post(
                 "https://auth.privy.io/api/v1/verify",
                 json={"token": token},
@@ -160,7 +162,6 @@ class PrivyTokenView(APIView):
             verify_response.raise_for_status()
             decoded = verify_response.json()
             
-            # Then get additional user info
             user_response = requests.get(
                 "https://auth.privy.io/api/v1/userinfo",
                 headers={"Authorization": f"Bearer {token}"},
@@ -199,33 +200,173 @@ class PrivyTokenView(APIView):
 class EventViewSet(viewsets.ModelViewSet):
     queryset = Event.objects.all()
     serializer_class = EventSerializer
-    parser_classes = (MultiPartParser, FormParser)
+    parser_classes = (JSONParser, MultiPartParser, FormParser)
+    permission_classes = [AllowAny]
     
     def create(self, request, *args, **kwargs):
-        # Handle file upload separately
         serializer = self.get_serializer(data=request.data)
         
         if serializer.is_valid():
-            # If ticket price is not provided, set to free
             if 'ticket_price' not in request.data:
-                serializer.validated_data['ticket_price'] = 100.00  # $100 USDC as per image
+                serializer.validated_data['ticket_price'] = 100.00  
             
-            # If capacity is not provided, set to unlimited (None)
+            
             if 'capacity' not in request.data:
                 serializer.validated_data['capacity'] = None
             
-            # Handle event image if uploaded
+            
             if 'event_image' in request.FILES:
                 serializer.validated_data['event_image'] = request.FILES['event_image']
             
-            # Set additional details
-            serializer.validated_data['hosted_by'] = 'Byro africa'
-            serializer.validated_data['is_transferable'] = True
-            serializer.validated_data['registration_required'] = True
+            
+            # serializer.validated_data['hosted_by'] = 'Byro africa'
+            serializer.validated_data['transferable'] = True
+            # serializer.validated_data['registration_required'] = True
             
             self.perform_create(serializer)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=True, methods=['POST'], permission_classes=[AllowAny])
+    def register(self, request, pk=None):
+        """
+        Register a user for this event
+        """
+        event = self.get_object()
+        
+        if event.capacity and event.tickets.count() >= event.capacity:
+            return Response(
+                {"error": "This event is at capacity"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        serializer = TicketSerializer(data={
+            'event': event.id,
+            'original_owner_name': request.data.get('name'),
+            'original_owner_email': request.data.get('email'),
+            'current_owner_name': request.data.get('name'),
+            'current_owner_email': request.data.get('email'),
+        }, context={'request': request})
+        
+        if serializer.is_valid():
+            ticket = serializer.save()
+            ticket_url = request.build_absolute_uri(
+            reverse('ticket-detail', args=[str(ticket.ticket_id)])
+        )
+        
+            return Response({
+                **serializer.data,
+                'ticket_url': ticket_url  # Add URL to response
+            }, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
 
 
+
+class TicketViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for Ticket operations (User facing)
+    retrieve: Get ticket details
+    transfer: Initiate ticket transfer
+    """
+    queryset = Ticket.objects.all()
+    serializer_class = TicketSerializer
+    lookup_field = 'ticket_id'
+    lookup_url_kwarg = 'ticket_id'
+    lookup_value_regex = '[0-9a-f-]{36}'
+    
+    def get_object(self):
+        """
+        Explicit override for debugging
+        """
+        ticket_id = self.kwargs['ticket_id']
+        print(f"Attempting to find ticket: {ticket_id}")
+        try:
+            return Ticket.objects.get(ticket_id=ticket_id)
+        except Ticket.DoesNotExist:
+            print(f"Current tickets in DB: {list(Ticket.objects.values_list('ticket_id', flat=True))}")
+            raise
+    
+    @action(detail=True, methods=['post'])
+    def transfer(self, request, pk=None,  *args, **kwargs):  # pk will be the ticket_id
+        ticket = self.get_object()
+        
+        # Validate transfer request
+        if not ticket.event.transferable:
+            return Response(
+                {"error": "This ticket is not transferable"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        serializer = TicketTransferSerializer(
+            data=request.data,
+            context={
+                'request': request,
+                'ticket': ticket
+            }
+        )
+        
+        if serializer.is_valid():
+            # Create transfer record
+            transfer = serializer.save(
+                ticket=ticket,
+                from_user_name=ticket.current_owner_name,
+                from_user_email=ticket.current_owner_email
+            )
+            
+            # Generate transfer URL (for direct access)
+            transfer_url = request.build_absolute_uri(
+                reverse('accept-transfer', args=[str(transfer.transfer_key)])
+            )
+            
+            return Response({
+                "transfer_id": transfer.id,
+                "transfer_url": transfer_url,
+                "message": "Transfer initiated. Share this URL with the recipient"
+            }, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class TicketTransferViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for Ticket Transfer operations
+    retrieve: Get transfer details
+    accept: Accept a transfer
+    """
+    queryset = TicketTransfer.objects.all()
+    serializer_class = TicketTransferSerializer
+    lookup_field = 'transfer_key'
+    lookup_value_regex = '[0-9a-f-]{36}'
+    
+    @action(detail=True, methods=['post'], permission_classes=[AllowAny])
+    def accept(self, request, transfer_key=None):
+        transfer = self.get_object()
+        
+        if transfer.is_accepted:
+            return Response(
+                {"error": "Transfer already completed"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Update ticket ownership
+        ticket = transfer.ticket
+        ticket.current_owner_name = transfer.to_user_name
+        ticket.current_owner_email = transfer.to_user_email
+        ticket.is_transferred = True
+        ticket.save()
+        
+        # Mark transfer as complete
+        transfer.is_accepted = True
+        transfer.save()
+        
+        # Return new ticket URL
+        ticket_url = request.build_absolute_uri(
+            reverse('ticket-detail', args=[str(ticket.ticket_id)])
+        )
+        
+        return Response({
+            "ticket_url": ticket_url,
+            "message": "Transfer completed successfully"
+        }, status=status.HTTP_200_OK)

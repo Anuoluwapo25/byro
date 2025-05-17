@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+import uuid
 
 class PaymentSettings(models.Model):    
     """Singleton model to store payment link settings"""
@@ -76,40 +77,29 @@ class Event(models.Model):
 
 
 
-class EventTicket(models.Model):
-    """
-    Represents a ticket for a specific event with Privy-specific transfer
-    """
-    TICKET_STATUS_CHOICES = [
-        ('active', 'Active'),
-        ('transferred', 'Transferred'),
-        ('used', 'Used'),
-        ('cancelled', 'Cancelled')
-    ]
-    
-    event = models.ForeignKey('Event', on_delete=models.CASCADE, related_name='tickets')
-    original_owner = models.ForeignKey(
-        PrivyUser, 
-        on_delete=models.CASCADE, 
-        related_name='original_tickets'
-    )
-    current_owner = models.ForeignKey(
-        PrivyUser, 
-        on_delete=models.CASCADE, 
-        related_name='current_tickets'
-    )
-    
-    ticket_code = models.CharField(max_length=50, unique=True)
-    
-    status = models.CharField(
-        max_length=20, 
-        choices=TICKET_STATUS_CHOICES, 
-        default='active'
-    )
-    
+class Ticket(models.Model):
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='tickets')
+    ticket_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    original_owner_name = models.CharField(max_length=255)
+    original_owner_email = models.EmailField()
+    current_owner_name = models.CharField(max_length=255)
+    current_owner_email = models.EmailField()
+    is_transferred = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-    last_transferred_at = models.DateTimeField(null=True, blank=True)
+    transferred_at = models.DateTimeField(null=True, blank=True)
     
-    def __str__(self):
-        return f"Ticket for {self.event.name} - {self.ticket_code}"
+    class Meta:
+        ordering = ['-created_at']
 
+class TicketTransfer(models.Model):
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='transfers')
+    from_user_name = models.CharField(null=True, blank=True)
+    from_user_email = models.EmailField(null=True, blank=True)
+    to_user_name = models.CharField(max_length=255)
+    to_user_email = models.EmailField()
+    transferred_at = models.DateTimeField(auto_now_add=True)
+    transfer_key = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    is_accepted = models.BooleanField(default=False)
+    
+    class Meta:
+        ordering = ['-transferred_at']
