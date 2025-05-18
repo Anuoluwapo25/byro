@@ -23,9 +23,9 @@ const nextConfig: NextConfig = {
   },
 
   // Enable experimental features if needed
-  experimental: {
-    serverComponentsExternalPackages: ['your-packages'],
-  }
+  // experimental: {
+  //   serverComponentsExternalPackages: ['your-packages'],
+  // }
 };
 
 export default nextConfig;

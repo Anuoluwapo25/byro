@@ -5,14 +5,14 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import API from "../../services/api";
-// import axiosInstance from "@/utils/axios";
 
 export default function EventCreationForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [eventName, setEventName] = useState("Event Name");
-  const [date, setDate] = useState("29-04-2025");
-  const [timeFrom, setTimeFrom] = useState("14:00");
-  const [timeTo, setTimeTo] = useState("16:00");
+  const [isImageLoading, setIsImageLoading] = useState(false);
+  const [eventName, setEventName] = useState("");
+  const [date, setDate] = useState("");
+  const [timeFrom, setTimeFrom] = useState("");
+  const [timeTo, setTimeTo] = useState("");
   const [physicalLocation, setPhysicalLocation] = useState("");
   const [virtualLink, setVirtualLink] = useState("");
   const [description, setDescription] = useState("");
@@ -21,9 +21,9 @@ export default function EventCreationForm() {
   const [capacity, setCapacity] = useState("Unlimited");
   const [eventImage, setEventImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
-  const [generatedLink, setGeneratedLink] = useState(null);
+  const [eventId, setEventId] = useState(null);
+  const [eventCreated, setEventCreated] = useState(false);
   const router = useRouter();
-
   const fileInputRef = useRef(null);
 
   const handleImageClick = () => {
@@ -31,10 +31,9 @@ export default function EventCreationForm() {
   };
 
   useEffect(() => {
-    if (timeFrom >= timeTo) {
-      // Add 1 hour to "Time From" as the default "Time To"
+    if (timeFrom && timeTo && timeFrom >= timeTo) {
       const [hours, minutes] = timeFrom.split(":");
-      const newHours = String(parseInt(hours, 10) + 1).padStart(2, "0");
+      const newHours = String((parseInt(hours, 10) + 1) % 24).padStart(2, "0");
       setTimeTo(`${newHours}:${minutes}`);
     }
   }, [timeFrom, timeTo]);
@@ -42,91 +41,176 @@ export default function EventCreationForm() {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      if (!file.type.startsWith("image/")) {
+        toast.error("Please upload an image file");
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Image size must be less than 5MB");
+        return;
+      }
+      setIsImageLoading(true);
       setEventImage(file);
-      // Create preview URL
+      console.log("Selected image:", file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result);
+        setIsImageLoading(false);
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const formatDateForServer = (dateStr) => {
+    if (!dateStr || dateStr.trim() === "") {
+      toast.error("Event date is required");
+      return null;
+    }
+    const datePattern = /^(\d{4})-(\d{2})-(\d{2})$/;
+    if (!datePattern.test(dateStr)) {
+      toast.error("Please enter a valid date");
+      return null;
+    }
+    return dateStr;
+  };
 
+  const validateForm = () => {
     if (!eventName.trim()) {
       toast.error("Event name is required");
+      return false;
+    }
+    if (!date.trim()) {
+      toast.error("Event date is required");
+      return false;
+    }
+    if (!timeFrom || !timeTo) {
+      toast.error("Event time is required");
+      return false;
+    }
+    if (!physicalLocation.trim() && !virtualLink.trim()) {
+      toast.error("Please provide either a physical location or virtual link");
+      return false;
+    }
+    if (virtualLink && !virtualLink.match(/^(https?:\/\/)?.+\..+/)) {
+      toast.error("Please enter a valid URL for the virtual link");
+      return false;
+    }
+    if (ticketPrice !== "Free" && (!ticketPrice || isNaN(ticketPrice) || parseFloat(ticketPrice) < 0)) {
+      toast.error("Please enter a valid ticket price");
+      return false;
+    }
+    if (capacity !== "Unlimited" && (!capacity || isNaN(capacity) || parseInt(capacity) <= 0)) {
+      toast.error("Please enter a valid capacity");
+      return false;
+    }
+    return true;
+  };
+
+  const convertTo24Hour = (time) => {
+    if (!time) return "00:00:00";
+    return `${time}:00`;
+  };
+
+  const resetForm = () => {
+    setEventName("");
+    setDate("");
+    setTimeFrom("");
+    setTimeTo("");
+    setPhysicalLocation("");
+    setVirtualLink("");
+    setDescription("");
+    setTicketsTransferable(false);
+    setTicketPrice("Free");
+    setCapacity("Unlimited");
+    setEventImage(null);
+    setImagePreview(null);
+    setEventId(null);
+    setEventCreated(false);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!validateForm()) {
       return;
     }
-
     try {
       setIsSubmitting(true);
-
       const formData = new FormData();
+      const formattedDate = formatDateForServer(date);
+      if (!formattedDate) return;
 
-      // Required fields
       formData.append("name", eventName);
-      formData.append("day", date.split("-").reverse().join("-")); // Convert DD-MM-YYYY to YYYY-MM-DD
-      formData.append("time_from", convertTo24Hour(timeFrom)); // Convert to 24-hour format
-      formData.append("time_to", convertTo24Hour(timeTo)); // Convert to 24-hour format
-
-      // Optional fields
+      formData.append("day", formattedDate);
+      formData.append("time_from", convertTo24Hour(timeFrom));
+      formData.append("time_to", convertTo24Hour(timeTo));
       if (physicalLocation) formData.append("location", physicalLocation);
       if (virtualLink) formData.append("virtual_link", virtualLink);
       if (description) formData.append("description", description);
-
-      // Boolean/Number fields
       formData.append("transferable", ticketsTransferable.toString());
       formData.append(
         "ticket_price",
         ticketPrice === "Free" ? "0.00" : ticketPrice
       );
-      formData.append("capacity", capacity === "Unlimited" ? "1000" : capacity);
+      if (capacity !== "Unlimited") {
+        formData.append("capacity", capacity);
+      }
       formData.append("visibility", "public");
-      formData.append("timezone", "GMT+01:00");
-
-      // Image
+      const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "GMT+01:00";
+      formData.append("timezone", userTimezone);
       if (eventImage) {
         formData.append("image", eventImage, eventImage.name);
+        console.log("Image appended to FormData:", eventImage);
+      }
+
+      for (let [key, value] of formData.entries()) {
+        console.log(`FormData: ${key} = ${value}`);
       }
 
       const response = await API.createEvent(formData);
-      const eventId = response.data.id;
+      console.log("Full API response:", response);
 
-      setGeneratedLink(`${window.location.origin}/viewevent/${eventId}`);
-
-      // Option 2: Redirect immediately
-      // router.push(`/viewevent/${eventId}`);
-
-      toast.success("Event created successfully!");
-
-      // Debug log
-      for (let [key, value] of formData.entries()) {
-        console.log(key, value);
+      const eventId = response.data?.id || response.id;
+      if (eventId) {
+        setEventId(eventId);
+        setEventCreated(true);
+        toast.success("Event created successfully!");
+      } else {
+        console.error("Invalid response format:", response);
+        toast.error("Event created, but couldn't retrieve event ID");
       }
     } catch (error) {
-      console.error("Full error:", error.response?.data || error.message);
+      console.error("Error:", error);
       toast.error(error.response?.data?.message || "Failed to create event");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Helper function to convert 12-hour time to 24-hour format
-  const convertTo24Hour = (time12h) => {
-    const [time, modifier] = time12h.split(" ");
-    let [hours, minutes] = time.split(":");
+  const getEventViewLink = () => {
+    if (!eventId) return "";
+    return `${typeof window !== "undefined" ? window.location.origin : ""}/events/${eventId}`;
+  };
 
-    if (hours === "12") {
-      hours = "00";
+  const getEventRegisterLink = () => {
+    if (!eventId) return "";
+    return `${typeof window !== "undefined" ? window.location.origin : ""}/events/${eventId}/register`;
+  };
+
+  const handleViewEvent = () => {
+    if (eventId) {
+      router.push(`/events/${eventId}`);
     }
+  };
 
-    if (modifier === "PM") {
-      hours = parseInt(hours, 10) + 12;
+  const handleRegisterEvent = () => {
+    if (eventId) {
+      router.push(`/events/${eventId}/register`);
     }
+  };
 
-    return `${hours}:${minutes}:00`;
+  const copyToClipboard = (link) => {
+    navigator.clipboard.writeText(link);
+    toast.success("Link copied to clipboard!");
   };
 
   return (
@@ -140,23 +224,22 @@ export default function EventCreationForm() {
             value={eventName}
             onChange={(e) => setEventName(e.target.value)}
             className="text-3xl font-medium text-blue-500 focus:outline-none"
+            aria-label="Event name"
           />
-
           <div className="flex gap-4">
-            {/* Public/Private Toggle */}
             <div className="flex items-center bg-blue-100 px-4 py-2 rounded-full">
               <div className="mr-2">
-                <Image src={publicSymbol} alt="globe-time" />
+                <Image src={publicSymbol} alt="Public symbol" />
               </div>
               <span className="text-sm text-[#007AFF]">Public</span>
             </div>
-
-            {/* Timezone */}
             <div className="flex items-center bg-blue-100 px-4 py-2 rounded-full">
               <div className="mr-2">
-                <Image src={globeTime} alt="globe-time" />
+                <Image src={globeTime} alt="Timezone" />
               </div>
-              <span className="text-sm text-[#007AFF]">GMT+01:00 Lagos</span>
+              <span className="text-sm text-[#007AFF]">
+                {Intl.DateTimeFormat().resolvedOptions().timeZone || "GMT+01:00"}
+              </span>
             </div>
           </div>
         </div>
@@ -167,12 +250,11 @@ export default function EventCreationForm() {
             <label className="font-medium mb-2 block text-black">Day</label>
             <div className="relative">
               <input
-                type="text"
-                placeholder="DD-MM-YYYY"
+                type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                min={new Date().toISOString().split("T")[0]}
                 className="w-full p-3 border border-gray-200 rounded-lg pl-10 focus:text-black text-black"
+                aria-label="Event date"
               />
               <div className="absolute left-3 top-3.5 text-gray-400">
                 <svg
@@ -208,68 +290,29 @@ export default function EventCreationForm() {
               </div>
             </div>
           </div>
-
           <div>
-            <label className="font-medium mb-2 block text-black">
-              Time - From
-            </label>
+            <label className="font-medium mb-2 block text-black">Time - From</label>
             <div className="relative">
               <input
                 type="time"
                 value={timeFrom}
                 onChange={(e) => setTimeFrom(e.target.value)}
                 className="w-full p-3 border border-gray-200 rounded-lg"
+                aria-label="Event start time"
               />
-              {/* <div className="absolute right-3 top-4 pointer-events-none">
-                <svg
-                  width="12"
-                  height="8"
-                  viewBox="0 0 12 8"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M1 1L6 6L11 1"
-                    stroke="#6B7280"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </div> */}
             </div>
           </div>
-
           <div>
-            <label className="font-medium mb-2 block text-black">
-              Time - To
-            </label>
+            <label className="font-medium mb-2 block text-black">Time - To</label>
             <div className="relative">
               <input
                 type="time"
                 value={timeTo}
                 onChange={(e) => setTimeTo(e.target.value)}
-                min={timeFrom} // Ensures "To" time cannot be earlier than "From" time
+                min={timeFrom}
                 className="w-full p-3 border border-gray-200 rounded-lg"
+                aria-label="Event end time"
               />
-
-              {/* <div className="absolute right-3 top-4 pointer-events-none">
-                <svg
-                  width="12"
-                  height="8"
-                  viewBox="0 0 12 8"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M1 1L6 6L11 1"
-                    stroke="#6B7280"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </div> */}
             </div>
           </div>
         </div>
@@ -285,6 +328,7 @@ export default function EventCreationForm() {
                 value={physicalLocation}
                 onChange={(e) => setPhysicalLocation(e.target.value)}
                 className="w-full p-3 border border-gray-200 rounded-lg pl-10 text-black"
+                aria-label="Physical location"
               />
               <div className="absolute left-3 top-3.5 text-gray-400">
                 <svg
@@ -311,7 +355,6 @@ export default function EventCreationForm() {
                 </svg>
               </div>
             </div>
-
             <div className="relative">
               <input
                 type="text"
@@ -319,6 +362,7 @@ export default function EventCreationForm() {
                 value={virtualLink}
                 onChange={(e) => setVirtualLink(e.target.value)}
                 className="w-full p-3 border border-gray-200 rounded-lg pl-10 text-black"
+                aria-label="Virtual link"
               />
               <div className="absolute left-3 top-3.5 text-gray-400">
                 <svg
@@ -351,15 +395,14 @@ export default function EventCreationForm() {
         {/* Description and Image */}
         <div className="flex gap-6 mb-8">
           <div className="flex-1">
-            <label className="font-medium mb-2 block text-black">
-              Description
-            </label>
+            <label className="font-medium mb-2 block text-black">Description</label>
             <div className="relative">
               <textarea
                 placeholder="Tell us about the event"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 className="w-full p-3 border border-gray-200 rounded-lg pl-10 h-16 text-black"
+                aria-label="Event description"
               />
               <div className="absolute left-3 top-3.5 text-gray-400">
                 <svg
@@ -380,7 +423,6 @@ export default function EventCreationForm() {
               </div>
             </div>
           </div>
-
           <div className="w-40">
             <input
               type="file"
@@ -388,20 +430,26 @@ export default function EventCreationForm() {
               onChange={handleImageChange}
               className="hidden"
               accept="image/*"
+              aria-label="Upload event image"
             />
             <div
               onClick={handleImageClick}
-              className="h-40 rounded-lg flex flex-col items-center justify-center text-white cursor-pointer overflow-hidden"
+              className="h-40 rounded-lg flex flex-col items-center justify-center text-white cursor-pointer overflow-hidden relative"
               style={{
                 background: imagePreview
                   ? `url(${imagePreview}) center/cover no-repeat`
                   : "linear-gradient(to bottom, #DBEAFE, #3B82F6)",
               }}
             >
-              {!imagePreview && (
+              {isImageLoading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                  <span className="text-white">Loading...</span>
+                </div>
+              )}
+              {!imagePreview && !isImageLoading && (
                 <>
                   <div className="mb-1">
-                    <Image src={eventFrame} alt="avatar" />
+                    <Image src={eventFrame} alt="Event frame" />
                   </div>
                 </>
               )}
@@ -411,15 +459,11 @@ export default function EventCreationForm() {
 
         {/* Event Options */}
         <div className="mb-8">
-          <label className="font-medium mb-2 block text-black">
-            Event Options
-          </label>
+          <label className="font-medium mb-2 block text-black">Event Options</label>
           <p className="text-xs text-gray-500 mb-4">
             *All transactions must be made using USDC on Base network*
           </p>
-
           <div className="space-y-4">
-            {/* Ticket Price */}
             <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
               <div className="flex items-center">
                 <div className="text-gray-400 mr-3">
@@ -459,6 +503,7 @@ export default function EventCreationForm() {
                       setTicketPrice("0.00");
                     }
                   }}
+                  aria-label="Ticket price type"
                 >
                   <option className="text-black" value="Free">
                     Free
@@ -476,16 +521,13 @@ export default function EventCreationForm() {
                       value={ticketPrice}
                       onChange={(e) => setTicketPrice(e.target.value)}
                       className="p-2 border border-gray-200 rounded w-24 pl-6 text-black"
+                      aria-label="Ticket price amount"
                     />
-                    <span className="absolute left-2 top-2 text-gray-500">
-                      $
-                    </span>
+                    <span className="absolute left-2 top-2 text-gray-500">$</span>
                   </div>
                 )}
               </div>
             </div>
-
-            {/* Transferable Tickets */}
             <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
               <div className="flex items-center">
                 <div className="mr-3 text-gray-400">
@@ -514,9 +556,7 @@ export default function EventCreationForm() {
                     />
                   </svg>
                 </div>
-                <span className="text-gray-600">
-                  Should Tickets be transferable?
-                </span>
+                <span className="text-gray-600">Should Tickets be transferable?</span>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
@@ -524,12 +564,11 @@ export default function EventCreationForm() {
                   className="sr-only peer"
                   checked={ticketsTransferable}
                   onChange={() => setTicketsTransferable(!ticketsTransferable)}
+                  aria-label="Toggle ticket transferability"
                 />
                 <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
               </label>
             </div>
-
-            {/* Capacity */}
             <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
               <div className="flex items-center">
                 <div className="text-gray-400 mr-3">
@@ -571,7 +610,7 @@ export default function EventCreationForm() {
               </div>
               <div className="flex items-center">
                 <select
-                  className="p-2  rounded mr-2"
+                  className="p-2 rounded mr-2"
                   value={capacity === "Unlimited" ? "Unlimited" : "Limited"}
                   onChange={(e) => {
                     if (e.target.value === "Unlimited") {
@@ -580,6 +619,7 @@ export default function EventCreationForm() {
                       setCapacity("100");
                     }
                   }}
+                  aria-label="Capacity type"
                 >
                   <option value="Unlimited">Unlimited</option>
                   <option value="Limited">Limited</option>
@@ -590,7 +630,8 @@ export default function EventCreationForm() {
                     min="1"
                     value={capacity}
                     onChange={(e) => setCapacity(e.target.value)}
-                    className="p-2 border border-gray-200 rounded w-24"
+                    className="p-2 border border-gray-200 rounded w-24 text-black"
+                    aria-label="Capacity limit"
                   />
                 )}
               </div>
@@ -598,52 +639,94 @@ export default function EventCreationForm() {
           </div>
         </div>
 
-        {/* Submit Button */}
-        <div>
+        {/* Submit and Reset Buttons */}
+        <div className="flex gap-4">
           <button
             type="button"
             onClick={handleSubmit}
             disabled={isSubmitting}
             className={`bg-gradient-to-r from-[#63D0A5] to-[#16B979] text-white font-medium py-3 px-8 rounded-full transition-colors ${
-              isSubmitting
-                ? "opacity-50 cursor-not-allowed"
-                : "hover:bg-green-500"
+              isSubmitting ? "opacity-50 cursor-not-allowed" : "hover:bg-green-500"
             }`}
+            aria-label={isSubmitting ? "Creating event" : "Create event"}
           >
             {isSubmitting ? "Creating..." : "Create Event"}
           </button>
+          {eventCreated && (
+            <button
+              type="button"
+              onClick={resetForm}
+              className="bg-gray-200 text-gray-700 font-medium py-3 px-8 rounded-full hover:bg-gray-300"
+              aria-label="Create another event"
+            >
+              Create Another Event
+            </button>
+          )}
         </div>
       </div>
 
-      {generatedLink && (
-        <div className="mt-8 p-4 bg-blue-50 rounded-lg">
-          <h3 className="font-medium text-blue-800 mb-2">Your Event Link:</h3>
-          <div className="flex flex-col space-y-4">
-            <div className="flex items-center">
-              <input
-                type="text"
-                value={generatedLink}
-                readOnly
-                className="flex-1 p-2 border border-blue-200 rounded-l-lg bg-white text-black"
-              />
+      {/* Event Links Section */}
+      {eventCreated && eventId && (
+        <div className="mt-8 p-6 bg-blue-50 rounded-lg">
+          <h3 className="font-medium text-lg text-blue-800 mb-4">Your Event is Ready!</h3>
+          <div className="space-y-6">
+            <div>
+              <h4 className="font-medium text-blue-700 mb-2">Event Preview Link:</h4>
+              <div className="flex items consultato -center">
+                <input
+                  type="text"
+                  value={getEventViewLink()}
+                  readOnly
+                  className="flex-1 p-2 border border-blue-200 rounded-l-lg bg-white text-black"
+                  aria-label="Event preview link"
+                />
+                <button
+                  onClick={() => copyToClipboard(getEventViewLink())}
+                  className="bg-blue-500 text-white px-4 py-2 rounded-r-lg hover:bg-blue-600"
+                  aria-label="Copy event preview link"
+                >
+                  Copy
+                </button>
+              </div>
               <button
-                onClick={() => {
-                  navigator.clipboard.writeText(generatedLink);
-                  toast.success("Link copied to clipboard!");
-                }}
-                className="bg-blue-500 text-white px-4 py-2 rounded-r-lg hover:bg-blue-600"
+                onClick={handleViewEvent}
+                className="mt-2 w-full bg-blue-600 text-white text-center py-2 px-4 rounded-lg hover:bg-blue-700"
+                aria-label="View event page"
               >
-                Copy
+                View Event Page
               </button>
             </div>
-            <a
-              href={generatedLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-green-500 text-white text-center py-2 px-4 rounded-lg hover:bg-green-600"
-            >
-              View Event Page
-            </a>
+            <div>
+              <h4 className="font-medium text-blue-700 mb-2">Registration Link:</h4>
+              <div className="flex items-center">
+                <input
+                  type="text"
+                  value={getEventRegisterLink()}
+                  readOnly
+                  className="flex-1 p-2 border border-blue-200 rounded-l-lg bg-white text-black"
+                  aria-label="Event registration link"
+                />
+                <button
+                  onClick={() => copyToClipboard(getEventRegisterLink())}
+                  className="bg-blue-500 text-white px-4 py-2 rounded-r-lg hover:bg-blue-600"
+                  aria-label="Copy registration link"
+                >
+                  Copy
+                </button>
+              </div>
+              <button
+                onClick={handleRegisterEvent}
+                className="mt-2 w-full bg-green-600 text-white text-center py-2 px-4 rounded-lg hover:bg-green-700"
+                aria-label="Register for event"
+              >
+                Register for Event
+              </button>
+            </div>
+            <div className="pt-4 border-t border-blue-200">
+              <p className="text-blue-700 text-sm">
+                Share these links with your attendees to let them view details and register for your event.
+              </p>
+            </div>
           </div>
         </div>
       )}
