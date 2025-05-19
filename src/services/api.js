@@ -108,22 +108,47 @@ const API = {
     }
   },
 
+
   // Privy
-  getPrivyToken: async (code) => {
+  getPrivyToken: async (accessToken) => {
     try {
-      const response = await axiosInstance.post("/privy/token/", { code });
+      const response = await axiosInstance.post("/privy/token/", { 
+        code: accessToken 
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        }
+      });
       return response.data;
     } catch (error) {
+      if (error.response?.status === 400) {
+        const errorMessage = error.response.data?.message || "Invalid access token";
+        throw new Error(errorMessage);
+      }
       throw handleApiError(error);
     }
   },
 
   // Waitlist
-  joinWaitlist: async (email) => {
+  joinWaitlist: async (data) => {
     try {
-      const response = await axiosInstance.post("/waitlist/", { email });
+      const response = await axiosInstance.post("/waitlist/", {
+        email: data.email,
+        source: "website"
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
       return response.data;
     } catch (error) {
+      if (error.response?.status === 400) {
+        const errorMessage = error.response.data?.message || "Invalid email format";
+        throw new Error(errorMessage);
+      }
       throw handleApiError(error);
     }
   },

@@ -1,7 +1,7 @@
 "use client";
 import { eventFrame, globeTime, publicSymbol } from "/src/app/assets";
 import Image from "next/image";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import API from "../../services/api";
@@ -26,9 +26,151 @@ export default function EventCreationForm() {
   const router = useRouter();
   const fileInputRef = useRef(null);
 
-  const handleImageClick = () => {
-    fileInputRef.current.click();
-  };
+  // Memoize handlers to prevent unnecessary re-renders
+  const handleImageClick = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleImageChange = useCallback((e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image size must be less than 5MB");
+      return;
+    }
+
+    setIsImageLoading(true);
+    setEventImage(file);
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result);
+      setIsImageLoading(false);
+    };
+    reader.readAsDataURL(file);
+  }, []);
+
+  // Memoize validation functions
+  const validateForm = useCallback(() => {
+    const validations = [
+      { condition: !eventName.trim(), message: "Event name is required" },
+      { condition: !date.trim(), message: "Event date is required" },
+      { condition: !timeFrom || !timeTo, message: "Event time is required" },
+      { 
+        condition: !physicalLocation.trim() && !virtualLink.trim(),
+        message: "Please provide either a physical location or virtual link"
+      },
+      {
+        condition: virtualLink && !virtualLink.match(/^(https?:\/\/)?.+\..+/),
+        message: "Please enter a valid URL for the virtual link"
+      },
+      {
+        condition: ticketPrice !== "Free" && (!ticketPrice || isNaN(ticketPrice) || parseFloat(ticketPrice) < 0),
+        message: "Please enter a valid ticket price"
+      },
+      {
+        condition: capacity !== "Unlimited" && (!capacity || isNaN(capacity) || parseInt(capacity) <= 0),
+        message: "Please enter a valid capacity"
+      }
+    ];
+
+    for (const { condition, message } of validations) {
+      if (condition) {
+        toast.error(message);
+        return false;
+      }
+    }
+    return true;
+  }, [eventName, date, timeFrom, timeTo, physicalLocation, virtualLink, ticketPrice, capacity]);
+
+  // Memoize form submission handler
+  const handleSubmit = useCallback(async (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
+    try {
+      setIsSubmitting(true);
+      const formData = new FormData();
+      const formattedDate = formatDateForServer(date);
+      if (!formattedDate) return;
+
+      // Add form fields
+      const formFields = {
+        name: eventName,
+        day: formattedDate,
+        time_from: convertTo24Hour(timeFrom),
+        time_to: convertTo24Hour(timeTo),
+        transferable: ticketsTransferable.toString(),
+        ticket_price: ticketPrice === "Free" ? "0.00" : ticketPrice,
+        visibility: "public",
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "GMT+01:00"
+      };
+
+      // Add optional fields
+      if (physicalLocation) formFields.location = physicalLocation;
+      if (virtualLink) formFields.virtual_link = virtualLink;
+      if (description) formFields.description = description;
+      if (capacity !== "Unlimited") formFields.capacity = capacity;
+      if (eventImage) formFields.image = eventImage;
+
+      // Append all fields to FormData
+      Object.entries(formFields).forEach(([key, value]) => {
+        formData.append(key, value);
+      });
+
+      const response = await API.createEvent(formData);
+      
+      if (response?.id) {
+        setEventId(response.id);
+        setEventCreated(true);
+        toast.success("Event created successfully!");
+        // Reset form after successful creation
+        resetForm();
+      } else {
+        throw new Error("Invalid response format from server");
+      }
+    } catch (error) {
+      console.error("Error creating event:", error);
+      toast.error(error.response?.data?.message || error.message || "Failed to create event");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [eventName, date, timeFrom, timeTo, physicalLocation, virtualLink, description, 
+      ticketsTransferable, ticketPrice, capacity, eventImage, validateForm]);
+
+  // Memoize link generation functions
+  const getEventViewLink = useMemo(() => {
+    if (!eventId) return "";
+    return `${typeof window !== "undefined" ? window.location.origin : ""}/events/${eventId}`;
+  }, [eventId]);
+
+  const getEventRegisterLink = useMemo(() => {
+    if (!eventId) return "";
+    return `${typeof window !== "undefined" ? window.location.origin : ""}/events/${eventId}/register`;
+  }, [eventId]);
+
+  // Memoize navigation handlers
+  const handleViewEvent = useCallback(() => {
+    if (eventId) {
+      router.push(`/events/viewevent/${eventId}?preview=true`);
+    }
+  }, [eventId, router]);
+
+  const handleRegisterEvent = useCallback(() => {
+    if (eventId) {
+      router.push(`/events/${eventId}/register`);
+    }
+  }, [eventId, router]);
+
+  const copyToClipboard = useCallback((link) => {
+    navigator.clipboard.writeText(link);
+    toast.success("Link copied to clipboard!");
+  }, []);
 
   useEffect(() => {
     if (timeFrom && timeTo && timeFrom >= timeTo) {
@@ -37,29 +179,6 @@ export default function EventCreationForm() {
       setTimeTo(`${newHours}:${minutes}`);
     }
   }, [timeFrom, timeTo]);
-
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (!file.type.startsWith("image/")) {
-        toast.error("Please upload an image file");
-        return;
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("Image size must be less than 5MB");
-        return;
-      }
-      setIsImageLoading(true);
-      setEventImage(file);
-      console.log("Selected image:", file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-        setIsImageLoading(false);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
 
   const formatDateForServer = (dateStr) => {
     if (!dateStr || dateStr.trim() === "") {
@@ -72,38 +191,6 @@ export default function EventCreationForm() {
       return null;
     }
     return dateStr;
-  };
-
-  const validateForm = () => {
-    if (!eventName.trim()) {
-      toast.error("Event name is required");
-      return false;
-    }
-    if (!date.trim()) {
-      toast.error("Event date is required");
-      return false;
-    }
-    if (!timeFrom || !timeTo) {
-      toast.error("Event time is required");
-      return false;
-    }
-    if (!physicalLocation.trim() && !virtualLink.trim()) {
-      toast.error("Please provide either a physical location or virtual link");
-      return false;
-    }
-    if (virtualLink && !virtualLink.match(/^(https?:\/\/)?.+\..+/)) {
-      toast.error("Please enter a valid URL for the virtual link");
-      return false;
-    }
-    if (ticketPrice !== "Free" && (!ticketPrice || isNaN(ticketPrice) || parseFloat(ticketPrice) < 0)) {
-      toast.error("Please enter a valid ticket price");
-      return false;
-    }
-    if (capacity !== "Unlimited" && (!capacity || isNaN(capacity) || parseInt(capacity) <= 0)) {
-      toast.error("Please enter a valid capacity");
-      return false;
-    }
-    return true;
   };
 
   const convertTo24Hour = (time) => {
@@ -126,91 +213,6 @@ export default function EventCreationForm() {
     setImagePreview(null);
     setEventId(null);
     setEventCreated(false);
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validateForm()) {
-      return;
-    }
-    try {
-      setIsSubmitting(true);
-      const formData = new FormData();
-      const formattedDate = formatDateForServer(date);
-      if (!formattedDate) return;
-
-      formData.append("name", eventName);
-      formData.append("day", formattedDate);
-      formData.append("time_from", convertTo24Hour(timeFrom));
-      formData.append("time_to", convertTo24Hour(timeTo));
-      if (physicalLocation) formData.append("location", physicalLocation);
-      if (virtualLink) formData.append("virtual_link", virtualLink);
-      if (description) formData.append("description", description);
-      formData.append("transferable", ticketsTransferable.toString());
-      formData.append(
-        "ticket_price",
-        ticketPrice === "Free" ? "0.00" : ticketPrice
-      );
-      if (capacity !== "Unlimited") {
-        formData.append("capacity", capacity);
-      }
-      formData.append("visibility", "public");
-      const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "GMT+01:00";
-      formData.append("timezone", userTimezone);
-      if (eventImage) {
-        formData.append("image", eventImage, eventImage.name);
-        console.log("Image appended to FormData:", eventImage);
-      }
-
-      for (let [key, value] of formData.entries()) {
-        console.log(`FormData: ${key} = ${value}`);
-      }
-
-      const response = await API.createEvent(formData);
-      console.log("Full API response:", response);
-
-      const eventId = response.data?.id || response.id;
-      if (eventId) {
-        setEventId(eventId);
-        setEventCreated(true);
-        toast.success("Event created successfully!");
-      } else {
-        console.error("Invalid response format:", response);
-        toast.error("Event created, but couldn't retrieve event ID");
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error(error.response?.data?.message || "Failed to create event");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const getEventViewLink = () => {
-    if (!eventId) return "";
-    return `${typeof window !== "undefined" ? window.location.origin : ""}/events/${eventId}`;
-  };
-
-  const getEventRegisterLink = () => {
-    if (!eventId) return "";
-    return `${typeof window !== "undefined" ? window.location.origin : ""}/events/${eventId}/register`;
-  };
-
-  const handleViewEvent = () => {
-    if (eventId) {
-      router.push(`/events/${eventId}`);
-    }
-  };
-
-  const handleRegisterEvent = () => {
-    if (eventId) {
-      router.push(`/events/${eventId}/register`);
-    }
-  };
-
-  const copyToClipboard = (link) => {
-    navigator.clipboard.writeText(link);
-    toast.success("Link copied to clipboard!");
   };
 
   return (
@@ -639,7 +641,7 @@ export default function EventCreationForm() {
           </div>
         </div>
 
-        {/* Submit and Reset Buttons */}
+     
         <div className="flex gap-4">
           <button
             type="button"
@@ -652,16 +654,6 @@ export default function EventCreationForm() {
           >
             {isSubmitting ? "Creating..." : "Create Event"}
           </button>
-          {eventCreated && (
-            <button
-              type="button"
-              onClick={resetForm}
-              className="bg-gray-200 text-gray-700 font-medium py-3 px-8 rounded-full hover:bg-gray-300"
-              aria-label="Create another event"
-            >
-              Create Another Event
-            </button>
-          )}
         </div>
       </div>
 

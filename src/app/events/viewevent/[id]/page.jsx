@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Transfer, Schedule, Location, nft } from "../../../assets/index";
 import Image from "next/image";
@@ -21,51 +21,18 @@ const ViewEvent = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (!id) {
-      setError("No event ID provided");
-      setLoading(false);
-      return;
-    }
-
-    // Open RegisterModal for /events/[id]/register
-    if (typeof window !== "undefined" && window.location.pathname.includes(`/events/${id}/register`)) {
-      setShowRegisterModal(true);
-    }
-
-    const fetchEvent = async () => {
-      try {
-        const eventData = await API.getEvent(id);
-        if (eventData && eventData.id) {
-          setEvent(eventData);
-        } else {
-          throw new Error("Invalid event data");
-        }
-      } catch (err) {
-        console.error("Error fetching event:", err);
-        setError(err.message || "Event not found");
-        if (err.message.includes("404")) {
-          setError("Event not found. It may not exist or you lack permission to view it.");
-        }
-        toast.error(err.message || "Failed to fetch event");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchEvent();
-  }, [id]);
-
-  const handleOpen = () => setShowRegisterModal(true);
-  const handleClose = () => {
+  // Memoize handlers
+  const handleOpen = useCallback(() => setShowRegisterModal(true), []);
+  
+  const handleClose = useCallback(() => {
     setShowRegisterModal(false);
     if (window.location.pathname.includes(`/events/${id}/register`)) {
       router.replace(`/events/${id}`);
     }
-  };
+  }, [id, router]);
 
-  const handleTransferClick = () => {
-    if (!event.transferable) {
+  const handleTransferClick = useCallback(() => {
+    if (!event?.transferable) {
       toast.error("Tickets for this event are not transferable");
       return;
     }
@@ -73,10 +40,10 @@ const ViewEvent = () => {
       toast.error("No ticket found for transfer");
       return;
     }
-    setShowTransferInput(!showTransferInput);
-  };
+    setShowTransferInput(prev => !prev);
+  }, [event?.transferable, ticketId]);
 
-  const handleTransferSubmit = async (e) => {
+  const handleTransferSubmit = useCallback(async (e) => {
     e.preventDefault();
     try {
       await API.transferTicket(ticketId, {
@@ -91,20 +58,20 @@ const ViewEvent = () => {
       console.error("Error transferring ticket:", err);
       toast.error(err.message || "Failed to transfer ticket");
     }
-  };
+  }, [ticketId, transferName, transferEmail]);
 
-  const handleRegister = () => {
+  const handleRegister = useCallback(() => {
     setShowRegisterModal(true);
-  };
+  }, []);
 
-  const handleRegistrationSuccess = (ticketId) => {
+  const handleRegistrationSuccess = useCallback((ticketId) => {
     setShowRegisterModal(false);
     setRegistered(true);
     setTicketId(ticketId);
     toast.success("Successfully registered for the event!");
-  };
+  }, []);
 
-  const handleCancelRegistration = async () => {
+  const handleCancelRegistration = useCallback(async () => {
     if (!ticketId) {
       toast.error("No ticket found for cancellation");
       return;
@@ -118,27 +85,75 @@ const ViewEvent = () => {
       console.error("Error canceling registration:", err);
       toast.error(err.message || "Failed to cancel registration");
     }
-  };
+  }, [ticketId]);
 
-  const formatDate = (dateString) => {
-    if (!dateString) return "";
+  // Memoize formatted date
+  const formattedDate = useMemo(() => {
+    if (!event?.day) return "";
     const options = {
       weekday: "long",
       year: "numeric",
       month: "long",
       day: "numeric",
     };
-    return new Date(dateString).toLocaleDateString("en-US", options);
-  };
+    return new Date(event.day).toLocaleDateString("en-US", options);
+  }, [event?.day]);
 
-  if (loading) return <p className="text-center text-gray-600">Loading event...</p>;
+  // Fetch event data
+  useEffect(() => {
+    if (!id) {
+      setError("No event ID provided");
+      setLoading(false);
+      return;
+    }
+
+    if (typeof window !== "undefined" && window.location.pathname.includes(`/events/${id}/register`)) {
+      setShowRegisterModal(true);
+    }
+
+    const fetchEvent = async () => {
+      try {
+        setLoading(true);
+        const eventData = await API.getEvent(id);
+        if (eventData?.id) {
+          setEvent(eventData);
+          if (window.location.search.includes('preview=true')) {
+            toast.success("Event created successfully! Here's your preview.");
+          }
+        } else {
+          throw new Error("Invalid event data received from server");
+        }
+      } catch (err) {
+        console.error("Error fetching event:", err);
+        setError(err.message || "Failed to fetch event");
+        if (err.message.includes("404")) {
+          setError("Event not found. It may not exist or you lack permission to view it.");
+        }
+        toast.error(err.message || "Failed to fetch event");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEvent();
+  }, [id]);
+
+  if (loading) return (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500" role="status">
+        <span className="sr-only">Loading...</span>
+      </div>
+    </div>
+  );
+
   if (error) return (
-    <div className="text-center text-red-600">
-      <h2>Event Not Found</h2>
-      <p>{error}</p>
+    <div className="text-center text-red-600 p-8">
+      <h2 className="text-2xl font-bold mb-4">Event Not Found</h2>
+      <p className="mb-4">{error}</p>
       <button
         onClick={() => router.push("/events")}
-        className="mt-4 bg-blue-500 text-white py-2 px-4 rounded"
+        className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-colors"
+        aria-label="Return to events list"
       >
         Back to Events
       </button>
@@ -297,7 +312,7 @@ const ViewEvent = () => {
                 </span>
                 <div className="ml-2">
                   <p className="text-lg font-semibold text-black">
-                    {formatDate(event.day)}
+                    {formattedDate}
                   </p>
                   <p className="text-black">
                     {event.time_from} to {event.time_to} ({event.timezone})
