@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-// import { Wallet } from '@coinbase/onchainkit/wallet';
 import AuthButton from "./auth/AuthButton";
 
 const Navbar = () => {
@@ -94,7 +93,7 @@ const Navbar = () => {
       >
         <div className="flex flex-col items-center justify-center h-full space-y-8">
           <button
-
+            title="hamburger"
             className="absolute top-4 right-4 text-[#5C6C7E]"
             onClick={toggleMenu}
           >
