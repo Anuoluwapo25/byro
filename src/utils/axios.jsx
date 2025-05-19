@@ -4,8 +4,9 @@ const axiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://byro.onrender.com/api',
   headers: {
     'Content-Type': 'application/json',
-    // Add other default headers if needed
-  }
+    'Accept': 'application/json',
+  },
+  withCredentials: true // Enable sending cookies if needed
 });
 
 // Custom method defined *outside* the config object
@@ -16,12 +17,16 @@ axiosInstance.createEvent = (eventData) =>
     },
   });
 
-// Request interceptor for auth token
+// Request interceptor for auth token and common headers
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("accessToken");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+    // Ensure Content-Type is set for all requests
+    if (!config.headers["Content-Type"]) {
+      config.headers["Content-Type"] = "application/json";
     }
     return config;
   },

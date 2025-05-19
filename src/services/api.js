@@ -1,7 +1,37 @@
-// src/services/api.js
 import axiosInstance from "../utils/axios";
 
+// Unified error handler
+const handleApiError = (error) => {
+  if (error.response) {
+    console.error("API Error Response:", {
+      status: error.response.status,
+      data: error.response.data,
+    });
+    throw new Error(
+      error.response.data?.message || "An unexpected error occurred"
+    );
+  } else if (error.request) {
+    console.error("API No Response:", error.request);
+    throw new Error("No response from server. Please check your connection.");
+  } else {
+    console.error("API Request Error:", error.message);
+    throw new Error("Error setting up request: " + error.message);
+  }
+};
+
+// Set auth token for authenticated requests
+const setAuthToken = (token) => {
+  if (token) {
+    axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+  } else {
+    delete axiosInstance.defaults.headers.common["Authorization"];
+  }
+};
+
 const API = {
+  // Set auth token
+  setAuthToken,
+
   // ===== EVENTS =====
   createEvent: async (formData) => {
     try {
@@ -18,7 +48,7 @@ const API = {
 
   getEvent: async (id) => {
     try {
-      const response = await axiosInstance.get(`/events/${id}`);
+      const response = await axiosInstance.get(`/events/${id}/`);
       return response.data;
     } catch (error) {
       throw handleApiError(error);
@@ -34,7 +64,8 @@ const API = {
     }
   },
 
-  registerForEvent: async (eventId, userData) => {
+  // Register for an event
+  registerEvent: async (eventId, userData) => {
     try {
       const response = await axiosInstance.post(
         `/events/${eventId}/register/`,
@@ -46,7 +77,7 @@ const API = {
     }
   },
 
-  // ===== TICKETS =====
+  // Tickets
   transferTicket: async (ticketId, transferData) => {
     try {
       const response = await axiosInstance.post(
@@ -59,85 +90,68 @@ const API = {
     }
   },
 
-  // ===== AUTH =====
-  getPrivyToken: async (code) => {
+  cancelRegistration: async (ticketId) => {
     try {
-      const response = await axiosInstance.post("/privy/token/", { code });
+      const response = await axiosInstance.delete(`/tickets/${ticketId}/`);
       return response.data;
     } catch (error) {
       throw handleApiError(error);
     }
   },
 
-  // ===== PAYMENT =====
-  createPaymentLink: async (data) => {
+  getTicket: async (ticketId) => {
     try {
-      const response = await axiosInstance.post("/payment-links/", data);
+      const response = await axiosInstance.get(`/tickets/${ticketId}/`);
       return response.data;
     } catch (error) {
       throw handleApiError(error);
     }
   },
 
-  // ===== PAYMENT SETTINGS =====
-  getPaymentSettings: async () => {
+
+  // Privy
+  getPrivyToken: async (accessToken) => {
     try {
-      const response = await axiosInstance.get("/payment-settings/");
+      const response = await axiosInstance.post("/privy/token/", { 
+        code: accessToken 
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        }
+      });
       return response.data;
     } catch (error) {
+      if (error.response?.status === 400) {
+        const errorMessage = error.response.data?.message || "Invalid access token";
+        throw new Error(errorMessage);
+      }
       throw handleApiError(error);
     }
   },
 
-  createPaymentSettings: async (data) => {
+  // Waitlist
+  joinWaitlist: async (data) => {
     try {
-      const response = await axiosInstance.post("/payment-settings/", data);
+      const response = await axiosInstance.post("/waitlist/", {
+        email: data.email,
+        source: "website"
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
       return response.data;
     } catch (error) {
+      if (error.response?.status === 400) {
+        const errorMessage = error.response.data?.message || "Invalid email format";
+        throw new Error(errorMessage);
+      }
       throw handleApiError(error);
     }
   },
-
-  updatePaymentSettings: async (id, data) => {
-    try {
-      const response = await axiosInstance.put(`/payment-settings/${id}/`, data);
-      return response.data;
-    } catch (error) {
-      throw handleApiError(error);
-    }
-  },
-
-  // ===== WAITLIST =====
-  joinWaitlist: async (email) => {
-    try {
-      const response = await axiosInstance.post("/waitlist/", { email });
-      return response.data;
-    } catch (error) {
-      throw handleApiError(error);
-    }
-  },
-};
-
-// Unified error handler
-const handleApiError = (error) => {
-  if (error.response) {
-    // Server responded with non-2xx status
-    console.error("API Error Response:", {
-      status: error.response.status,
-      data: error.response.data,
-    });
-    throw new Error(
-      error.response.data?.message || "An unexpected error occurred"
-    );
-  } else if (error.request) {
-    // No response received
-    console.error("API No Response:", error.request);
-    throw new Error("No response from server. Please check your connection.");
-  } else {
-    // Something wrong with request setup
-    console.error("API Request Error:", error.message);
-    throw new Error("Error setting up request: " + error.message);
-  }
 };
 
 export default API;

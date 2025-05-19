@@ -1,127 +1,215 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Transfer, Schedule, Location, nft } from "../assets/index";
+import { Transfer, Schedule, Location, nft } from "../../../assets/index";
 import Image from "next/image";
 import { Ticket } from "lucide-react";
-import RegisterModal from "../../components/auth/RegisterModal";
-import API from '../../services/api';
-// import ErrorBoundary from '../components/ErrorBoundary';
+import RegisterModal from "../../../../components/auth/RegisterModal";
+import API from "../../../../services/api";
+import { toast } from "react-toastify";
 
-const page = () => {
-  const [registered, setRegistered] = useState(true);
+const ViewEvent = () => {
+  const { id } = useParams();
+  const router = useRouter();
+  const [registered, setRegistered] = useState(false);
+  const [ticketId, setTicketId] = useState(null);
   const [showTransferInput, setShowTransferInput] = useState(false);
   const [transferEmail, setTransferEmail] = useState("");
   const [transferName, setTransferName] = useState("");
   const [showRegisterModal, setShowRegisterModal] = useState(false);
-  const { id } = useParams();
-  const [eventData, setEventData] = useState(null);
+  const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const [isOpen, setIsOpen] = useState(false); // modal open state
+  // Memoize handlers
+  const handleOpen = useCallback(() => setShowRegisterModal(true), []);
+  
+  const handleClose = useCallback(() => {
+    setShowRegisterModal(false);
+    if (window.location.pathname.includes(`/events/${id}/register`)) {
+      router.replace(`/events/${id}`);
+    }
+  }, [id, router]);
 
-  const handleOpen = () => setIsOpen(true);
-  const handleClose = () => setIsOpen(false);
+  const handleTransferClick = useCallback(() => {
+    if (!event?.transferable) {
+      toast.error("Tickets for this event are not transferable");
+      return;
+    }
+    if (!ticketId) {
+      toast.error("No ticket found for transfer");
+      return;
+    }
+    setShowTransferInput(prev => !prev);
+  }, [event?.transferable, ticketId]);
 
-  const router = useRouter();
+  const handleTransferSubmit = useCallback(async (e) => {
+    e.preventDefault();
+    try {
+      await API.transferTicket(ticketId, {
+        to_user_name: transferName,
+        to_user_email: transferEmail,
+      });
+      toast.success(`Ticket transfer request sent to ${transferName} (${transferEmail})`);
+      setShowTransferInput(false);
+      setTransferEmail("");
+      setTransferName("");
+    } catch (err) {
+      console.error("Error transferring ticket:", err);
+      toast.error(err.message || "Failed to transfer ticket");
+    }
+  }, [ticketId, transferName, transferEmail]);
 
+  const handleRegister = useCallback(() => {
+    setShowRegisterModal(true);
+  }, []);
+
+  const handleRegistrationSuccess = useCallback((ticketId) => {
+    setShowRegisterModal(false);
+    setRegistered(true);
+    setTicketId(ticketId);
+    toast.success("Successfully registered for the event!");
+  }, []);
+
+  const handleCancelRegistration = useCallback(async () => {
+    if (!ticketId) {
+      toast.error("No ticket found for cancellation");
+      return;
+    }
+    try {
+      await API.cancelRegistration(ticketId);
+      setRegistered(false);
+      setTicketId(null);
+      toast.success("Registration canceled successfully");
+    } catch (err) {
+      console.error("Error canceling registration:", err);
+      toast.error(err.message || "Failed to cancel registration");
+    }
+  }, [ticketId]);
+
+  // Memoize formatted date
+  const formattedDate = useMemo(() => {
+    if (!event?.day) return "";
+    const options = {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    };
+    return new Date(event.day).toLocaleDateString("en-US", options);
+  }, [event?.day]);
+
+  // Fetch event data
   useEffect(() => {
-    const fetchEventData = async () => {
+    if (!id) {
+      setError("No event ID provided");
+      setLoading(false);
+      return;
+    }
+
+    if (typeof window !== "undefined" && window.location.pathname.includes(`/events/${id}/register`)) {
+      setShowRegisterModal(true);
+    }
+
+    const fetchEvent = async () => {
       try {
         setLoading(true);
-        const response = await API.getEvent(id);
-        setEventData(response.data);
-      } catch (error) {
-        console.error("Failed to load event:", error);
-        // Add error state handling here
+        const eventData = await API.getEvent(id);
+        if (eventData?.id) {
+          setEvent(eventData);
+          if (window.location.search.includes('preview=true')) {
+            toast.success("Event created successfully! Here's your preview.");
+          }
+        } else {
+          throw new Error("Invalid event data received from server");
+        }
+      } catch (err) {
+        console.error("Error fetching event:", err);
+        setError(err.message || "Failed to fetch event");
+        if (err.message.includes("404")) {
+          setError("Event not found. It may not exist or you lack permission to view it.");
+        }
+        toast.error(err.message || "Failed to fetch event");
       } finally {
         setLoading(false);
       }
     };
 
-    if (id) {
-      fetchEventData();
-    }
+    fetchEvent();
   }, [id]);
 
-  if (loading) {
-    return <div className="text-center py-10">Loading event details...</div>;
-  }
+  if (loading) return (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500" role="status">
+        <span className="sr-only">Loading...</span>
+      </div>
+    </div>
+  );
 
-  if (!eventData) {
-    return <div className="text-center py-10">Event not found</div>;
-  }
-
-  const handleTransferClick = () => {
-    setShowTransferInput(!showTransferInput);
-  };
-
-  const handleTransferSubmit = (e) => {
-    e.preventDefault();
-    // Handle the transfer logic here
-    alert(`Ticket transfer request sent to ${transferName} (${transferEmail})`);
-    setShowTransferInput(false);
-    setTransferEmail("");
-    setTransferName("");
-  };
-
-  const handleRegister = () => {
-    setShowRegisterModal(true);
-  };
-
-  const handleRegistrationSuccess = () => {
-    setShowRegisterModal(false);
-    setRegistered(true);
-  };
-
-  const handleCancelRegistration = () => {
-    setRegistered(false);
-  };
+  if (error) return (
+    <div className="text-center text-red-600 p-8">
+      <h2 className="text-2xl font-bold mb-4">Event Not Found</h2>
+      <p className="mb-4">{error}</p>
+      <button
+        onClick={() => router.push("/events")}
+        className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-colors"
+        aria-label="Return to events list"
+      >
+        Back to Events
+      </button>
+    </div>
+  );
 
   return (
     <div>
       <div className="relative bg-main-section bg-fixed bg-cover bg-center bg-no-repeat h-screen">
-        {/* <Navbar /> */}
         <main className="mx-auto p-4 md:p-6 lg:p-10 w-full lg:w-[80%] xl:w-[70%] 2xl:w-[60%]">
           <div className="flex flex-col md:flex-row gap-6 md:gap-10 lg:gap-14 justify-center items-start">
             {/* Left column */}
             <div className="w-full md:w-auto">
               {/* Event image */}
-              <div className="w-full h-52 md:w-52 md:h-52 rounded-lg bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center mx-auto md:mx-0">
-                <svg
-                  className="h-12 w-12 text-white"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+              <div className="w-full h-52 md:w-52 md:h-52 rounded-lg overflow-hidden mx-auto md:mx-0">
+                {event.event_image ? (
+                  <img
+                    src={event.event_image}
+                    alt={event.name}
+                    className="w-full h-full object-cover"
                   />
-                </svg>
-
-                <div className="text-white text-xs text-center mt-1">
-                  <div>Event</div>
-                  <div>Image</div>
-                </div>
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-blue-400 to-blue-600 flex flex-col items-center justify-center">
+                    <svg
+                      className="h-12 w-12 text-white"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                    <div className="text-white text-xs text-center mt-1">
+                      <div>Event</div>
+                      <div>Image</div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Hosted by section */}
               <div className="mt-6 mb-6">
-                <div className="font-bold text-black text-xl mb-1">
-                  Hosted by
-                </div>
+                <div className="font-bold text-black text-xl mb-1">Hosted by</div>
                 <div className="font-medium text-black text-sm mb-1">
-                  {eventData.host || "Byro office"}
+                  Byro office (Host not specified)
                 </div>
                 {!registered && (
                   <div className="text-sm text-gray-600 mb-2">
-                    Is ticket transferable?
+                    Is ticket transferable? {event.transferable ? "Yes" : "No"}
                   </div>
                 )}
-                {registered && (
+                {registered && event.transferable && (
                   <div>
                     <button
                       onClick={handleTransferClick}
@@ -136,8 +224,6 @@ const page = () => {
                       />
                       Transfer Ticket
                     </button>
-
-                    {/* Email Input for Ticket Transfer */}
                     {showTransferInput && (
                       <form onSubmit={handleTransferSubmit} className="mt-2">
                         <div className="flex flex-col space-y-2">
@@ -198,7 +284,7 @@ const page = () => {
                 <Ticket className="bg-blue-500 mx-3 transform -rotate-12" />
                 <div className="py-2">
                   <div className="font-bold text-black text-xl">
-                    ${eventData.ticket_price || "100"}
+                    {parseFloat(event.ticket_price) === 0 ? "Free" : `$${event.ticket_price}`}
                   </div>
                   <div className="text-xs text-black">USDC ON BASE</div>
                 </div>
@@ -210,7 +296,7 @@ const page = () => {
               {/* Event name */}
               <div className="bg-gray-50 border-2 rounded-lg w-full">
                 <h1 className="text-xl font-semibold text-[#2653EB] p-5 text-center md:text-left">
-                  {eventData.name || "Event Name"}
+                  {event.name}
                 </h1>
               </div>
 
@@ -226,10 +312,10 @@ const page = () => {
                 </span>
                 <div className="ml-2">
                   <p className="text-lg font-semibold text-black">
-                    {formatDate(eventData.day) || "Tuesday, 28th April 2025"}
+                    {formattedDate}
                   </p>
                   <p className="text-black">
-                    {eventData.time_from} to {eventData.time_to}
+                    {event.time_from} to {event.time_to} ({event.timezone})
                   </p>
                 </div>
               </div>
@@ -246,10 +332,62 @@ const page = () => {
                 </span>
                 <div className="ml-2">
                   <p className="text-lg font-semibold text-black">
-                    {eventData.location || "Byro Headquarters"}
+                    {event.location || "Virtual Event"}
                   </p>
+                  {event.virtual_link && (
+                    <a
+                      href={event.virtual_link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500 hover:underline"
+                    >
+                      Join Virtual Event
+                    </a>
+                  )}
+                </div>
+              </div>
+
+              {/* Capacity */}
+              <div className="flex items-start">
+                <span className="mt-1">
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M17 8C17 10.2091 15.2091 12 13 12C10.7909 12 9 10.2091 9 8C9 5.79086 10.7909 4 13 4C15.2091 4 17 5.79086 17 8Z"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M1 20.5C1 17.6 3.4 14 9 14C14.6 14 17 17.6 17 20.5"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                    <path
+                      d="M19 8H25"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                    <path
+                      d="M22 5V11"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </span>
+                <div className="ml-2">
+                  <p className="text-lg font-semibold text-black">Capacity</p>
                   <p className="text-black">
-                    {eventData.city || "Lagos, Nigeria"}
+                    {event.capacity ? event.capacity : "Unlimited"}
                   </p>
                 </div>
               </div>
@@ -316,25 +454,19 @@ const page = () => {
               About Event
             </h3>
             <p className="text-base md:text-xl text-gray-600 leading-relaxed">
-              {eventData.description || "No description available."}
+              {event.description || "No description available."}
             </p>
           </section>
         </main>
-        {/* <Footer /> */}
       </div>
-      <RegisterModal isOpen={isOpen} onClose={handleClose} />
+      <RegisterModal
+        isOpen={showRegisterModal}
+        onClose={handleClose}
+        onSuccess={handleRegistrationSuccess}
+        eventId={id}
+      />
     </div>
   );
 };
 
-const formatDate = (dateString) => {
-  const options = {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  };
-  return new Date(dateString).toLocaleDateString("en-US", options);
-};
-
-export default page;
+export default ViewEvent;

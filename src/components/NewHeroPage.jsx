@@ -4,32 +4,40 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { ManSeating } from "../app/assets/index";
 import Stats from "./Stats";
-import axios from "../utils/axios";
+import API from "../services/api";
 import { toast } from "react-toastify";
 
 const NewHeroPage = () => {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const headerConfig = {
-    headers: {
-      "Content-Type": "application/json",
-    },
-  };
-
   const handleSubmit = async (e) => {
-    const data = {
-      email: `${email}`,
-    };
-
     e.preventDefault();
     
+    const trimmedEmail = email.trim();
+    
+    if (!trimmedEmail) {
+      toast.error("Please enter an email address");
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
     try {
       setLoading(true);
-      await axios.post("/waitlist/", data, headerConfig);
-      toast.success("Added to waitlist successfully");
+      const response = await API.joinWaitlist({ email: trimmedEmail });
+      if (response) {
+        toast.success("Added to waitlist successfully");
+        setEmail(""); // Clear the input after successful submission
+      }
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to join waitlist");
+      console.error("Error joining waitlist:", error);
+      toast.error(error.message || "Failed to join waitlist. Please try again.");
     } finally {
       setLoading(false);
     }
