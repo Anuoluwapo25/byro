@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from "react";
@@ -72,18 +73,7 @@ const Navbar = () => {
         >
           Events
         </Link>
-        <Link
-          href="/services"
-          className="text-[#5C6C7E] text-base hover:text-blue-600 transition-colors"
-        >
-          FAQs
-        </Link>
-        <Link
-          href="/services"
-          className="text-[#5C6C7E] text-base hover:text-blue-600 transition-colors"
-        >
-          Community
-        </Link>
+   
       </nav>
 
       {/* Mobile Navigation */}
@@ -152,3 +142,7 @@ const Navbar = () => {
 };
 
 export default Navbar;
+
+
+
+

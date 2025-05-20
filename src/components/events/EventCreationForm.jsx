@@ -667,13 +667,13 @@ export default function EventCreationForm() {
               <div className="flex items consultato -center">
                 <input
                   type="text"
-                  value={getEventViewLink()}
+                  value={getEventViewLink}
                   readOnly
                   className="flex-1 p-2 border border-blue-200 rounded-l-lg bg-white text-black"
                   aria-label="Event preview link"
                 />
                 <button
-                  onClick={() => copyToClipboard(getEventViewLink())}
+                  onClick={() => copyToClipboard(getEventViewLink)}
                   className="bg-blue-500 text-white px-4 py-2 rounded-r-lg hover:bg-blue-600"
                   aria-label="Copy event preview link"
                 >
@@ -693,13 +693,13 @@ export default function EventCreationForm() {
               <div className="flex items-center">
                 <input
                   type="text"
-                  value={getEventRegisterLink()}
+                  value={getEventRegisterLink}
                   readOnly
                   className="flex-1 p-2 border border-blue-200 rounded-l-lg bg-white text-black"
                   aria-label="Event registration link"
                 />
                 <button
-                  onClick={() => copyToClipboard(getEventRegisterLink())}
+                  onClick={() => copyToClipboard(getEventRegisterLink)}
                   className="bg-blue-500 text-white px-4 py-2 rounded-r-lg hover:bg-blue-600"
                   aria-label="Copy registration link"
                 >

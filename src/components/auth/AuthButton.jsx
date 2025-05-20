@@ -120,7 +120,7 @@ export default function AuthButton() {
         disabled={loading || !ready}
         className="w-full bg-[linear-gradient(126.34deg,_#0057FF_0%,_#4F8BFF_86.18%)] hover:bg-blue-00 text-white font-medium py-2 px-4 rounded disabled:opacity-50 cursor-pointer"
       >
-        {loading ? "Processing..." : "Sign Up"}
+        {loading ? "Processing..." : "Login/Signup"}
       </button>
     </>
   );

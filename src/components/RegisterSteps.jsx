@@ -1,8 +1,6 @@
-
 import React from "react";
 import {StepOneIcon, StepTwoIcon, StepThreeIcon, StepFourIcon, StepFiveIcon } from "../app/assets/index";
 import Image from "next/image";
-
 
 const steps = [
   {
@@ -39,9 +37,8 @@ const steps = [
 ];
 
 const RegisterSteps = () => {
- 
   return (
-    <div className=" bg-gradient-to-r from-indigo-100 to-pink-100">
+    <div className="bg-gradient-to-r from-indigo-100 to-pink-100">
       <div className="py-16 flex flex-col-reverse p-4 gap-4 md:flex-row justify-between items-center container mx-auto">
         <div className="space-y-4">
           {steps.map((step) => (
@@ -62,8 +59,8 @@ const RegisterSteps = () => {
           <h2 className="text-sm text-black font-bold">ORGANIZE AN EVENT IN JUST</h2>
           <h1 className="text-5xl font-bold text-blue-600">5 Steps</h1>
           <button 
-          
-          className="mt-4 px-8 py-3 bg-green-500 text-white font-semibold rounded-full shadow-md hover:bg-green-600">
+            className="mt-4 px-8 py-3 bg-green-500 text-white font-semibold rounded-full shadow-md hover:bg-green-600"
+          >
             Register
           </button>
         </div>

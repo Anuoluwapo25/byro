@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { ManSeating } from "../app/assets/index";
-import Stats from "./Stats";
+// import Stats from "./Stats";
 import API from "../services/api";
 import { toast } from "react-toastify";
 
@@ -103,7 +103,7 @@ const NewHeroPage = () => {
         </div>
       </div>
 
-      <Stats />
+      {/* <Stats /> */}
     </main>
   );
 };
