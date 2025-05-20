@@ -21,7 +21,7 @@ export default function EventCreationForm() {
   const [capacity, setCapacity] = useState("Unlimited");
   const [eventImage, setEventImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
-  const [eventId, setEventId] = useState(null);
+  const [eventId, setEventId] = useState();
   const [eventCreated, setEventCreated] = useState(false);
   const router = useRouter();
   const fileInputRef = useRef(null);
@@ -61,22 +61,26 @@ export default function EventCreationForm() {
       { condition: !eventName.trim(), message: "Event name is required" },
       { condition: !date.trim(), message: "Event date is required" },
       { condition: !timeFrom || !timeTo, message: "Event time is required" },
-      { 
+      {
         condition: !physicalLocation.trim() && !virtualLink.trim(),
-        message: "Please provide either a physical location or virtual link"
+        message: "Please provide either a physical location or virtual link",
       },
       {
         condition: virtualLink && !virtualLink.match(/^(https?:\/\/)?.+\..+/),
-        message: "Please enter a valid URL for the virtual link"
+        message: "Please enter a valid URL for the virtual link",
       },
       {
-        condition: ticketPrice !== "Free" && (!ticketPrice || isNaN(ticketPrice) || parseFloat(ticketPrice) < 0),
-        message: "Please enter a valid ticket price"
+        condition:
+          ticketPrice !== "Free" &&
+          (!ticketPrice || isNaN(ticketPrice) || parseFloat(ticketPrice) < 0),
+        message: "Please enter a valid ticket price",
       },
       {
-        condition: capacity !== "Unlimited" && (!capacity || isNaN(capacity) || parseInt(capacity) <= 0),
-        message: "Please enter a valid capacity"
-      }
+        condition:
+          capacity !== "Unlimited" &&
+          (!capacity || isNaN(capacity) || parseInt(capacity) <= 0),
+        message: "Please enter a valid capacity",
+      },
     ];
 
     for (const { condition, message } of validations) {
@@ -86,72 +90,108 @@ export default function EventCreationForm() {
       }
     }
     return true;
-  }, [eventName, date, timeFrom, timeTo, physicalLocation, virtualLink, ticketPrice, capacity]);
+  }, [
+    eventName,
+    date,
+    timeFrom,
+    timeTo,
+    physicalLocation,
+    virtualLink,
+    ticketPrice,
+    capacity,
+  ]);
 
   // Memoize form submission handler
-  const handleSubmit = useCallback(async (e) => {
-    e.preventDefault();
-    if (!validateForm()) return;
+  const handleSubmit = useCallback(
+    async (e) => {
+      e.preventDefault();
+      if (!validateForm()) return;
 
-    try {
-      setIsSubmitting(true);
-      const formData = new FormData();
-      const formattedDate = formatDateForServer(date);
-      if (!formattedDate) return;
+      try {
+        setIsSubmitting(true);
+        const formData = new FormData();
+        const formattedDate = formatDateForServer(date);
+        if (!formattedDate) return;
 
-      // Add form fields
-      const formFields = {
-        name: eventName,
-        day: formattedDate,
-        time_from: convertTo24Hour(timeFrom),
-        time_to: convertTo24Hour(timeTo),
-        transferable: ticketsTransferable.toString(),
-        ticket_price: ticketPrice === "Free" ? "0.00" : ticketPrice,
-        visibility: "public",
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "GMT+01:00"
-      };
+        // Add form fields
+        const formFields = {
+          name: eventName,
+          day: formattedDate,
+          time_from: convertTo24Hour(timeFrom),
+          time_to: convertTo24Hour(timeTo),
+          transferable: ticketsTransferable.toString(),
+          ticket_price: ticketPrice === "Free" ? "0.00" : ticketPrice,
+          visibility: "public",
+          timezone:
+            Intl.DateTimeFormat().resolvedOptions().timeZone || "GMT+01:00",
+        };
 
-      // Add optional fields
-      if (physicalLocation) formFields.location = physicalLocation;
-      if (virtualLink) formFields.virtual_link = virtualLink;
-      if (description) formFields.description = description;
-      if (capacity !== "Unlimited") formFields.capacity = capacity;
-      if (eventImage) formFields.image = eventImage;
+        // Add optional fields
+        if (physicalLocation) formFields.location = physicalLocation;
+        if (virtualLink) formFields.virtual_link = virtualLink;
+        if (description) formFields.description = description;
+        if (capacity !== "Unlimited") formFields.capacity = capacity;
+        if (eventImage) formFields.image = eventImage;
 
-      // Append all fields to FormData
-      Object.entries(formFields).forEach(([key, value]) => {
-        formData.append(key, value);
-      });
+        // Append all fields to FormData
+        Object.entries(formFields).forEach(([key, value]) => {
+          formData.append(key, value);
+        });
 
-      const response = await API.createEvent(formData);
-      
-      if (response?.id) {
-        setEventId(response.id);
-        setEventCreated(true);
-        toast.success("Event created successfully!");
-        // Reset form after successful creation
-        resetForm();
-      } else {
-        throw new Error("Invalid response format from server");
+        const response = await API.createEvent(formData);
+        console.log("Event created successfully:", response);
+
+        if (response) {
+          setEventId(response.id);
+          console.log("Event ID:", response.id);
+          console.log("Is set", eventId);
+          setEventCreated(true);
+          toast.success("Event created successfully!");
+          // Reset form after successful creation
+          resetForm();
+        } else {
+          throw new Error("Invalid response format from server");
+        }
+      } catch (error) {
+        console.error("Error creating event:", error);
+        toast.error(
+          error.response?.data?.message ||
+            error.message ||
+            "Failed to create event"
+        );
+      } finally {
+        setIsSubmitting(false);
       }
-    } catch (error) {
-      console.error("Error creating event:", error);
-      toast.error(error.response?.data?.message || error.message || "Failed to create event");
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [eventName, date, timeFrom, timeTo, physicalLocation, virtualLink, description, 
-      ticketsTransferable, ticketPrice, capacity, eventImage, validateForm]);
+    },
+    [
+      eventName,
+      date,
+      timeFrom,
+      timeTo,
+      physicalLocation,
+      virtualLink,
+      description,
+      ticketsTransferable,
+      ticketPrice,
+      capacity,
+      eventImage,
+      validateForm,
+    ]
+  );
 
   // Memoize link generation functions
   const getEventViewLink = useMemo(() => {
     if (!eventId) return "";
-    return `${typeof window !== "undefined" ? window.location.origin : ""}/events/${eventId}`;
+    return `${
+      typeof window !== "undefined" ? window.location.origin : ""
+    }/events/viewevent/${eventId}`;
   }, [eventId]);
 
   const getEventRegisterLink = useMemo(() => {
     if (!eventId) return "";
-    return `${typeof window !== "undefined" ? window.location.origin : ""}/events/${eventId}/register`;
+    return `${
+      typeof window !== "undefined" ? window.location.origin : ""
+    }/events/${eventId}/register`;
   }, [eventId]);
 
   // Memoize navigation handlers
@@ -211,8 +251,8 @@ export default function EventCreationForm() {
     setCapacity("Unlimited");
     setEventImage(null);
     setImagePreview(null);
-    setEventId(null);
-    setEventCreated(false);
+    // setEventId(null);
+    // setEventCreated(true);
   };
 
   return (
@@ -240,7 +280,8 @@ export default function EventCreationForm() {
                 <Image src={globeTime} alt="Timezone" />
               </div>
               <span className="text-sm text-[#007AFF]">
-                {Intl.DateTimeFormat().resolvedOptions().timeZone || "GMT+01:00"}
+                {Intl.DateTimeFormat().resolvedOptions().timeZone ||
+                  "GMT+01:00"}
               </span>
             </div>
           </div>
@@ -293,7 +334,9 @@ export default function EventCreationForm() {
             </div>
           </div>
           <div>
-            <label className="font-medium mb-2 block text-black">Time - From</label>
+            <label className="font-medium mb-2 block text-black">
+              Time - From
+            </label>
             <div className="relative">
               <input
                 type="time"
@@ -305,7 +348,9 @@ export default function EventCreationForm() {
             </div>
           </div>
           <div>
-            <label className="font-medium mb-2 block text-black">Time - To</label>
+            <label className="font-medium mb-2 block text-black">
+              Time - To
+            </label>
             <div className="relative">
               <input
                 type="time"
@@ -397,7 +442,9 @@ export default function EventCreationForm() {
         {/* Description and Image */}
         <div className="flex gap-6 mb-8">
           <div className="flex-1">
-            <label className="font-medium mb-2 block text-black">Description</label>
+            <label className="font-medium mb-2 block text-black">
+              Description
+            </label>
             <div className="relative">
               <textarea
                 placeholder="Tell us about the event"
@@ -461,7 +508,9 @@ export default function EventCreationForm() {
 
         {/* Event Options */}
         <div className="mb-8">
-          <label className="font-medium mb-2 block text-black">Event Options</label>
+          <label className="font-medium mb-2 block text-black">
+            Event Options
+          </label>
           <p className="text-xs text-gray-500 mb-4">
             *All transactions must be made using USDC on Base network*
           </p>
@@ -525,7 +574,9 @@ export default function EventCreationForm() {
                       className="p-2 border border-gray-200 rounded w-24 pl-6 text-black"
                       aria-label="Ticket price amount"
                     />
-                    <span className="absolute left-2 top-2 text-gray-500">$</span>
+                    <span className="absolute left-2 top-2 text-gray-500">
+                      $
+                    </span>
                   </div>
                 )}
               </div>
@@ -558,7 +609,9 @@ export default function EventCreationForm() {
                     />
                   </svg>
                 </div>
-                <span className="text-gray-600">Should Tickets be transferable?</span>
+                <span className="text-gray-600">
+                  Should Tickets be transferable?
+                </span>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
@@ -641,14 +694,15 @@ export default function EventCreationForm() {
           </div>
         </div>
 
-     
         <div className="flex gap-4">
           <button
             type="button"
             onClick={handleSubmit}
             disabled={isSubmitting}
             className={`bg-gradient-to-r from-[#63D0A5] to-[#16B979] text-white font-medium py-3 px-8 rounded-full transition-colors ${
-              isSubmitting ? "opacity-50 cursor-not-allowed" : "hover:bg-green-500"
+              isSubmitting
+                ? "opacity-50 cursor-not-allowed"
+                : "hover:bg-green-500"
             }`}
             aria-label={isSubmitting ? "Creating event" : "Create event"}
           >
@@ -658,12 +712,16 @@ export default function EventCreationForm() {
       </div>
 
       {/* Event Links Section */}
-      {eventCreated && eventId && (
+      {eventCreated && (
         <div className="mt-8 p-6 bg-blue-50 rounded-lg">
-          <h3 className="font-medium text-lg text-blue-800 mb-4">Your Event is Ready!</h3>
+          <h3 className="font-medium text-lg text-blue-800 mb-4">
+            Your Event is Ready!
+          </h3>
           <div className="space-y-6">
             <div>
-              <h4 className="font-medium text-blue-700 mb-2">Event Preview Link:</h4>
+              <h4 className="font-medium text-blue-700 mb-2">
+                Event Preview Link:
+              </h4>
               <div className="flex items consultato -center">
                 <input
                   type="text"
@@ -689,7 +747,9 @@ export default function EventCreationForm() {
               </button>
             </div>
             <div>
-              <h4 className="font-medium text-blue-700 mb-2">Registration Link:</h4>
+              <h4 className="font-medium text-blue-700 mb-2">
+                Registration Link:
+              </h4>
               <div className="flex items-center">
                 <input
                   type="text"
@@ -716,7 +776,8 @@ export default function EventCreationForm() {
             </div>
             <div className="pt-4 border-t border-blue-200">
               <p className="text-blue-700 text-sm">
-                Share these links with your attendees to let them view details and register for your event.
+                Share these links with your attendees to let them view details
+                and register for your event.
               </p>
             </div>
           </div>
