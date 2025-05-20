@@ -1,5 +1,5 @@
 "use client";
-import { eventFrame, globeTime, publicSymbol } from "/src/app/assets";
+import { eventFrame, globeTime, publicSymbol } from "../../app/assets";
 import Image from "next/image";
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";

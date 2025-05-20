@@ -7,7 +7,7 @@ const handleApiError = (error) => {
       status: error.response.status,
       data: error.response.data,
     });
-    throw new Error(
+    throw Error(
       error.response.data?.message || "An unexpected error occurred"
     );
   } else if (error.request) {
