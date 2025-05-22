@@ -1,6 +1,7 @@
 import { usePrivy } from "@privy-io/react-auth";
 import { useState, useEffect } from "react";
 import API from "../../services/api";
+import SignupButton from "../SignupButton";
 
 export default function AuthButton() {
   const { ready, authenticated, user, login, getAccessToken, logout } = usePrivy();
@@ -115,13 +116,15 @@ export default function AuthButton() {
 
   return (
     <>
-      <button
-        onClick={handleSignup}
-        disabled={loading || !ready}
-        className="w-full bg-[linear-gradient(126.34deg,_#0057FF_0%,_#4F8BFF_86.18%)] hover:bg-blue-00 text-white font-medium py-2 px-4 rounded disabled:opacity-50 cursor-pointer"
-      >
-        {loading ? "Processing..." : "Login/Signup"}
-      </button>
+    <SignupButton
+      onClick={handleSignup}
+      disabled={loading || !ready}
+      className="w-full bg-[linear-gradient(126.34deg,_#0057FF_0%,_#4F8BFF_86.18%)] hover:bg-blue-00 text-white font-medium py-2 px-4 rounded disabled:opacity-50 cursor-pointer"
+      aria-label='Log in'
+    >
+      {loading ? "Processing..." : "Login/Signup"}
+    </SignupButton>
+     
     </>
   );
 }

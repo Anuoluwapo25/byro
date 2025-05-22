@@ -1,148 +1,225 @@
-
 "use client";
-
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import { searchIcon } from "../app/assets/index"; 
 import Image from "next/image";
 import Link from "next/link";
-import AuthButton from "./auth/AuthButton";
+import PrivyButton from "./auth/PrivyButton"; 
 
 const Navbar = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false); 
+  const [isDesktopSearchOpen, setIsDesktopSearchOpen] = useState(false); 
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false); 
 
+  const desktopSearchInputRef = useRef<HTMLInputElement>(null);
+  const mobileSearchInputRef = useRef<HTMLInputElement>(null);
+
+
+  useEffect(() => {
+    if (isDesktopSearchOpen && desktopSearchInputRef.current) {
+      desktopSearchInputRef.current.focus();
+    }
+  }, [isDesktopSearchOpen]);
+
+  useEffect(() => {
+    if (isMobileSearchOpen && mobileSearchInputRef.current) {
+      mobileSearchInputRef.current.focus();
+    }
+  }, [isMobileSearchOpen]);
+
+  // Function to toggle the mobile menu
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
+  
+    if (isMenuOpen) {
+      setIsMobileSearchOpen(false);
+    }
+  };
+
+  // Function to handle desktop search click
+  const handleDesktopSearchClick = () => {
+    setIsDesktopSearchOpen(true);
+  };
+
+  // Function to handle mobile search click
+  const handleMobileSearchClick = () => {
+    setIsMobileSearchOpen(true);
+  };
+
+ 
+  const handleSearchBlur = (
+    setter: React.Dispatch<React.SetStateAction<boolean>>
+  ) => {
+   
+    setTimeout(() => {
+      setter(false);
+    }, 100);
   };
 
   return (
-    <header className="flex justify-between items-center bg-gradient-to-r from-indigo-100 to-pink-100 p-4 shadow-md">
-      <div className="flex items-center space-x-20">
-        <Link href="/">
-          <Image
-            src="/assets/images/logo.svg"
-            alt="byro logo"
-            width={100}
-            height={40}
-          />
-        </Link>
-        <div className="md:hidden">
-          <AuthButton />
+    <nav
+      className="bg-white text-white py-4 shadow-md
+                    fixed top-0 left-0 w-full z-50
+                    lg:static lg:shadow-none"
+    >
+      <div className="container mx-auto px-4 flex items-center justify-between">
+        {/* Logo */}
+        <div>
+          <Link href="/">
+            <Image
+              src="/assets/images/logo.svg"
+              alt="byro logo"
+              width={100}
+              height={40}
+            />
+          </Link>
         </div>
-      </div>
 
-      {/* Mobile menu button */}
-      <button
-        className="md:hidden text-[#5C6C7E]"
-        onClick={toggleMenu}
-        aria-label="Toggle menu"
-      >
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          {isMenuOpen ? (
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M6 18L18 6M6 6l12 12"
-            />
+        {/* Desktop Navigation */}
+        <div className="hidden lg:flex items-center space-x-8 flex-grow justify-center">
+          {/* Conditional rendering for desktop search */}
+          {!isDesktopSearchOpen ? (
+            <div
+              className="flex items-center space-x-2 cursor-pointer rounded-full py-2 px-4 hover:text-white transition-colors"
+              onClick={handleDesktopSearchClick}
+            >
+              <span className="text-gray-400">Explore Events</span>
+              {/* Search Icon */}
+              <Image src={searchIcon} alt="Search Icon" width={20} height={20} />
+            </div>
           ) : (
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 6h16M4 12h16M4 18h16"
-            />
+            <div className="relative">
+              <input
+                ref={desktopSearchInputRef}
+                type="text"
+                placeholder="Explore Events"
+                className="bg-transparent text-black placeholder-gray-400
+                           rounded-full py-2 px-4 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500
+                           w-64"
+                onBlur={() => handleSearchBlur(setIsDesktopSearchOpen)}
+              />
+              {/* Search Icon */}
+              <svg
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            </div>
           )}
-        </svg>
-      </button>
+        </div>
 
-      {/* Desktop Navigation */}
-      <nav className="hidden md:flex space-x-10">
-        <Link
-          href="/"
-          className="text-[#5C6C7E] text-base hover:text-blue-600 transition-colors"
-        >
-          Home
-        </Link>
-        <Link
-          href="/events"
-          className="text-[#5C6C7E] text-base hover:text-blue-600 transition-colors"
-        >
-          Events
-        </Link>
-   
-      </nav>
+  
+        <div className="hidden lg:block">
+          <PrivyButton />
+        </div>
 
-      {/* Mobile Navigation */}
-      <div
-        className={`md:hidden fixed inset-0 bg-white transform ${isMenuOpen ? "translate-x-0" : "translate-x-full"
-          } transition-transform duration-300 ease-in-out z-50`}
-      >
-        <div className="flex flex-col items-center justify-center h-full space-y-8">
-          <button
-            title="hamburger"
-            className="absolute top-4 right-4 text-[#5C6C7E]"
-            onClick={toggleMenu}
-          >
+        {/* Mobile Navigation (flex items for mobile) */}
+        <div className="flex items-center space-x-4 lg:hidden">
+          {/* Mobile Privy Button (always visible) */}
+          <PrivyButton />
+
+          {/* Mobile Menu Button (Hamburger Icon) */}
+          <button aria-label="hamburger-menu" onClick={toggleMenu} className="text-black focus:outline-none">
             <svg
-              className="w-6 h-6"
+              className="w-8 h-8"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
+              {isMenuOpen ? (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M6 18L18 6M6 6l12 12"
+                ></path>
+              ) : (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M4 6h16M4 12h16m-7 6h7"
+                ></path>
+              )}
             </svg>
           </button>
-          <Link
-            href="/"
-            className="text-[#5C6C7E] text-xl hover:text-blue-600 transition-colors"
-            onClick={toggleMenu}
-          >
-            Home
-          </Link>
-          <Link
-            href="/events"
-            className="text-[#5C6C7E] text-xl hover:text-blue-600 transition-colors"
-            onClick={toggleMenu}
-          >
-            Events
-          </Link>
-          <Link
-            href="/services"
-            className="text-[#5C6C7E] text-xl hover:text-blue-600 transition-colors"
-            onClick={toggleMenu}
-          >
-            FAQs
-          </Link>
-          <Link
-            href="/services"
-            className="text-[#5C6C7E] text-xl hover:text-blue-600 transition-colors"
-            onClick={toggleMenu}
-          >
-            Community
-          </Link>
         </div>
       </div>
 
-      {/* Desktop Wallet and Login */}
-      <div className="hidden md:flex items-center space-x-4">
-        {/* <Wallet /> */}
-        <AuthButton />
+      {/* Mobile Menu (Collapsible - contains only search for now) */}
+      <div
+        className={`lg:hidden overflow-hidden transition-all duration-300 ease-in-out ${
+          isMenuOpen ? "max-h-screen opacity-100 py-4" : "max-h-0 opacity-0"
+        }`}
+      >
+        <div className="flex flex-col items-center space-y-4 px-4">
+          {/* Conditional rendering for mobile search */}
+          {!isMobileSearchOpen ? (
+            <div
+              className="flex items-center space-x-2 cursor-pointer bg-gray-800 rounded-full py-2 px-4 w-full max-w-xs hover:bg-gray-700 transition-colors text-white" /* Added text-white */
+              onClick={handleMobileSearchClick}
+            >
+              <span className="text-gray-400">Explore Events</span>
+              {/* Search Icon */}
+              <svg
+                className="text-gray-400"
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            </div>
+          ) : (
+            <div className="relative w-full max-w-xs">
+              <input
+                ref={mobileSearchInputRef}
+                type="text"
+                placeholder="Explore Events"
+                className="bg-transparent text-black placeholder-gray-400
+                           rounded-full py-2 px-4 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500
+                           w-full"
+                onBlur={() => handleSearchBlur(setIsMobileSearchOpen)}
+              />
+              {/* Search Icon */}
+              <svg
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            </div>
+          )}
+        </div>
       </div>
-    </header>
+    </nav>
   );
 };
 
 export default Navbar;
-
-
-
-
