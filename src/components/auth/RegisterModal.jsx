@@ -26,7 +26,7 @@ const RegisterModal = ({ isOpen, onClose, eventId = "123", eventPrice = "Free" }
 
     try {
       setLoading(true);
-      const response = await API.registerForEvent(eventId, formData);
+      const response = await API.registerEvent(eventId, formData);
       
       if (eventPrice === "Free") {
         // For free events, show success message and close modal

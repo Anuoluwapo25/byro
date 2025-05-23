@@ -117,17 +117,20 @@ const Navbar = () => {
           )}
         </div>
 
-  
+
         <div className="hidden lg:block">
           <PrivyButton />
-        </div>
+        </div> 
 
         {/* Mobile Navigation (flex items for mobile) */}
-        <div className="flex items-center space-x-4 lg:hidden">
-          {/* Mobile Privy Button (always visible) */}
-          <PrivyButton />
+        <div className="flex items-center space-x-4 justify-between lg:hidden">
+      
+          <div className="block">
+            <PrivyButton />
+          </div>
+         
 
-          {/* Mobile Menu Button (Hamburger Icon) */}
+          {/* Mobile Menu Button*/}
           <button aria-label="hamburger-menu" onClick={toggleMenu} className="text-black focus:outline-none">
             <svg
               className="w-8 h-8"
@@ -156,7 +159,7 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile Menu (Collapsible - contains only search for now) */}
+{/* MObile Menu */}
       <div
         className={`lg:hidden overflow-hidden transition-all duration-300 ease-in-out ${
           isMenuOpen ? "max-h-screen opacity-100 py-4" : "max-h-0 opacity-0"
