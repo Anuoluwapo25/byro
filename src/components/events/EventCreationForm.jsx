@@ -342,7 +342,7 @@ export default function EventCreationForm() {
                 type="time"
                 value={timeFrom}
                 onChange={(e) => setTimeFrom(e.target.value)}
-                className="w-full p-3 border border-gray-200 rounded-lg"
+                className="w-full p-3 border border-gray-200 rounded-lg text-black"
                 aria-label="Event start time"
               />
             </div>
@@ -357,7 +357,7 @@ export default function EventCreationForm() {
                 value={timeTo}
                 onChange={(e) => setTimeTo(e.target.value)}
                 min={timeFrom}
-                className="w-full p-3 border border-gray-200 rounded-lg"
+                className="w-full p-3 border border-gray-200 rounded-lg text-black"
                 aria-label="Event end time"
               />
             </div>

@@ -7,7 +7,6 @@ export default function AuthButton() {
   const { ready, authenticated, user, login, getAccessToken, logout } = usePrivy();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(false);
 
   // Effect to handle token exchange after authentication
   useEffect(() => {
@@ -33,7 +32,6 @@ export default function AuthButton() {
           localStorage.setItem("accessToken", response.token);
           // Set auth token for future requests
           API.setAuthToken(response.token);
-          setSuccess(true);
         } else {
           throw new Error("Invalid token response from backend");
         }
@@ -79,7 +77,6 @@ export default function AuthButton() {
       API.setAuthToken(null);
       // Call Privy logout
       await logout();
-      setSuccess(false);
     } catch (err) {
       console.error("Logout error:", err);
       setError(err.message || "Logout failed");
@@ -93,38 +90,29 @@ export default function AuthButton() {
     const token = localStorage.getItem("accessToken");
     if (token) {
       API.setAuthToken(token);
-      setSuccess(true);
+      console.log("Token set");
     }
   }, []);
 
-  if (success) {
+  if (authenticated) {
     return (
-      <div className="flex flex-col gap-4">
-        <div className="p-4 bg-green-100 text-green-800 rounded">
-          Signup successful! Welcome aboard.
-        </div>
-        <button
-          onClick={handleLogout}
-          disabled={loading}
-          className="w-full bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded disabled:opacity-50 cursor-pointer"
-        >
-          {loading ? "Processing..." : "Logout"}
-        </button>
-      </div>
+      <SignupButton
+        onClick={handleLogout}
+        disabled={loading}
+        loading={loading}
+        text="Logout"
+        className="bg-red-500 hover:bg-red-600"
+      />
     );
   }
 
   return (
-    <>
     <SignupButton
       onClick={handleSignup}
       disabled={loading || !ready}
-      className="w-full bg-[linear-gradient(126.34deg,_#0057FF_0%,_#4F8BFF_86.18%)] hover:bg-blue-00 text-white font-medium py-2 px-4 rounded disabled:opacity-50 cursor-pointer"
-      aria-label='Log in'
-    >
-      {loading ? "Processing..." : "Login/Signup"}
-    </SignupButton>
-     
-    </>
+      loading={loading}
+      text="Sign In"
+      // className="bg-[linear-gradient(126.34deg,_#0057FF_0%,_#4F8BFF_86.18%)] hover:bg-blue-00"
+    />
   );
 }
