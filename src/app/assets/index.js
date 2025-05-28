@@ -19,3 +19,4 @@ export { default as globeTime } from "./images/globe-time.svg";
 export { default as publicSymbol } from "./images/public-symbol.png";
 export { default as eventFrame } from "./images/event-frame.png";
 export { default as searchIcon } from "./images/Vector.svg";
+export { default as eventIcon } from "./images/event-icon.svg";

@@ -1,11 +1,11 @@
 "use client";
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Transfer, Schedule, Location, nft } from "../../../assets/index";
+import { Transfer, Schedule, Location, nft } from "../assets/index";
 import Image from "next/image";
 import { Ticket } from "lucide-react";
-import RegisterModal from "../../../../components/auth/RegisterModal";
-import API from "../../../../services/api";
+import RegisterModal from "../../components/auth/RegisterModal";
+import API from "../../services/api";
 import { toast } from "react-toastify";
 
 const ViewEvent = () => {
@@ -28,8 +28,8 @@ const ViewEvent = () => {
 
   const handleClose = useCallback(() => {
     setShowRegisterModal(false);
-    if (window.location.pathname.includes(`/events/${id}/register`)) {
-      router.replace(`/events/${id}`);
+    if (window.location.pathname.includes(`/events/${slug}/register`)) {
+      router.replace(`/events/${slug}`);
     }
   }, [id, router]);
 

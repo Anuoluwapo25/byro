@@ -46,9 +46,9 @@ const API = {
     }
   },
 
-  getEvent: async (id) => {
+  getEvent: async (slug) => {
     try {
-      const response = await axiosInstance.get(`/events/${id}/`);
+      const response = await axiosInstance.get(`/events/${slug}/`);
       return response.data;
     } catch (error) {
       throw handleApiError(error);

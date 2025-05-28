@@ -21,7 +21,9 @@ export default function EventCreationForm() {
   const [capacity, setCapacity] = useState("Unlimited");
   const [eventImage, setEventImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+  // const [eventSlug, setEventSlug] = useState();
   const [eventId, setEventId] = useState();
+
   const [eventCreated, setEventCreated] = useState(false);
   const router = useRouter();
   const fileInputRef = useRef(null);
