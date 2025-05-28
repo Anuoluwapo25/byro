@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.utils.crypto import get_random_string  # Correct import
 import uuid
 
 class PaymentSettings(models.Model):    
@@ -49,6 +50,7 @@ class Event(models.Model):
     ]
 
     name = models.CharField()
+    slug = models.SlugField(max_length=10, unique=True, blank=True, null=True)
     day = models.DateField()
     time_from = models.TimeField()
     time_to = models.TimeField()
@@ -75,6 +77,14 @@ class Event(models.Model):
     hosted_by = models.CharField(max_length=200, default='Byro africa')
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def save(self, *args, **kwargs):
+        if not self.slug:  
+            self.slug = get_random_string(6)  
+            # Ensure uniqueness
+            while Event.objects.filter(slug=self.slug).exists():
+                self.slug = get_random_string(6)
+        super().save(*args, **kwargs)
+    
 
 
 class Ticket(models.Model):

@@ -20,10 +20,12 @@ const ViewEvent = () => {
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  console.log("Event ID:", id);
+  console.log("Event Data:", useParams());
 
   // Memoize handlers
   const handleOpen = useCallback(() => setShowRegisterModal(true), []);
-  
+
   const handleClose = useCallback(() => {
     setShowRegisterModal(false);
     if (window.location.pathname.includes(`/events/${id}/register`)) {
@@ -40,25 +42,30 @@ const ViewEvent = () => {
       toast.error("No ticket found for transfer");
       return;
     }
-    setShowTransferInput(prev => !prev);
+    setShowTransferInput((prev) => !prev);
   }, [event?.transferable, ticketId]);
 
-  const handleTransferSubmit = useCallback(async (e) => {
-    e.preventDefault();
-    try {
-      await API.transferTicket(ticketId, {
-        to_user_name: transferName,
-        to_user_email: transferEmail,
-      });
-      toast.success(`Ticket transfer request sent to ${transferName} (${transferEmail})`);
-      setShowTransferInput(false);
-      setTransferEmail("");
-      setTransferName("");
-    } catch (err) {
-      console.error("Error transferring ticket:", err);
-      toast.error(err.message || "Failed to transfer ticket");
-    }
-  }, [ticketId, transferName, transferEmail]);
+  const handleTransferSubmit = useCallback(
+    async (e) => {
+      e.preventDefault();
+      try {
+        await API.transferTicket(ticketId, {
+          to_user_name: transferName,
+          to_user_email: transferEmail,
+        });
+        toast.success(
+          `Ticket transfer request sent to ${transferName} (${transferEmail})`
+        );
+        setShowTransferInput(false);
+        setTransferEmail("");
+        setTransferName("");
+      } catch (err) {
+        console.error("Error transferring ticket:", err);
+        toast.error(err.message || "Failed to transfer ticket");
+      }
+    },
+    [ticketId, transferName, transferEmail]
+  );
 
   const handleRegister = useCallback(() => {
     setShowRegisterModal(true);
@@ -107,7 +114,10 @@ const ViewEvent = () => {
       return;
     }
 
-    if (typeof window !== "undefined" && window.location.pathname.includes(`/events/${id}/register`)) {
+    if (
+      typeof window !== "undefined" &&
+      window.location.pathname.includes(`/events/${id}/register`)
+    ) {
       setShowRegisterModal(true);
     }
 
@@ -117,7 +127,7 @@ const ViewEvent = () => {
         const eventData = await API.getEvent(id);
         if (eventData?.id) {
           setEvent(eventData);
-          if (window.location.search.includes('preview=true')) {
+          if (window.location.search.includes("preview=true")) {
             toast.success("Event created successfully! Here's your preview.");
           }
         } else {
@@ -127,7 +137,9 @@ const ViewEvent = () => {
         console.error("Error fetching event:", err);
         setError(err.message || "Failed to fetch event");
         if (err.message.includes("404")) {
-          setError("Event not found. It may not exist or you lack permission to view it.");
+          setError(
+            "Event not found. It may not exist or you lack permission to view it."
+          );
         }
         toast.error(err.message || "Failed to fetch event");
       } finally {
@@ -138,32 +150,39 @@ const ViewEvent = () => {
     fetchEvent();
   }, [id]);
 
-  if (loading) return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500" role="status">
-        <span className="sr-only">Loading...</span>
+  if (loading)
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div
+          className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"
+          role="status"
+        >
+          <span className="sr-only">Loading...</span>
+        </div>
       </div>
-    </div>
-  );
+    );
 
-  if (error) return (
-    <div className="text-center text-red-600 p-8">
-      <h2 className="text-2xl font-bold mb-4">Event Not Found</h2>
-      <p className="mb-4">{error}</p>
-      <button
-        onClick={() => router.push("/events")}
-        className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-colors"
-        aria-label="Return to events list"
-      >
-        Back to Events
-      </button>
-    </div>
-  );
+  if (error)
+    return (
+      <div className="text-center text-red-600 p-8">
+        <h2 className="text-2xl font-bold mb-4">Event Not Found</h2>
+        <p className="mb-4">{error}</p>
+        <button
+          onClick={() => router.push("/events")}
+          className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-colors"
+          aria-label="Return to events list"
+        >
+          Back to Events
+        </button>
+      </div>
+    );
 
   return (
-    <div>
-      <div className="relative bg-main-section bg-fixed bg-cover bg-center bg-no-repeat h-screen">
+    <div className="relative">
+      <div className=" inset-0 bg-main-section bg-fixed bg-cover bg-center bg-no-repeat min-h-screen z-0">
+        
         <main className="mx-auto p-4 md:p-6 lg:p-10 w-full lg:w-[80%] xl:w-[70%] 2xl:w-[60%]">
+          
           <div className="flex flex-col md:flex-row gap-6 md:gap-10 lg:gap-14 justify-center items-start">
             {/* Left column */}
             <div className="w-full md:w-auto">
@@ -200,7 +219,9 @@ const ViewEvent = () => {
 
               {/* Hosted by section */}
               <div className="mt-6 mb-6">
-                <div className="font-bold text-black text-xl mb-1">Hosted by</div>
+                <div className="font-bold text-black text-xl mb-1">
+                  Hosted by
+                </div>
                 <div className="font-medium text-black text-sm mb-1">
                   Byro office (Host not specified)
                 </div>
@@ -284,7 +305,9 @@ const ViewEvent = () => {
                 <Ticket className="bg-blue-500 mx-3 transform -rotate-12" />
                 <div className="py-2">
                   <div className="font-bold text-black text-xl">
-                    {parseFloat(event.ticket_price) === 0 ? "Free" : `$${event.ticket_price}`}
+                    {parseFloat(event.ticket_price) === 0
+                      ? "Free"
+                      : `$${event.ticket_price}`}
                   </div>
                   <div className="text-xs text-black">USDC ON BASE</div>
                 </div>

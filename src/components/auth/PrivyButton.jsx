@@ -1,12 +1,12 @@
 import { usePrivy } from "@privy-io/react-auth";
 import { useState, useEffect } from "react";
 import API from "../../services/api";
+import SignupButton from "../SignupButton";
 
 export default function AuthButton() {
   const { ready, authenticated, user, login, getAccessToken, logout } = usePrivy();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(false);
 
   // Effect to handle token exchange after authentication
   useEffect(() => {
@@ -23,7 +23,6 @@ export default function AuthButton() {
           throw new Error("Failed to get access token from Privy");
         }
 
-
         // Exchange Privy access token for our backend token
         const response = await API.getPrivyToken(accessToken);
         console.log("Backend token response:", response);
@@ -33,7 +32,6 @@ export default function AuthButton() {
           localStorage.setItem("accessToken", response.token);
           // Set auth token for future requests
           API.setAuthToken(response.token);
-          setSuccess(true);
         } else {
           throw new Error("Invalid token response from backend");
         }
@@ -70,44 +68,51 @@ export default function AuthButton() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      // Clear local storage and API token
+      localStorage.removeItem("accessToken");
+      API.setAuthToken(null);
+      // Call Privy logout
+      await logout();
+    } catch (err) {
+      console.error("Logout error:", err);
+      setError(err.message || "Logout failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Check if we already have a token
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
     if (token) {
       API.setAuthToken(token);
-      setSuccess(true);
+      console.log("Token set");
     }
   }, []);
 
-  if (success) {
+  if (authenticated) {
     return (
-      <div className="p-4 bg-green-100 text-green-800 rounded">
-        Signup successful! Welcome aboard.
-      </div>
+      <SignupButton
+        onClick={handleLogout}
+        disabled={loading}
+        loading={loading}
+        text="Logout"
+        className="bg-red-500 hover:bg-red-600"
+      />
     );
   }
 
   return (
-    <>
-      <button
-        onClick={handleSignup}
-        disabled={loading || !ready}
-        className="w-full bg-[linear-gradient(126.34deg,_#0057FF_0%,_#4F8BFF_86.18%)] hover:bg-blue-00 text-white font-medium py-2 px-4 rounded disabled:opacity-50 cursor-pointer"
-      >
-        {loading ? "Processing..." : "Sign Up"}
-      </button>
-{/* 
-      {error && (
-        <div className="mt-4 p-3 bg-red-100 text-red-800 rounded">
-          {error}
-        </div>
-      )} */}
-
-      {/* {authenticated && !success && !error && (
-        <div className="mt-4 p-3 bg-gray-100 rounded">
-          <p>Completing your signup...</p>
-        </div>
-      )} */}
-    </>
+    <SignupButton
+      onClick={handleSignup}
+      disabled={loading || !ready}
+      loading={loading}
+      text="Sign In"
+      // className="bg-[linear-gradient(126.34deg,_#0057FF_0%,_#4F8BFF_86.18%)] hover:bg-blue-00"
+    />
   );
 }

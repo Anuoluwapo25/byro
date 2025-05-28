@@ -139,6 +139,12 @@ def drf_protected_view(request):
 
 
 
+import requests
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+import os
+
 class PrivyTokenView(APIView):
     def post(self, request):
         auth_header = request.headers.get('Authorization', '')
@@ -152,28 +158,72 @@ class PrivyTokenView(APIView):
                 {"error": "No token provided"},
                 status=status.HTTP_400_BAD_REQUEST
             )
-
+        
         try:
+            # Get your Privy App ID and Secret from environment variables
+            app_id = os.getenv('PRIVY_APP_ID')
+            app_secret = os.getenv('PRIVY_APP_SECRET')
+            
+            if not app_id or not app_secret:
+                return Response(
+                    {"error": "Privy configuration missing"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+            
+            # Use the correct Privy API endpoint for token verification
             verify_response = requests.post(
-                "https://auth.privy.io/api/v1/verify",
+                f"https://auth.privy.io/api/v1/apps/{app_id}/tokens/verify",
                 json={"token": token},
-                timeout=5
+                headers={
+                    "privy-app-id": app_id,
+                    "privy-app-secret": app_secret,
+                    "Content-Type": "application/json"
+                },
+                timeout=10
             )
-            verify_response.raise_for_status()
+            
+            if verify_response.status_code != 200:
+                return Response(
+                    {"error": f"Token verification failed: {verify_response.status_code}"},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+            
             decoded = verify_response.json()
             
+            # Get user data using the correct endpoint
             user_response = requests.get(
-                "https://auth.privy.io/api/v1/userinfo",
-                headers={"Authorization": f"Bearer {token}"},
-                timeout=5
+                f"https://auth.privy.io/api/v1/apps/{app_id}/users/{decoded['userId']}",
+                headers={
+                    "privy-app-id": app_id,
+                    "privy-app-secret": app_secret,
+                },
+                timeout=10
             )
+            
+            if user_response.status_code != 200:
+                return Response(
+                    {"error": f"User data fetch failed: {user_response.status_code}"},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+            
             user_data = user_response.json()
-
+            
+            # Extract wallet address and email from the correct structure
+            wallet_address = ''
+            email = ''
+            
+            if 'linkedAccounts' in user_data:
+                for account in user_data['linkedAccounts']:
+                    if account['type'] == 'wallet':
+                        wallet_address = account['address']
+                    elif account['type'] == 'email':
+                        email = account['address']
+            
             user, created = PrivyUser.objects.get_or_create(
-                privy_id=decoded['sub'],
+                privy_id=user_data['id'],
                 defaults={
-                    'wallet_address': user_data.get('wallet', {}).get('address', ''),
-                    'email': user_data.get('email', {}).get('address', '')
+                    'wallet_address': wallet_address,
+                    'email': email
                 }
             )
             
@@ -181,6 +231,7 @@ class PrivyTokenView(APIView):
                 "status": "success",
                 "user_id": user.privy_id,
                 "wallet": user.wallet_address,
+                "email": user.email,
                 "is_new_user": created
             })
             
@@ -189,19 +240,23 @@ class PrivyTokenView(APIView):
                 {"error": f"Privy API error: {str(e)}"},
                 status=status.HTTP_503_SERVICE_UNAVAILABLE
             )
+        except KeyError as e:
+            return Response(
+                {"error": f"Unexpected response format: missing {str(e)}"},
+                status=status.HTTP_502_BAD_GATEWAY
+            )
         except Exception as e:
             return Response(
-                {"error": str(e)},
-                status=status.HTTP_401_UNAUTHORIZED
+                {"error": f"Internal error: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-
-
 
 class EventViewSet(viewsets.ModelViewSet):
     queryset = Event.objects.all()
     serializer_class = EventSerializer
     parser_classes = (JSONParser, MultiPartParser, FormParser)
     permission_classes = [AllowAny]
+    lookup_field = 'slug' 
     
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)

@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -22,9 +22,23 @@ export default function PaymentPage() {
     handleSubmit,
     formState: { errors },
     reset,
+    setValue,
   } = useForm({
     resolver: yupResolver(schema),
   });
+
+  // Load pre-filled data from localStorage
+  useEffect(() => {
+    const storedData = localStorage.getItem('paymentData');
+    if (storedData) {
+      const { amount, description, name } = JSON.parse(storedData);
+      setValue('amount', amount);
+      setValue('description', description);
+      setValue('name', name);
+      // Clear the stored data after using it
+      localStorage.removeItem('paymentData');
+    }
+  }, [setValue]);
 
   const onSubmit = async (data) => {
     const formattedData = {

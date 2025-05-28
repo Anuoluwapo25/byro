@@ -1,11 +1,12 @@
+// components/NewHeroPage.tsx
 "use client";
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { ManSeating } from "../app/assets/index";
-import Stats from "./Stats";
+import { ManSeating } from "../app/assets/index"; 
 import API from "../services/api";
 import { toast } from "react-toastify";
+import Link from "next/link"; 
 
 const NewHeroPage = () => {
   const [email, setEmail] = useState("");
@@ -13,15 +14,14 @@ const NewHeroPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     const trimmedEmail = email.trim();
-    
+
     if (!trimmedEmail) {
       toast.error("Please enter an email address");
       return;
     }
 
-    // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(trimmedEmail)) {
       toast.error("Please enter a valid email address");
@@ -33,40 +33,53 @@ const NewHeroPage = () => {
       const response = await API.joinWaitlist({ email: trimmedEmail });
       if (response) {
         toast.success("Added to waitlist successfully");
-        setEmail(""); // Clear the input after successful submission
+        setEmail("");
       }
     } catch (error) {
       console.error("Error joining waitlist:", error);
-      toast.error(error.message || "Failed to join waitlist. Please try again.");
+      toast.error(
+        error.message || "Failed to join waitlist. Please try again."
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <main className="">
-      <div className="relative bg-main-section bg-fixed bg-cover bg-center bg-no-repeat  flex items-center justify-center">
-        <div className="absolute inset-0 bg-gradient-to-r from-indigo-100/70 to-pink-100/70 z-0 overflow-hidden" />
+    
+    <main className="relative"> 
+  
+      <div className="absolute inset-0 bg-main-section bg-fixed bg-cover bg-center bg-no-repeat z-0" />
+      
+      <div className="absolute inset-0 bg-gray-50 z-0 opacity-70" /> 
+  
 
-        {/* Shared container with max width */}
-        <div className="relative z-10 max-w-6xl mx-auto w-full px-4">
-          {/* Hero Section */}
-          <section className="flex flex-col-reverse md:flex-row items-center justify-between gap-8 md:gap-12">
-            {/* Text Section */}
+
+      <div
+        className="relative z-10 flex items-center justify-center
+                      min-h-screen lg:min-h-[calc(100vh-64px)] 
+                      pt-16 lg:pt-0 pb-12 sm:pb-16 lg:pb-0"
+      >
+     
+        <div className="max-w-7xl mx-auto w-full px-6 md:px-8 lg:px-12 py-12 md:py-20 lg:py-24">
+
+          <section className="flex flex-col-reverse md:flex-row items-center justify-between gap-12 md:gap-16 lg:gap-20">
+           
             <div className="md:w-1/2 space-y-6 text-center md:text-left">
-              <h1 className="text-[2.5rem] sm:text-[3rem] md:text-[3.5rem] font-bold leading-tight">
+
+              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold leading-tight tracking-tight">
                 <span className="bg-gradient-to-r from-[#0057FF] to-[#4F8BFF] text-transparent bg-clip-text block">
-                  One Platform
+                  Create Experience,
                 </span>
-                <span className="text-[#0B243F] block">Endless Events</span>
+                <span className="text-[#0B243F] block">Enjoy Memories.</span>
               </h1>
 
-              <p className="text-lg sm:text-xl bg-gradient-to-r from-[#0057FF] to-[#4F8BFF] text-transparent bg-clip-text">
+              <p className="text-lg sm:text-xl md:text-2xl font-normal leading-relaxed mt-4 bg-gradient-to-r from-[#0057FF] to-[#4F8BFF] text-transparent bg-clip-text">
                 Create your event page, invite friends, and start selling
                 tickets. Host an unforgettable event today!
               </p>
 
-              {/* Form */}
+       
               <form
                 onSubmit={handleSubmit}
                 className="flex flex-col sm:flex-row sm:py-5 md:py-8 gap-3 items-center"
@@ -88,22 +101,20 @@ const NewHeroPage = () => {
               </form>
             </div>
 
-            {/* Image Section */}
-            <div className="hidden md:flex md:w-1/2 justify-center">
+            <div className="hidden md:flex md:w-1/2 justify-center items-center">
               <Image
                 src={ManSeating}
                 alt="Man Seating"
-                width={805}
-                height={705}
-                className="w-[805px] h-[705px]"
+                width={800}
+                height={700}
+                className="max-w-full h-auto object-contain drop-shadow-2xl"
                 priority
               />
             </div>
           </section>
         </div>
       </div>
-
-      <Stats />
+   
     </main>
   );
 };
