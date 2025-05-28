@@ -10,7 +10,7 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDesktopSearchOpen, setIsDesktopSearchOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const desktopSearchInputRef = useRef<HTMLInputElement>(null);
   const mobileSearchInputRef = useRef<HTMLInputElement>(null);
@@ -157,8 +157,8 @@ const Navbar = () => {
         {/* // )}; */}
         
           <PrivyButton 
-           onLogin={() => setIsAuthenticated(true)}
-           onLogout={() => setIsAuthenticated(false)}
+          //  onLogin={() => setIsAuthenticated(true)}
+          //  onLogout={() => setIsAuthenticated(false)}
           />
         </div>
 
