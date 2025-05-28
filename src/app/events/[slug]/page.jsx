@@ -1,15 +1,15 @@
 "use client";
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Transfer, Schedule, Location, nft } from "../assets/index";
+import { Transfer, Schedule, Location, nft } from "../../assets/index";
 import Image from "next/image";
 import { Ticket } from "lucide-react";
-import RegisterModal from "../../components/auth/RegisterModal";
-import API from "../../services/api";
+import RegisterModal from "../../../components/auth/RegisterModal";
+import API from "../../../services/api";
 import { toast } from "react-toastify";
 
 const ViewEvent = () => {
-  const { id } = useParams();
+  const { slug } = useParams();
   const router = useRouter();
   const [registered, setRegistered] = useState(false);
   const [ticketId, setTicketId] = useState(null);
@@ -20,7 +20,7 @@ const ViewEvent = () => {
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  console.log("Event ID:", id);
+ 
   console.log("Event Data:", useParams());
 
   // Memoize handlers
@@ -31,7 +31,7 @@ const ViewEvent = () => {
     if (window.location.pathname.includes(`/events/${slug}/register`)) {
       router.replace(`/events/${slug}`);
     }
-  }, [id, router]);
+  }, [slug, router]);
 
   const handleTransferClick = useCallback(() => {
     if (!event?.transferable) {
@@ -108,15 +108,15 @@ const ViewEvent = () => {
 
   // Fetch event data
   useEffect(() => {
-    if (!id) {
-      setError("No event ID provided");
+    if (!slug) {
+      setError("No event slug provided");
       setLoading(false);
       return;
     }
 
     if (
       typeof window !== "undefined" &&
-      window.location.pathname.includes(`/events/${id}/register`)
+      window.location.pathname.includes(`/events/${slug}/register`)
     ) {
       setShowRegisterModal(true);
     }
@@ -124,9 +124,12 @@ const ViewEvent = () => {
     const fetchEvent = async () => {
       try {
         setLoading(true);
-        const eventData = await API.getEvent(id);
-        if (eventData?.id) {
+        const eventData = await API.getEvent(slug);
+        if (eventData?.id || eventData?.slug) {
           setEvent(eventData);
+          if (eventData.slug && eventData.slug !== slug) {
+            router.replace(`/events/${eventData.slug}`);
+          }
           if (window.location.search.includes("preview=true")) {
             toast.success("Event created successfully! Here's your preview.");
           }
@@ -148,7 +151,7 @@ const ViewEvent = () => {
     };
 
     fetchEvent();
-  }, [id]);
+  }, [slug, router]);
 
   if (loading)
     return (
@@ -486,7 +489,7 @@ const ViewEvent = () => {
         isOpen={showRegisterModal}
         onClose={handleClose}
         onSuccess={handleRegistrationSuccess}
-        eventId={id}
+        eventId={slug}
       />
     </div>
   );

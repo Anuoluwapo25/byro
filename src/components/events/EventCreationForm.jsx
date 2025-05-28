@@ -21,8 +21,8 @@ export default function EventCreationForm() {
   const [capacity, setCapacity] = useState("Unlimited");
   const [eventImage, setEventImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
-  // const [eventSlug, setEventSlug] = useState();
-  const [eventId, setEventId] = useState();
+  const [eventSlug, setEventSlug] = useState();
+  // const [eventId, setEventId] = useState();
 
   const [eventCreated, setEventCreated] = useState(false);
   const router = useRouter();
@@ -144,9 +144,8 @@ export default function EventCreationForm() {
         console.log("Event created successfully:", response);
 
         if (response) {
-          setEventId(response.id);
-          console.log("Event ID:", response.id);
-          console.log("Is set", eventId);
+          setEventSlug(response.slug || response.id);
+
           setEventCreated(true);
           toast.success("Event created successfully!");
           // Reset form after successful creation
@@ -183,31 +182,31 @@ export default function EventCreationForm() {
 
   // Memoize link generation functions
   const getEventViewLink = useMemo(() => {
-    if (!eventId) return "";
+    if (!eventSlug) return "";
     return `${
       typeof window !== "undefined" ? window.location.origin : ""
-    }/events/viewevent/${eventId}`;
-  }, [eventId]);
+    }/events/${eventSlug}`;
+  }, [eventSlug]);
 
   const getEventRegisterLink = useMemo(() => {
-    if (!eventId) return "";
+    if (!eventSlug) return "";
     return `${
       typeof window !== "undefined" ? window.location.origin : ""
-    }/events/${eventId}/register`;
-  }, [eventId]);
+    }/events/${eventSlug}/register`;
+  }, [eventSlug]);
 
   // Memoize navigation handlers
   const handleViewEvent = useCallback(() => {
-    if (eventId) {
-      router.push(`/events/viewevent/${eventId}?preview=true`);
+    if (eventSlug) {
+      router.push(`/events/${eventSlug}?preview=true`);
     }
-  }, [eventId, router]);
+  }, [eventSlug, router]);
 
   const handleRegisterEvent = useCallback(() => {
-    if (eventId) {
-      router.push(`/events/${eventId}/register`);
+    if (eventSlug) {
+      router.push(`/events/${eventSlug}/register`);
     }
-  }, [eventId, router]);
+  }, [eventSlug, router]);
 
   const copyToClipboard = useCallback((link) => {
     navigator.clipboard.writeText(link);

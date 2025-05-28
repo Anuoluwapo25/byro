@@ -59,7 +59,7 @@ export default function AuthButton() {
     try {
       setLoading(true);
       setError(null);
-      await login();
+      // await login();
       // The useEffect will handle the token exchange after authentication
     } catch (err) {
       console.error("Login error:", err);

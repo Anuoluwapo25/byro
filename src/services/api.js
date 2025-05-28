@@ -65,10 +65,10 @@ const API = {
   },
 
   // Register for an event
-  registerEvent: async (eventId, userData) => {
+  registerEvent: async (eventSlug, userData) => {
     try {
       const response = await axiosInstance.post(
-        `/events/${eventId}/register/`,
+        `/events/${eventSlug}/register/`,
         userData
       );
       return response.data;
