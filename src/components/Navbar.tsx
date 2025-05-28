@@ -1,14 +1,15 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
-import { searchIcon } from "../app/assets/index"; 
+import { searchIcon } from "../app/assets/index";
 import Image from "next/image";
 import Link from "next/link";
-import PrivyButton from "./auth/PrivyButton"; 
+import PrivyButton from "./auth/PrivyButton";
 
 const Navbar = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false); 
-  const [isDesktopSearchOpen, setIsDesktopSearchOpen] = useState(false); 
-  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false); 
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isDesktopSearchOpen, setIsDesktopSearchOpen] = useState(false);
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+  // const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const desktopSearchInputRef = useRef<HTMLInputElement>(null);
   const mobileSearchInputRef = useRef<HTMLInputElement>(null);
@@ -29,7 +30,7 @@ const Navbar = () => {
   // Function to toggle the mobile menu
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
-  
+
     if (isMenuOpen) {
       setIsMobileSearchOpen(false);
     }
@@ -45,11 +46,11 @@ const Navbar = () => {
     setIsMobileSearchOpen(true);
   };
 
- 
+
   const handleSearchBlur = (
     setter: React.Dispatch<React.SetStateAction<boolean>>
   ) => {
-   
+
     setTimeout(() => {
       setter(false);
     }, 100);
@@ -78,6 +79,10 @@ const Navbar = () => {
         <div className="hidden lg:flex items-center space-x-8 flex-grow justify-center">
           {/* Conditional rendering for desktop search */}
           {!isDesktopSearchOpen ? (
+
+        
+            
+
             <div
               className="flex items-center space-x-2 cursor-pointer rounded-full py-2 px-4 hover:text-white transition-colors"
               onClick={handleDesktopSearchClick}
@@ -119,16 +124,22 @@ const Navbar = () => {
 
 
         <div className="hidden lg:block">
-          <PrivyButton />
-        </div> 
+          <PrivyButton 
+          //  onLogin={() => setIsAuthenticated(true)}
+          //  onLogout={() => setIsAuthenticated(false)}
+          />
+        </div>
 
         {/* Mobile Navigation (flex items for mobile) */}
         <div className="flex items-center space-x-4 justify-between lg:hidden">
-      
+
           <div className="block">
-            <PrivyButton />
+            <PrivyButton 
+            //  onLogin={() => setIsAuthenticated(true)}
+            //  onLogout={() => setIsAuthenticated(false)}
+            />
           </div>
-         
+
 
           {/* Mobile Menu Button*/}
           <button aria-label="hamburger-menu" onClick={toggleMenu} className="text-black focus:outline-none">
@@ -159,11 +170,10 @@ const Navbar = () => {
         </div>
       </div>
 
-{/* MObile Menu */}
+      {/* MObile Menu */}
       <div
-        className={`lg:hidden overflow-hidden transition-all duration-300 ease-in-out ${
-          isMenuOpen ? "max-h-screen opacity-100 py-4" : "max-h-0 opacity-0"
-        }`}
+        className={`lg:hidden overflow-hidden transition-all duration-300 ease-in-out ${isMenuOpen ? "max-h-screen opacity-100 py-4" : "max-h-0 opacity-0"
+          }`}
       >
         <div className="flex flex-col items-center space-y-4 px-4">
           {/* Conditional rendering for mobile search */}
