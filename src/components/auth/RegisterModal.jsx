@@ -3,7 +3,7 @@ import { toast } from "react-toastify";
 import API from "../../services/api";
 import { useRouter } from "next/navigation";
 
-const RegisterModal = ({ isOpen, onClose, eventId = "123", eventPrice = "Free" }) => {
+const RegisterModal = ({ isOpen, onClose, eventSlug = "123", eventPrice = "Free" }) => {
   const [formData, setFormData] = useState({
     name: "",
     email: ""
@@ -26,7 +26,7 @@ const RegisterModal = ({ isOpen, onClose, eventId = "123", eventPrice = "Free" }
 
     try {
       setLoading(true);
-      const response = await API.registerEvent(eventId, formData);
+      const response = await API.registerEvent(eventSlug, formData);
       
       if (eventPrice === "Free") {
         // For free events, show success message and close modal
