@@ -1,11 +1,11 @@
 "use client";
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Transfer, Schedule, Location, nft } from "../../assets/index";
+import { Transfer, Schedule, Location, nft } from "../assets/index";
 import Image from "next/image";
 import { Ticket } from "lucide-react";
-import RegisterModal from "../../../components/auth/RegisterModal";
-import API from "../../../services/api";
+import RegisterModal from "../../components/auth/RegisterModal";
+import API from "../../services/api";
 import { toast } from "react-toastify";
 
 const ViewEvent = () => {
@@ -128,7 +128,7 @@ const ViewEvent = () => {
         if (eventData?.id || eventData?.slug) {
           setEvent(eventData);
           if (eventData.slug && eventData.slug !== slug) {
-            router.replace(`/events/${eventData.slug}`);
+            router.replace(`/${eventData.slug}`);
           }
           if (window.location.search.includes("preview=true")) {
             toast.success("Event created successfully! Here's your preview.");
@@ -181,12 +181,12 @@ const ViewEvent = () => {
     );
 
   return (
-    <div className="relative">
+    <div className="relative ">
       <div className=" inset-0 bg-main-section bg-fixed bg-cover bg-center bg-no-repeat min-h-screen z-0">
         
-        <main className="mx-auto p-4 md:p-6 lg:p-10 w-full lg:w-[80%] xl:w-[70%] 2xl:w-[60%]">
+        <main className="mx-auto p-4 md:p-6 lg:p-10 w-full lg:w-[80%] xl:w-[70%] 2xl:w-[60%] ">
           
-          <div className="flex flex-col md:flex-row gap-6 md:gap-10 lg:gap-14 justify-center items-start">
+          <div className="flex flex-col md:flex-row gap-6 md:gap-10 lg:gap-14 justify-center items-start pt-32">
             {/* Left column */}
             <div className="w-full md:w-auto">
               {/* Event image */}
@@ -489,7 +489,7 @@ const ViewEvent = () => {
         isOpen={showRegisterModal}
         onClose={handleClose}
         onSuccess={handleRegistrationSuccess}
-        eventId={slug}
+        eventSlug={slug}
       />
     </div>
   );

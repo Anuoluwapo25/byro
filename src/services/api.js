@@ -35,13 +35,17 @@ const API = {
   // ===== EVENTS =====
   createEvent: async (formData) => {
     try {
+      console.log("Sending form data to API:", formData); // Debug log
       const response = await axiosInstance.post("/events/", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
+        transformRequest: (data) => data, // Prevent axios from transforming FormData
       });
+      console.log("API Response:", response.data); // Debug log
       return response.data;
     } catch (error) {
+      console.error("API Error:", error.response?.data || error); // Debug log
       throw handleApiError(error);
     }
   },

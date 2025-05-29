@@ -3,7 +3,7 @@ import { toast } from "react-toastify";
 import API from "../../services/api";
 import { useRouter } from "next/navigation";
 
-const RegisterModal = ({ isOpen, onClose, eventSlug = "123", eventPrice = "Free" }) => {
+const RegisterModal = ({ isOpen, onClose, eventSlug, eventPrice = "Free" }) => {
   const [formData, setFormData] = useState({
     name: "",
     email: ""
@@ -19,6 +19,11 @@ const RegisterModal = ({ isOpen, onClose, eventSlug = "123", eventPrice = "Free"
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    if (!eventSlug) {
+      toast.error("Invalid event");
+      return;
+    }
+
     if (!formData.name || !formData.email) {
       toast.error("Please fill all fields");
       return;
@@ -26,7 +31,9 @@ const RegisterModal = ({ isOpen, onClose, eventSlug = "123", eventPrice = "Free"
 
     try {
       setLoading(true);
+      console.log("Registering for event:", eventSlug, "with data:", formData);
       const response = await API.registerEvent(eventSlug, formData);
+      console.log("Registration response:", response);
       
       if (eventPrice === "Free") {
         // For free events, show success message and close modal
@@ -34,7 +41,7 @@ const RegisterModal = ({ isOpen, onClose, eventSlug = "123", eventPrice = "Free"
         onClose();
       } else {
         // For paid events, redirect to payment page with event details
-        if (response.data.ticket_url) {
+        if (response.ticket_url) {
           const paymentData = {
             amount: eventPrice,
             description: `Ticket for ${formData.name}`,
@@ -50,7 +57,16 @@ const RegisterModal = ({ isOpen, onClose, eventSlug = "123", eventPrice = "Free"
       }
     } catch (error) {
       console.error("Registration failed:", error);
-      toast.error(error.response?.data?.message || "Registration failed");
+      // Check for specific error types
+      if (error.response?.status === 400) {
+        toast.error(error.response.data?.message || "Invalid registration data");
+      } else if (error.response?.status === 401) {
+        toast.error("Please sign in to register for events");
+      } else if (error.response?.status === 404) {
+        toast.error("Event not found");
+      } else {
+        toast.error(error.message || "Registration failed. Please try again.");
+      }
     } finally {
       setLoading(false);
     }

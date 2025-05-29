@@ -37,6 +37,8 @@ export default function EventCreationForm() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    console.log("Selected file:", file); // Debug log
+
     if (!file.type.startsWith("image/")) {
       toast.error("Please upload an image file");
       return;
@@ -48,11 +50,13 @@ export default function EventCreationForm() {
 
     setIsImageLoading(true);
     setEventImage(file);
+    console.log("Event image state set to:", file); // Debug log
 
     const reader = new FileReader();
     reader.onloadend = () => {
       setImagePreview(reader.result);
       setIsImageLoading(false);
+      console.log("Image preview set"); // Debug log
     };
     reader.readAsDataURL(file);
   }, []);
@@ -133,12 +137,18 @@ export default function EventCreationForm() {
         if (virtualLink) formFields.virtual_link = virtualLink;
         if (description) formFields.description = description;
         if (capacity !== "Unlimited") formFields.capacity = capacity;
-        if (eventImage) formFields.image = eventImage;
+        if (eventImage) {
+          console.log("Adding image to form data:", eventImage); // Debug log
+          formFields.event_image = eventImage;
+        }
 
         // Append all fields to FormData
         Object.entries(formFields).forEach(([key, value]) => {
+          console.log(`Appending ${key} to FormData:`, value); // Debug log
           formData.append(key, value);
         });
+
+        console.log("FormData contents:", Object.fromEntries(formData)); // Debug log
 
         const response = await API.createEvent(formData);
         console.log("Event created successfully:", response);
@@ -185,7 +195,7 @@ export default function EventCreationForm() {
     if (!eventSlug) return "";
     return `${
       typeof window !== "undefined" ? window.location.origin : ""
-    }/events/${eventSlug}`;
+    }/${eventSlug}`;
   }, [eventSlug]);
 
   const getEventRegisterLink = useMemo(() => {
@@ -478,6 +488,7 @@ export default function EventCreationForm() {
               type="file"
               ref={fileInputRef}
               onChange={handleImageChange}
+              // value={eventImage}
               className="hidden"
               accept="image/*"
               aria-label="Upload event image"
