@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import PrivyButton from "./auth/PrivyButton";
 
+
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDesktopSearchOpen, setIsDesktopSearchOpen] = useState(false);
