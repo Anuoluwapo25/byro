@@ -130,7 +130,7 @@ const API = {
   transferTicket: async (ticketId, transferData) => {
     try {
       const response = await axiosInstance.post(
-        `/tickets/${ticketId}/transfer/`,
+        `/${ticketId}/transfer/`,
         transferData
       );
       return response.data;
