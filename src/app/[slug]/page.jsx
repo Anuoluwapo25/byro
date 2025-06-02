@@ -1,15 +1,15 @@
 "use client";
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Transfer, Schedule, Location, nft } from "../../../assets/index";
+import { Transfer, Schedule, Location, nft } from "../assets/index";
 import Image from "next/image";
 import { Ticket } from "lucide-react";
-import RegisterModal from "../../../../components/auth/RegisterModal";
-import API from "../../../../services/api";
+import RegisterModal from "../../components/auth/RegisterModal";
+import API from "../../services/api";
 import { toast } from "react-toastify";
 
 const ViewEvent = () => {
-  const { id } = useParams();
+  const { slug } = useParams();
   const router = useRouter();
   const [registered, setRegistered] = useState(false);
   const [ticketId, setTicketId] = useState(null);
@@ -20,7 +20,7 @@ const ViewEvent = () => {
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  console.log("Event ID:", id);
+ 
   console.log("Event Data:", useParams());
 
   // Memoize handlers
@@ -28,10 +28,10 @@ const ViewEvent = () => {
 
   const handleClose = useCallback(() => {
     setShowRegisterModal(false);
-    if (window.location.pathname.includes(`/events/${id}/register`)) {
-      router.replace(`/events/${id}`);
+    if (window.location.pathname.includes(`/events/${slug}/register`)) {
+      router.replace(`/events/${slug}`);
     }
-  }, [id, router]);
+  }, [slug, router]);
 
   const handleTransferClick = useCallback(() => {
     if (!event?.transferable) {
@@ -108,15 +108,15 @@ const ViewEvent = () => {
 
   // Fetch event data
   useEffect(() => {
-    if (!id) {
-      setError("No event ID provided");
+    if (!slug) {
+      setError("No event slug provided");
       setLoading(false);
       return;
     }
 
     if (
       typeof window !== "undefined" &&
-      window.location.pathname.includes(`/events/${id}/register`)
+      window.location.pathname.includes(`/events/${slug}/register`)
     ) {
       setShowRegisterModal(true);
     }
@@ -124,9 +124,12 @@ const ViewEvent = () => {
     const fetchEvent = async () => {
       try {
         setLoading(true);
-        const eventData = await API.getEvent(id);
-        if (eventData?.id) {
+        const eventData = await API.getEvent(slug);
+        if (eventData?.id || eventData?.slug) {
           setEvent(eventData);
+          if (eventData.slug && eventData.slug !== slug) {
+            router.replace(`/${eventData.slug}`);
+          }
           if (window.location.search.includes("preview=true")) {
             toast.success("Event created successfully! Here's your preview.");
           }
@@ -148,7 +151,7 @@ const ViewEvent = () => {
     };
 
     fetchEvent();
-  }, [id]);
+  }, [slug, router]);
 
   if (loading)
     return (
@@ -178,12 +181,12 @@ const ViewEvent = () => {
     );
 
   return (
-    <div className="relative">
+    <div className="relative ">
       <div className=" inset-0 bg-main-section bg-fixed bg-cover bg-center bg-no-repeat min-h-screen z-0">
         
-        <main className="mx-auto p-4 md:p-6 lg:p-10 w-full lg:w-[80%] xl:w-[70%] 2xl:w-[60%]">
+        <main className="mx-auto p-4 md:p-6 lg:p-10 w-full lg:w-[80%] xl:w-[70%] 2xl:w-[60%] ">
           
-          <div className="flex flex-col md:flex-row gap-6 md:gap-10 lg:gap-14 justify-center items-start">
+          <div className="flex flex-col md:flex-row gap-6 md:gap-10 lg:gap-14 justify-center items-start pt-20">
             {/* Left column */}
             <div className="w-full md:w-auto">
               {/* Event image */}
@@ -486,7 +489,7 @@ const ViewEvent = () => {
         isOpen={showRegisterModal}
         onClose={handleClose}
         onSuccess={handleRegistrationSuccess}
-        eventId={id}
+        eventSlug={slug}
       />
     </div>
   );

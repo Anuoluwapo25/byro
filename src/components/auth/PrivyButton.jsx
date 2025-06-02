@@ -1,12 +1,15 @@
 import { usePrivy } from "@privy-io/react-auth";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import API from "../../services/api";
 import SignupButton from "../SignupButton";
+import {UserPill} from '@privy-io/react-auth/ui';
 
 export default function AuthButton() {
   const { ready, authenticated, user, login, getAccessToken, logout } = usePrivy();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const router = useRouter();
 
   // Effect to handle token exchange after authentication
   useEffect(() => {
@@ -14,16 +17,19 @@ export default function AuthButton() {
       if (!authenticated || !user) return;
 
       try {
+        console.log("Starting token exchange...");
         setLoading(true);
         setError(null);
         
         // Get access token from Privy
+        console.log("Getting access token from Privy...");
         const accessToken = await getAccessToken();
         if (!accessToken) {
           throw new Error("Failed to get access token from Privy");
         }
+        console.log("Got access token from Privy");
 
-        // Exchange Privy access token for our backend token
+        // send Privy access token to our backend 
         const response = await API.getPrivyToken(accessToken);
         console.log("Backend token response:", response);
         
@@ -32,6 +38,9 @@ export default function AuthButton() {
           localStorage.setItem("accessToken", response.token);
           // Set auth token for future requests
           API.setAuthToken(response.token);
+          console.log("Token exchange successful, redirecting to events...");
+          // Redirect to events page after successful authentication
+          router.push("/events");
         } else {
           throw new Error("Invalid token response from backend");
         }
@@ -51,15 +60,22 @@ export default function AuthButton() {
     if (authenticated && user) {
       handleTokenExchange();
     }
-  }, [authenticated, user, getAccessToken]);
+  }, [authenticated, user, getAccessToken, router]);
 
   const handleSignup = async () => {
-    if (!ready) return;
+    if (!ready) {
+      console.log("Privy not ready yet");
+      return;
+    }
     
     try {
+      console.log("Starting signup process...");
       setLoading(true);
       setError(null);
+      
+      console.log("Calling Privy login...");
       await login();
+      console.log("Privy login completed");
       // The useEffect will handle the token exchange after authentication
     } catch (err) {
       console.error("Login error:", err);
@@ -77,6 +93,8 @@ export default function AuthButton() {
       API.setAuthToken(null);
       // Call Privy logout
       await logout();
+      // Redirect to home page after logout
+      router.push("/");
     } catch (err) {
       console.error("Logout error:", err);
       setError(err.message || "Logout failed");
@@ -90,18 +108,21 @@ export default function AuthButton() {
     const token = localStorage.getItem("accessToken");
     if (token) {
       API.setAuthToken(token);
-      console.log("Token set");
+      console.log("Token set from localStorage");
     }
   }, []);
 
   if (authenticated) {
     return (
-      <SignupButton
-        onClick={handleLogout}
-        disabled={loading}
-        loading={loading}
-        text="Logout"
-        className="bg-red-500 hover:bg-red-600"
+      <UserPill
+        onLogout={handleLogout}
+        className="!bg-blue-600 !text-white hover:!bg-blue-700"
+        avatarClassName="!w-8 !h-8"
+        textClassName="!text-sm !font-medium"
+        showAvatar={true}
+        showAddress={true}
+        showEmail={true}
+        truncateAddress={true}
       />
     );
   }
@@ -111,8 +132,7 @@ export default function AuthButton() {
       onClick={handleSignup}
       disabled={loading || !ready}
       loading={loading}
-      text="Sign In"
-      // className="bg-[linear-gradient(126.34deg,_#0057FF_0%,_#4F8BFF_86.18%)] hover:bg-blue-00"
+      text={loading ? "Signing in..." : "Sign In"}
     />
   );
 }

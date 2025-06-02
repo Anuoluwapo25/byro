@@ -39,8 +39,10 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Handle token expiration (e.g., redirect to login)
-      window.location.href = "/login";
+      // Clear the invalid token
+      localStorage.removeItem("accessToken");
+      // Let the component handle the authentication
+      return Promise.reject(error);
     }
     return Promise.reject(error);
   }

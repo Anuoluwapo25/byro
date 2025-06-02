@@ -1,9 +1,11 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
-import { searchIcon } from "../app/assets/index";
+import { searchIcon, eventIcon } from "../app/assets/index";
+// import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import PrivyButton from "./auth/PrivyButton";
+
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -79,18 +81,31 @@ const Navbar = () => {
         <div className="hidden lg:flex items-center space-x-8 flex-grow justify-center">
           {/* Conditional rendering for desktop search */}
           {!isDesktopSearchOpen ? (
-
-        
-            
-
-            <div
-              className="flex items-center space-x-2 cursor-pointer rounded-full py-2 px-4 hover:text-white transition-colors"
-              onClick={handleDesktopSearchClick}
-            >
-              <span className="text-gray-400">Explore Events</span>
-              {/* Search Icon */}
-              <Image src={searchIcon} alt="Search Icon" width={20} height={20} />
+            <>
+            {/* {isAuthenticated && ( */}
+            <>
+            <div className="flex items-center space-x-2 cursor-pointer py-2 px-4 transition-colors">
+            <Link href="/events"
+              className="text-gray-400"
+              >
+                Events
+              </Link>
+              
+              <Image src={eventIcon} alt="Event Icon" width={20} height={20} />
             </div>
+            </>
+            
+            {/* )} */}
+
+              <div
+                className="flex items-center space-x-2 cursor-pointer rounded-full py-2 px-4 hover:text-white transition-colors"
+                onClick={handleDesktopSearchClick}
+              >
+                <span className="text-gray-400">Explore Events</span>
+                {/* Search Icon */}
+                <Image src={searchIcon} alt="Search Icon" width={20} height={20} />
+              </div>
+            </>
           ) : (
             <div className="relative">
               <input
@@ -122,8 +137,26 @@ const Navbar = () => {
           )}
         </div>
 
+        
+        
+        
+        
 
-        <div className="hidden lg:block">
+
+        <div className="hidden lg:flex">
+
+        {/* {isAuthenticated && ( */}
+          
+          <div className="flex items-center space-x-2 cursor-pointer py-2 px-4 ">
+            <Link href="/events/create"
+              className="text-[#09D059] font-black text cursor-pointer text-[16px] "
+              >
+                Create Event
+              </Link>
+              </div>
+              
+        {/* // )}; */}
+        
           <PrivyButton 
           //  onLogin={() => setIsAuthenticated(true)}
           //  onLogout={() => setIsAuthenticated(false)}
