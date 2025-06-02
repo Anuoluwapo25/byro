@@ -23,6 +23,7 @@ export default function EventCreationForm() {
   const [imagePreview, setImagePreview] = useState(null);
   const [eventId, setEventId] = useState();
   const [eventCreated, setEventCreated] = useState(false);
+  const [eventVisibility, setEventVisibility] = useState(true);
   const router = useRouter();
   const fileInputRef = useRef(null);
 
@@ -121,7 +122,7 @@ export default function EventCreationForm() {
           time_to: convertTo24Hour(timeTo),
           transferable: ticketsTransferable.toString(),
           ticket_price: ticketPrice === "Free" ? "0.00" : ticketPrice,
-          visibility: "public",
+          visibility: eventVisibility ? "public" : "private",
           timezone:
             Intl.DateTimeFormat().resolvedOptions().timeZone || "GMT+01:00",
         };
@@ -269,12 +270,28 @@ export default function EventCreationForm() {
             aria-label="Event name"
           />
           <div className="flex gap-4">
-            <div className="flex items-center bg-blue-100 px-4 py-2 rounded-full">
-              <div className="mr-2">
-                <Image src={publicSymbol} alt="Public symbol" />
+            {eventVisibility ? (
+              <div
+                className="flex items-center bg-blue-100 px-4 py-2 rounded-full"
+                onClick={() => setEventVisibility(!eventVisibility)}
+              >
+                <div className="mr-2">
+                  <Image src={publicSymbol} alt="Public symbol" />
+                </div>
+                <span className="text-sm text-[#007AFF]">Public</span>
               </div>
-              <span className="text-sm text-[#007AFF]">Public</span>
-            </div>
+            ) : (
+              <div
+                className="flex items-center bg-blue-100 px-4 py-2 rounded-full"
+                onClick={() => setEventVisibility(!eventVisibility)}
+              >
+                <div className="mr-2">
+                  <Image src={publicSymbol} alt="Public symbol" />
+                </div>
+                <span className="text-sm text-[#007AFF]">Private</span>
+              </div>
+            )}
+
             <div className="flex items-center bg-blue-100 px-4 py-2 rounded-full">
               <div className="mr-2">
                 <Image src={globeTime} alt="Timezone" />
@@ -440,7 +457,7 @@ export default function EventCreationForm() {
         </div>
 
         {/* Description and Image */}
-        <div className="flex gap-6 mb-8">
+        <div className="flex flex-col md:flex-row gap-6 mb-8">
           <div className="flex-1">
             <label className="font-medium mb-2 block text-black">
               Description
