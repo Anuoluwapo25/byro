@@ -18,6 +18,7 @@ from django.urls import reverse
 # from django.conf import settings
 from django.db import models
 from django.db.models import Q
+import os
 import uuid
 import requests
 import os
@@ -139,11 +140,7 @@ def drf_protected_view(request):
 
 
 
-import requests
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-import os
+
 
 class PrivyTokenView(APIView):
     def post(self, request):
@@ -160,7 +157,6 @@ class PrivyTokenView(APIView):
             )
         
         try:
-            # Get your Privy App ID and Secret from environment variables
             app_id = os.getenv('PRIVY_APP_ID')
             app_secret = os.getenv('PRIVY_APP_SECRET')
             
@@ -170,7 +166,6 @@ class PrivyTokenView(APIView):
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
             
-            # Use the correct Privy API endpoint for token verification
             verify_response = requests.post(
                 f"https://auth.privy.io/api/v1/apps/{app_id}/tokens/verify",
                 json={"token": token},
@@ -190,7 +185,6 @@ class PrivyTokenView(APIView):
             
             decoded = verify_response.json()
             
-            # Get user data using the correct endpoint
             user_response = requests.get(
                 f"https://auth.privy.io/api/v1/apps/{app_id}/users/{decoded['userId']}",
                 headers={
@@ -208,7 +202,6 @@ class PrivyTokenView(APIView):
             
             user_data = user_response.json()
             
-            # Extract wallet address and email from the correct structure
             wallet_address = ''
             email = ''
             
@@ -284,7 +277,7 @@ class EventViewSet(viewsets.ModelViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     @action(detail=True, methods=['POST'], permission_classes=[AllowAny])
-    def register(self, request, pk=None):
+    def register(self, request, slug=None):
         """
         Register a user for this event
         """
@@ -312,7 +305,7 @@ class EventViewSet(viewsets.ModelViewSet):
         
             return Response({
                 **serializer.data,
-                'ticket_url': ticket_url  # Add URL to response
+                'ticket_url': ticket_url  
             }, status=status.HTTP_201_CREATED)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -345,10 +338,9 @@ class TicketViewSet(viewsets.ModelViewSet):
             raise
     
     @action(detail=True, methods=['post'])
-    def transfer(self, request, pk=None,  *args, **kwargs):  # pk will be the ticket_id
+    def transfer(self, request, pk=None,  *args, **kwargs):  
         ticket = self.get_object()
         
-        # Validate transfer request
         if not ticket.event.transferable:
             return Response(
                 {"error": "This ticket is not transferable"},
@@ -364,14 +356,12 @@ class TicketViewSet(viewsets.ModelViewSet):
         )
         
         if serializer.is_valid():
-            # Create transfer record
             transfer = serializer.save(
                 ticket=ticket,
                 from_user_name=ticket.current_owner_name,
                 from_user_email=ticket.current_owner_email
             )
             
-            # Generate transfer URL (for direct access)
             transfer_url = request.build_absolute_uri(
                 reverse('accept-transfer', args=[str(transfer.transfer_key)])
             )
@@ -405,18 +395,15 @@ class TicketTransferViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Update ticket ownership
         ticket = transfer.ticket
         ticket.current_owner_name = transfer.to_user_name
         ticket.current_owner_email = transfer.to_user_email
         ticket.is_transferred = True
         ticket.save()
         
-        # Mark transfer as complete
         transfer.is_accepted = True
         transfer.save()
         
-        # Return new ticket URL
         ticket_url = request.build_absolute_uri(
             reverse('ticket-detail', args=[str(ticket.ticket_id)])
         )
