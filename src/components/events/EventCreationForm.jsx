@@ -21,8 +21,11 @@ export default function EventCreationForm() {
   const [capacity, setCapacity] = useState("Unlimited");
   const [eventImage, setEventImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
-  const [eventId, setEventId] = useState();
+  const [eventSlug, setEventSlug] = useState();
+  // const [eventId, setEventId] = useState();
+
   const [eventCreated, setEventCreated] = useState(false);
+  const [eventVisibility, setEventVisibility] = useState(true);
   const router = useRouter();
   const fileInputRef = useRef(null);
 
@@ -35,6 +38,8 @@ export default function EventCreationForm() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    console.log("Selected file:", file); // Debug log
+
     if (!file.type.startsWith("image/")) {
       toast.error("Please upload an image file");
       return;
@@ -46,11 +51,13 @@ export default function EventCreationForm() {
 
     setIsImageLoading(true);
     setEventImage(file);
+    console.log("Event image state set to:", file); // Debug log
 
     const reader = new FileReader();
     reader.onloadend = () => {
       setImagePreview(reader.result);
       setIsImageLoading(false);
+      console.log("Image preview set"); // Debug log
     };
     reader.readAsDataURL(file);
   }, []);
@@ -121,7 +128,7 @@ export default function EventCreationForm() {
           time_to: convertTo24Hour(timeTo),
           transferable: ticketsTransferable.toString(),
           ticket_price: ticketPrice === "Free" ? "0.00" : ticketPrice,
-          visibility: "public",
+          visibility: eventVisibility ? "public" : "private",
           timezone:
             Intl.DateTimeFormat().resolvedOptions().timeZone || "GMT+01:00",
         };
@@ -131,20 +138,25 @@ export default function EventCreationForm() {
         if (virtualLink) formFields.virtual_link = virtualLink;
         if (description) formFields.description = description;
         if (capacity !== "Unlimited") formFields.capacity = capacity;
-        if (eventImage) formFields.image = eventImage;
+        if (eventImage) {
+          console.log("Adding image to form data:", eventImage); // Debug log
+          formFields.event_image = eventImage;
+        }
 
         // Append all fields to FormData
         Object.entries(formFields).forEach(([key, value]) => {
+          console.log(`Appending ${key} to FormData:`, value); // Debug log
           formData.append(key, value);
         });
+
+        console.log("FormData contents:", Object.fromEntries(formData)); // Debug log
 
         const response = await API.createEvent(formData);
         console.log("Event created successfully:", response);
 
         if (response) {
-          setEventId(response.id);
-          console.log("Event ID:", response.id);
-          console.log("Is set", eventId);
+          setEventSlug(response.slug || response.id);
+
           setEventCreated(true);
           toast.success("Event created successfully!");
           // Reset form after successful creation
@@ -181,31 +193,31 @@ export default function EventCreationForm() {
 
   // Memoize link generation functions
   const getEventViewLink = useMemo(() => {
-    if (!eventId) return "";
+    if (!eventSlug) return "";
     return `${
       typeof window !== "undefined" ? window.location.origin : ""
-    }/events/viewevent/${eventId}`;
-  }, [eventId]);
+    }/${eventSlug}`;
+  }, [eventSlug]);
 
   const getEventRegisterLink = useMemo(() => {
-    if (!eventId) return "";
+    if (!eventSlug) return "";
     return `${
       typeof window !== "undefined" ? window.location.origin : ""
-    }/events/${eventId}/register`;
-  }, [eventId]);
+    }/events/${eventSlug}/register`;
+  }, [eventSlug]);
 
   // Memoize navigation handlers
   const handleViewEvent = useCallback(() => {
-    if (eventId) {
-      router.push(`/events/viewevent/${eventId}?preview=true`);
+    if (eventSlug) {
+      router.push(`/events/${eventSlug}?preview=true`);
     }
-  }, [eventId, router]);
+  }, [eventSlug, router]);
 
   const handleRegisterEvent = useCallback(() => {
-    if (eventId) {
-      router.push(`/events/${eventId}/register`);
+    if (eventSlug) {
+      router.push(`/events/${eventSlug}/register`);
     }
-  }, [eventId, router]);
+  }, [eventSlug, router]);
 
   const copyToClipboard = useCallback((link) => {
     navigator.clipboard.writeText(link);
@@ -269,12 +281,28 @@ export default function EventCreationForm() {
             aria-label="Event name"
           />
           <div className="flex gap-4">
-            <div className="flex items-center bg-blue-100 px-4 py-2 rounded-full">
-              <div className="mr-2">
-                <Image src={publicSymbol} alt="Public symbol" />
+            {eventVisibility ? (
+              <div
+                className="flex items-center bg-blue-100 px-4 py-2 rounded-full"
+                onClick={() => setEventVisibility(!eventVisibility)}
+              >
+                <div className="mr-2">
+                  <Image src={publicSymbol} alt="Public symbol" />
+                </div>
+                <span className="text-sm text-[#007AFF]">Public</span>
               </div>
-              <span className="text-sm text-[#007AFF]">Public</span>
-            </div>
+            ) : (
+              <div
+                className="flex items-center bg-blue-100 px-4 py-2 rounded-full"
+                onClick={() => setEventVisibility(!eventVisibility)}
+              >
+                <div className="mr-2">
+                  <Image src={publicSymbol} alt="Public symbol" />
+                </div>
+                <span className="text-sm text-[#007AFF]">Private</span>
+              </div>
+            )}
+
             <div className="flex items-center bg-blue-100 px-4 py-2 rounded-full">
               <div className="mr-2">
                 <Image src={globeTime} alt="Timezone" />
@@ -440,7 +468,7 @@ export default function EventCreationForm() {
         </div>
 
         {/* Description and Image */}
-        <div className="flex gap-6 mb-8">
+        <div className="flex flex-col md:flex-row gap-6 mb-8">
           <div className="flex-1">
             <label className="font-medium mb-2 block text-black">
               Description
@@ -477,6 +505,7 @@ export default function EventCreationForm() {
               type="file"
               ref={fileInputRef}
               onChange={handleImageChange}
+              // value={eventImage}
               className="hidden"
               accept="image/*"
               aria-label="Upload event image"

@@ -4,15 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
+    "build": "ANALYZE=true next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "analyze": "ANALYZE=true next build"
   },
   "dependencies": {
-    "@coinbase/onchainkit": "^0.38.8",
     "@hookform/resolvers": "^5.0.1",
-    "@next/bundle-analyzer": "^15.3.2",
-    "@privy-io/react-auth": "^2.12.0",
+    "@privy-io/react-auth": "^2.13.5",
     "axios": "^1.9.0",
     "lucide-react": "^0.508.0",
     "next": "^15.3.1",
@@ -25,9 +24,11 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@next/bundle-analyzer": "^15.3.2",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "depcheck": "^1.4.7",
     "eslint": "^9",
     "eslint-config-next": "15.1.7",
     "postcss": "^8",

@@ -35,20 +35,24 @@ const API = {
   // ===== EVENTS =====
   createEvent: async (formData) => {
     try {
+      console.log("Sending form data to API:", formData); // Debug log
       const response = await axiosInstance.post("/events/", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
+        transformRequest: (data) => data, // Prevent axios from transforming FormData
       });
+      console.log("API Response:", response.data); // Debug log
       return response.data;
     } catch (error) {
+      console.error("API Error:", error.response?.data || error); // Debug log
       throw handleApiError(error);
     }
   },
 
-  getEvent: async (id) => {
+  getEvent: async (slug) => {
     try {
-      const response = await axiosInstance.get(`/events/${id}/`);
+      const response = await axiosInstance.get(`/events/${slug}/`);
       return response.data;
     } catch (error) {
       throw handleApiError(error);
@@ -65,14 +69,59 @@ const API = {
   },
 
   // Register for an event
-  registerEvent: async (eventId, userData) => {
+  registerEvent: async (eventSlug, userData) => {
     try {
+      // Check if we have an auth token
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Authentication required. Please sign in first.');
+      }
+
+      console.log("Registration request details:", {
+        url: `/events/${eventSlug}/register/`,
+        userData,
+        hasToken: !!token
+      }); 
+      
       const response = await axiosInstance.post(
-        `/events/${eventId}/register/`,
-        userData
+        `/events/${eventSlug}/register/`,
+        {
+          name: userData.name,
+          email: userData.email
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
       );
+      console.log("Registration response:", response.data);
       return response.data;
     } catch (error) {
+      if (error.message === 'Authentication required. Please sign in first.') {
+        throw error;
+      }
+      
+      console.error("Registration error details:", {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message,
+        requestData: {
+          url: `/events/${eventSlug}/register/`,
+          userData,
+          hasToken: !!localStorage.getItem('token')
+        }
+      });
+      
+      if (error.response?.status === 401) {
+        throw new Error('Please sign in to register for events');
+      } else if (error.response?.status === 404) {
+        throw new Error('Event not found');
+      } else if (error.response?.status === 400) {
+        throw new Error(error.response.data?.message || 'Invalid registration data');
+      }
+      
       throw handleApiError(error);
     }
   },
@@ -81,7 +130,7 @@ const API = {
   transferTicket: async (ticketId, transferData) => {
     try {
       const response = await axiosInstance.post(
-        `/tickets/${ticketId}/transfer/`,
+        `/${ticketId}/transfer/`,
         transferData
       );
       return response.data;

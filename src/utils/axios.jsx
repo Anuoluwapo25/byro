@@ -1,16 +1,17 @@
 import axios from "axios";
 
 const axiosInstance = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://www.byro.africa/api',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://byro-xlka.onrender.com/api',
+
   headers: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
+    "Content-Type": "application/json",
+    Accept: "application/json",
   },
-  withCredentials: true // Enable sending cookies if needed
+  withCredentials: true, // Enable sending cookies if needed
 });
 
 // Custom method defined *outside* the config object
-axiosInstance.createEvent = (eventData) => 
+axiosInstance.createEvent = (eventData) =>
   axiosInstance.post("/events/", eventData, {
     headers: {
       "Content-Type": "multipart/form-data", // Required for file uploads
@@ -38,8 +39,10 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Handle token expiration (e.g., redirect to login)
-      window.location.href = "/login";
+      // Clear the invalid token
+      localStorage.removeItem("accessToken");
+      // Let the component handle the authentication
+      return Promise.reject(error);
     }
     return Promise.reject(error);
   }
