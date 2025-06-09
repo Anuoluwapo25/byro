@@ -24,7 +24,7 @@ urlpatterns = [
     path('api/', include(router.urls)),
     path('api/privy/token/', PrivyTokenView.as_view(), name='token-access'),
     path('<slug:slug>/', EventViewSet.as_view({'get': 'retrieve'}), name='event-short-url'),
-    path('api/events/<int:pk>/register/', 
+    path('api/events/<slug:slug>/register/', 
          EventViewSet.as_view({'post': 'register'}), 
          name='event-register'),
     path('api/tickets/<uuid:ticket_id>/transfer/', 
