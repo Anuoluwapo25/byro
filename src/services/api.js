@@ -81,11 +81,6 @@ const API = {
         {
           name: userData.name,
           email: userData.email
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json'
-          }
         }
       );
       console.log("Registration response:", response.data);
