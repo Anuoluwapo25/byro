@@ -9,19 +9,29 @@ from .serializers import PaymentLinkCreateSerializer, PaymentSettingsSerializer,
 from rest_framework.permissions import IsAuthenticated
 from django.http import JsonResponse
 from rest_framework.authentication import BaseAuthentication
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework.exceptions import AuthenticationFailed
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+from .utils import privy_auth
+from django.utils.text import slugify
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import never_cache
 from django.contrib.auth import login
 from .models import PrivyUser, WaitList, Event, PaymentSettings, Ticket, TicketTransfer
-from .utils import verify_privy_token
 # from django.core.mail import send_mail
 from django.urls import reverse
 # from django.conf import settings
 from django.db import models
 from django.db.models import Q
+
 import os
 import uuid
 import requests
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 class PaymentLinkViewSet(viewsets.ViewSet):
     """ViewSet for creating and managing payment links"""
@@ -141,177 +151,141 @@ def drf_protected_view(request):
 
 
 
-
-class PrivyTokenView(APIView):
-    def post(self, request):
+@csrf_exempt
+@require_http_methods(["POST"])
+def verify_token(request):
+    try:
+        # Get token from Authorization header
         auth_header = request.headers.get('Authorization', '')
-        token_from_header = auth_header.split('Bearer ')[1] if 'Bearer ' in auth_header else None
-        token_from_body = request.data.get('token')
-        
-        token = token_from_header or token_from_body
-        
-        if not token:
-            return Response(
-                {"error": "No token provided"},
-                status=status.HTTP_400_BAD_REQUEST
+        if not auth_header.startswith('Bearer '):
+            return JsonResponse(
+                {'error': 'Invalid Authorization header format'},
+                status=401
             )
         
-        try:
-            app_id = os.getenv('PRIVY_APP_ID')
-            app_secret = os.getenv('PRIVY_APP_SECRET')
-            
-            if not app_id or not app_secret:
-                return Response(
-                    {"error": "Privy configuration missing"},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                )
-            
-            verify_response = requests.post(
-                f"https://auth.privy.io/api/v1/apps/{app_id}/tokens/verify",
-                json={"token": token},
-                headers={
-                    "privy-app-id": app_id,
-                    "privy-app-secret": app_secret,
-                    "Content-Type": "application/json"
-                },
-                timeout=10
-            )
-            
-            if verify_response.status_code != 200:
-                return Response(
-                    {"error": f"Token verification failed: {verify_response.status_code}"},
-                    status=status.HTTP_401_UNAUTHORIZED
-                )
-            
-            decoded = verify_response.json()
-            
-            user_response = requests.get(
-                f"https://auth.privy.io/api/v1/apps/{app_id}/users/{decoded['userId']}",
-                headers={
-                    "privy-app-id": app_id,
-                    "privy-app-secret": app_secret,
-                },
-                timeout=10
-            )
-            
-            if user_response.status_code != 200:
-                return Response(
-                    {"error": f"User data fetch failed: {user_response.status_code}"},
-                    status=status.HTTP_401_UNAUTHORIZED
-                )
-            
-            user_data = user_response.json()
-            
-            wallet_address = ''
-            email = ''
-            
-            if 'linkedAccounts' in user_data:
-                for account in user_data['linkedAccounts']:
-                    if account['type'] == 'wallet':
-                        wallet_address = account['address']
-                    elif account['type'] == 'email':
-                        email = account['address']
-            
-            user, created = PrivyUser.objects.get_or_create(
-                privy_id=user_data['id'],
-                defaults={
-                    'wallet_address': wallet_address,
-                    'email': email
-                }
-            )
-            
-            return Response({
-                "status": "success",
-                "user_id": user.privy_id,
-                "wallet": user.wallet_address,
-                "email": user.email,
-                "is_new_user": created
-            })
-            
-        except requests.RequestException as e:
-            return Response(
-                {"error": f"Privy API error: {str(e)}"},
-                status=status.HTTP_503_SERVICE_UNAVAILABLE
-            )
-        except KeyError as e:
-            return Response(
-                {"error": f"Unexpected response format: missing {str(e)}"},
-                status=status.HTTP_502_BAD_GATEWAY
-            )
-        except Exception as e:
-            return Response(
-                {"error": f"Internal error: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+        token = auth_header.split(' ')[1]
+        
+        # Verify token
+        payload = privy_auth.verify_token(token)
+        
+        return JsonResponse({
+            'status': 'success',
+            'user_id': payload['sub'],
+            'app_id': payload.get('aud'),
+            'issuer': payload.get('iss')
+        })
+        
+    except Exception as e:
+        return JsonResponse(
+            {'error': str(e)},
+            status=401
+        )
 
 class EventViewSet(viewsets.ModelViewSet):
     queryset = Event.objects.all()
     serializer_class = EventSerializer
     parser_classes = (JSONParser, MultiPartParser, FormParser)
     permission_classes = [AllowAny]
-    lookup_field = 'slug' 
+    lookup_field = 'slug'
+    
+    def get_queryset(self):
+        return Event.objects.all().order_by('-created_at')
+    
+    @method_decorator(never_cache)
+
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
     
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         
         if serializer.is_valid():
             if 'ticket_price' not in request.data:
-                serializer.validated_data['ticket_price'] = 100.00  
-            
+                serializer.validated_data['ticket_price'] = 100.00
             
             if 'capacity' not in request.data:
                 serializer.validated_data['capacity'] = None
             
+            if not serializer.validated_data.get('slug'):
+                name = serializer.validated_data.get('name', 'event')
+                serializer.validated_data['slug'] = slugify(name) + '-' + str(uuid.uuid4())[:8]
             
-            if 'event_image' in request.FILES:
-                serializer.validated_data['event_image'] = request.FILES['event_image']
-            
-            
-            # serializer.validated_data['hosted_by'] = 'Byro africa'
             serializer.validated_data['transferable'] = True
-            # serializer.validated_data['registration_required'] = True
             
             self.perform_create(serializer)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            
+            event_url = request.build_absolute_uri(
+                reverse('event-detail', kwargs={'slug': serializer.data['slug']}))
+            
+            response_data = serializer.data
+            response_data['event_url'] = event_url
+            
+            return Response(response_data, status=status.HTTP_201_CREATED)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     @action(detail=True, methods=['POST'], permission_classes=[AllowAny])
     def register(self, request, slug=None):
-        """
-        Register a user for this event
-        """
-        event = self.get_object()
-        
-        if event.capacity and event.tickets.count() >= event.capacity:
+        try:
+            event = self.get_object()
+            
+            if event.capacity and event.tickets.count() >= event.capacity:
+                return Response(
+                    {"error": "This event is at capacity"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            required_fields = ['name', 'email']
+            if not all(field in request.data for field in required_fields):
+                return Response(
+                    {"error": "Missing required fields: name and email"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            ticket_data = {
+                'event': event.id,
+                'original_owner_name': request.data['name'],
+                'original_owner_email': request.data['email'],
+                'current_owner_name': request.data['name'],
+                'current_owner_email': request.data['email'],
+            }
+            
+            serializer = TicketSerializer(data=ticket_data, context={'request': request})
+            
+            if serializer.is_valid():
+                ticket = serializer.save()
+                ticket_url = request.build_absolute_uri(
+                    reverse('ticket-detail', kwargs={'ticket_id': str(ticket.ticket_id)})
+                )
+                
+                return Response({
+                    **serializer.data,
+                    'ticket_url': ticket_url,
+                    'event_slug': event.slug,
+                    'message': 'Registration successful'
+                }, status=status.HTTP_201_CREATED)
+            
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
+        except Exception as e:
+            logger.exception("Error in event registration")
             return Response(
-                {"error": "This event is at capacity"},
-                status=status.HTTP_400_BAD_REQUEST
+                {"error": "An error occurred during registration"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-        
-        serializer = TicketSerializer(data={
-            'event': event.id,
-            'original_owner_name': request.data.get('name'),
-            'original_owner_email': request.data.get('email'),
-            'current_owner_name': request.data.get('name'),
-            'current_owner_email': request.data.get('email'),
-        }, context={'request': request})
-        
-        if serializer.is_valid():
-            ticket = serializer.save()
-            ticket_url = request.build_absolute_uri(
-            reverse('ticket-detail', args=[str(ticket.ticket_id)])
-        )
-        
-            return Response({
-                **serializer.data,
-                'ticket_url': ticket_url  
-            }, status=status.HTTP_201_CREATED)
-        
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# class TicketViewSet(viewsets.ModelViewSet):
+#     queryset = Ticket.objects.all()
+#     serializer_class = TicketSerializer
+#     permission_classes = [AllowAny]
     
-
-
+#     def get_queryset(self):
+#         queryset = super().get_queryset()
+#         email = self.request.query_params.get('email')
+#         if email:
+#             queryset = queryset.filter(
+#                 Q(original_owner_email=email) | Q(current_owner_email=email))
+#         return queryset
 
 class TicketViewSet(viewsets.ModelViewSet):
     """

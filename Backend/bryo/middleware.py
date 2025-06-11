@@ -1,32 +1,41 @@
-# auth/middleware.py
 from django.http import JsonResponse
-from .utils import PrivyAuth
+from .views import privy_verifier
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+from django.utils.decorators import method_decorator
+import json
 
-class PrivyAuthMiddleware:
-    def __init__(self, get_response):
-        self.get_response = get_response
 
-    def __call__(self, request):
-        # Skip auth for certain paths
-        if request.path in ['/api/auth/privy/', '/admin/']:
-            return self.get_response(request)
 
-        # Verify token for protected routes
-        auth_header = request.headers.get('Authorization', '')
-        if not auth_header.startswith('Bearer '):
-            return JsonResponse(
-                {"error": "Authorization header required"},
-                status=401
-            )
-
-        try:
-            token = auth_header.split('Bearer ')[1]
-            decoded = PrivyAuth.verify_privy_token(token)
-            request.privy_user_id = decoded['sub']
-        except Exception as e:
-            return JsonResponse(
-                {"error": f"Invalid token: {str(e)}"},
-                status=401
-            )
-
-        return self.get_response(request)
+@csrf_exempt
+@require_http_methods(["POST"])
+def verify_privy_token(request):
+    try:
+        # Parse request data
+        data = json.loads(request.body) if request.body else {}
+        token = data.get('token')
+        
+        if not token:
+            return JsonResponse({
+                'success': False,
+                'message': 'Token is required'
+            }, status=400)
+        
+        # Verify token
+        decoded_token = privy_verifier.verify_token(token)
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Authentication successful',
+            'user': {
+                'user_id': decoded_token.get('sub'),
+                'email': decoded_token.get('email'),
+                # Add other user data as needed
+            }
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Token verification failed: {str(e)}'
+        }, status=401)
