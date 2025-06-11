@@ -274,18 +274,6 @@ class EventViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-# class TicketViewSet(viewsets.ModelViewSet):
-#     queryset = Ticket.objects.all()
-#     serializer_class = TicketSerializer
-#     permission_classes = [AllowAny]
-    
-#     def get_queryset(self):
-#         queryset = super().get_queryset()
-#         email = self.request.query_params.get('email')
-#         if email:
-#             queryset = queryset.filter(
-#                 Q(original_owner_email=email) | Q(current_owner_email=email))
-#         return queryset
 
 class TicketViewSet(viewsets.ModelViewSet):
     """
