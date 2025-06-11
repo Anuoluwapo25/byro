@@ -1,6 +1,6 @@
-## Overview of Byro Africa
+## Overview of Byro
 
-Byro Africa is a decentralised event ticketing platform that revolutionises how events are created, managed, and attended in Africa. Our platform combines the power of blockchain technology with user-friendly features to provide a seamless, secure, and transparent ticketing experience.
+Byro is a decentralised event ticketing platform revolutionising how events are created, managed, and attended in Africa. Our platform combines the power of blockchain technology with user-friendly features to provide a seamless, secure, and transparent ticketing experience.
 
 ### Key Features
 
