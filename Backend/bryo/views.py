@@ -151,35 +151,35 @@ def drf_protected_view(request):
 
 
 
-@csrf_exempt
-@require_http_methods(["POST"])
-def verify_token(request):
-    try:
-        # Get token from Authorization header
-        auth_header = request.headers.get('Authorization', '')
-        if not auth_header.startswith('Bearer '):
-            return JsonResponse(
-                {'error': 'Invalid Authorization header format'},
-                status=401
-            )
+# @csrf_exempt
+# @require_http_methods(["POST"])
+# def verify_token(request):
+#     try:
+#         # Get token from Authorization header
+#         auth_header = request.headers.get('Authorization', '')
+#         if not auth_header.startswith('Bearer '):
+#             return JsonResponse(
+#                 {'error': 'Invalid Authorization header format'},
+#                 status=401
+#             )
         
-        token = auth_header.split(' ')[1]
+#         token = auth_header.split(' ')[1]
         
-        # Verify token
-        payload = privy_auth.verify_token(token)
+#         # Verify token
+#         payload = privy_auth.verify_token(token)
         
-        return JsonResponse({
-            'status': 'success',
-            'user_id': payload['sub'],
-            'app_id': payload.get('aud'),
-            'issuer': payload.get('iss')
-        })
+#         return JsonResponse({
+#             'status': 'success',
+#             'user_id': payload['sub'],
+#             'app_id': payload.get('aud'),
+#             'issuer': payload.get('iss')
+#         })
         
-    except Exception as e:
-        return JsonResponse(
-            {'error': str(e)},
-            status=401
-        )
+#     except Exception as e:
+#         return JsonResponse(
+#             {'error': str(e)},
+#             status=401
+#         )
 
 class EventViewSet(viewsets.ModelViewSet):
     queryset = Event.objects.all()
