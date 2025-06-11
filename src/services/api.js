@@ -35,7 +35,7 @@ const API = {
   // ===== EVENTS =====
   createEvent: async (formData) => {
     try {
-      console.log("Sending form data to API:", formData); // Debug log
+      console.log("Sending form data to API:", formData); 
       const response = await axiosInstance.post("/events/", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
