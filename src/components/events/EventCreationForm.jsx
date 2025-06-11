@@ -280,7 +280,7 @@ export default function EventCreationForm() {
             className="text-3xl font-medium text-blue-500 focus:outline-none"
             aria-label="Event name"
           />
-          <div className="flex gap-4">
+          <div className="flex gap-4 cursor-pointer">
             {eventVisibility ? (
               <div
                 className="flex items-center bg-blue-100 px-4 py-2 rounded-full"
@@ -541,7 +541,7 @@ export default function EventCreationForm() {
             Event Options
           </label>
           <p className="text-xs text-gray-500 mb-4">
-            *All transactions must be made using USDC on Base network*
+            *All transactions must be made using USDC on Stellar network*
           </p>
           <div className="space-y-4">
             <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
@@ -775,40 +775,7 @@ export default function EventCreationForm() {
                 View Event Page
               </button>
             </div>
-            <div>
-              <h4 className="font-medium text-blue-700 mb-2">
-                Registration Link:
-              </h4>
-              <div className="flex items-center">
-                <input
-                  type="text"
-                  value={getEventRegisterLink}
-                  readOnly
-                  className="flex-1 p-2 border border-blue-200 rounded-l-lg bg-white text-black"
-                  aria-label="Event registration link"
-                />
-                <button
-                  onClick={() => copyToClipboard(getEventRegisterLink)}
-                  className="bg-blue-500 text-white px-4 py-2 rounded-r-lg hover:bg-blue-600"
-                  aria-label="Copy registration link"
-                >
-                  Copy
-                </button>
-              </div>
-              <button
-                onClick={handleRegisterEvent}
-                className="mt-2 w-full bg-green-600 text-white text-center py-2 px-4 rounded-lg hover:bg-green-700"
-                aria-label="Register for event"
-              >
-                Register for Event
-              </button>
-            </div>
-            <div className="pt-4 border-t border-blue-200">
-              <p className="text-blue-700 text-sm">
-                Share these links with your attendees to let them view details
-                and register for your event.
-              </p>
-            </div>
+            
           </div>
         </div>
       )}

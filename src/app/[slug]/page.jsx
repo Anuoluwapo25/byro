@@ -312,7 +312,7 @@ const ViewEvent = () => {
                       ? "Free"
                       : `$${event.ticket_price}`}
                   </div>
-                  <div className="text-xs text-black">USDC ON BASE</div>
+                  <div className="text-xs text-black">USDC ON </div>
                 </div>
               </div>
             </div>

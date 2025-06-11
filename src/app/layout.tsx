@@ -21,7 +21,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Byro",
-  description: "Where Memories are Created",
+  description: "Own Your Tickets. Own the Moment.",
   icons: {
     icon: [
       {
