@@ -23,6 +23,7 @@ load_dotenv()
 
 
 # BlockRadar  and Privy Settings
+JWKS_URL = "https://auth.privy.io/.well-known/jwks.json" 
 BLOCKRADAR_API_KEY = os.environ.get('BLOCKRADAR_API_KEY')
 PRIVY_APP_ID = os.environ.get('PRIVY_APP_ID')
 PRIVY_APP_SECRET = os.environ.get('PRIVY_APP_SECRET')

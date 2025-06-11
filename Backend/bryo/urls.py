@@ -1,10 +1,11 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+from . import views
 from .views import (
     PaymentLinkViewSet, PaymentSettingsViewSet,
     WaitListViewSet,
     EventViewSet,
-    PrivyTokenView,
+    verify_token,
     TicketViewSet,
     TicketTransferViewSet
 )
@@ -20,13 +21,18 @@ router.register(r'transfers', TicketTransferViewSet, basename='transfer')
 
 
 
+
 urlpatterns = [
     path('api/', include(router.urls)),
-    path('api/privy/token/', PrivyTokenView.as_view(), name='token-access'),
+#     path('api/privy/token/', PrivyTokenView.as_view(), name='token-access'),
     path('<slug:slug>/', EventViewSet.as_view({'get': 'retrieve'}), name='event-short-url'),
-    path('api/events/<int:pk>/register/', 
+    path('api/events/<slug:slug>/register/', 
          EventViewSet.as_view({'post': 'register'}), 
          name='event-register'),
+#     path('api/verify-token/', views.VerifyTokenView.as_view(), name='verify_token'),
+#     path('api/auth/verify/', views.verify_privy_token, name='verify_privy_token'),
+    path('api/auth/verify', verify_token, name='verify-token'),
+
     path('api/tickets/<uuid:ticket_id>/transfer/', 
          TicketViewSet.as_view({'post': 'transfer'}), 
          name='ticket-transfer'),

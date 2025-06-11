@@ -71,16 +71,9 @@ const API = {
   // Register for an event
   registerEvent: async (eventSlug, userData) => {
     try {
-      // Check if we have an auth token
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('Authentication required. Please sign in first.');
-      }
-
       console.log("Registration request details:", {
         url: `/events/${eventSlug}/register/`,
-        userData,
-        hasToken: !!token
+        userData
       }); 
       
       const response = await axiosInstance.post(
@@ -91,7 +84,6 @@ const API = {
         },
         {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           }
         }
@@ -99,24 +91,17 @@ const API = {
       console.log("Registration response:", response.data);
       return response.data;
     } catch (error) {
-      if (error.message === 'Authentication required. Please sign in first.') {
-        throw error;
-      }
-      
       console.error("Registration error details:", {
         status: error.response?.status,
         data: error.response?.data,
         message: error.message,
         requestData: {
           url: `/events/${eventSlug}/register/`,
-          userData,
-          hasToken: !!localStorage.getItem('token')
+          userData
         }
       });
       
-      if (error.response?.status === 401) {
-        throw new Error('Please sign in to register for events');
-      } else if (error.response?.status === 404) {
+      if (error.response?.status === 404) {
         throw new Error('Event not found');
       } else if (error.response?.status === 400) {
         throw new Error(error.response.data?.message || 'Invalid registration data');

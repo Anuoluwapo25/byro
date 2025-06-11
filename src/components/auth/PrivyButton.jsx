@@ -3,7 +3,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import API from "../../services/api";
 import SignupButton from "../SignupButton";
-import {UserPill} from '@privy-io/react-auth/ui';
+// import { UserPill } from "@privy-io/react-auth/ui";
+// import {UserPill} from '@privy-io/react-auth/ui';
 
 export default function AuthButton() {
   const { ready, authenticated, user, login, getAccessToken, logout } = usePrivy();
@@ -114,15 +115,16 @@ export default function AuthButton() {
 
   if (authenticated) {
     return (
-      <UserPill
-        onLogout={handleLogout}
-        className="!bg-blue-600 !text-white hover:!bg-blue-700"
+      <SignupButton
+        onClick={handleLogout}
+        className="!bg-red-600 !text-white hover:!bg-red-700"
         avatarClassName="!w-8 !h-8"
         textClassName="!text-sm !font-medium"
         showAvatar={true}
         showAddress={true}
         showEmail={true}
         truncateAddress={true}
+        text={ "Logout"}
       />
     );
   }
