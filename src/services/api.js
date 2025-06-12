@@ -40,7 +40,7 @@ const API = {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-        transformRequest: (data) => data, // Prevent axios from transforming FormData
+        transformRequest: (data) => data, 
       });
       console.log("API Response:", response.data); // Debug log
       return response.data;
