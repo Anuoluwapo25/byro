@@ -106,14 +106,15 @@ DATABASES = {
         'NAME': 'byro',
         'USER': 'byro_user',
         'PASSWORD': 'Ba14jYMyFDYaqzsOHW40ulAIzZNHJa4F',
+        'HOST': 'localhost',
         'HOST': 'dpg-d15b2nffte5s7390pslg-a.oregon-postgres.render.com',
         'PORT': '5432',
     }
   
 }
 
-import dj_database_url
-DATABASES = {'default': dj_database_url.parse('postgresql://bryo_user:Ba14jYMyFDYaqzsOHW40ulAIzZNHJa4F@dpg-d15b2nffte5s7390pslg-a.oregon-postgres.render.com/byro')}
+# import dj_database_url
+# DATABASES = {'default': dj_database_url.parse('postgresql://bryo_user:Ba14jYMyFDYaqzsOHW40ulAIzZNHJa4F@dpg-d15b2nffte5s7390pslg-a.oregon-postgres.render.com/byro')}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
