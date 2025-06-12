@@ -49,7 +49,7 @@ class Event(models.Model):
         ('private', 'Private'),
     ]
 
-    name = models.CharField()
+    name = models.CharField(max_length=100)
     slug = models.SlugField(max_length=10, unique=True, blank=True, null=True)
     day = models.DateField()
     time_from = models.TimeField()

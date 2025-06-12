@@ -103,18 +103,35 @@ WSGI_APPLICATION = 'api.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'byro',
-        'USER': 'byro_user',
+        'NAME': 'bryo',
+        'USER': 'bryo_user',
         'PASSWORD': 'Ba14jYMyFDYaqzsOHW40ulAIzZNHJa4F',
-        'HOST': 'localhost',
         'HOST': 'dpg-d15b2nffte5s7390pslg-a.oregon-postgres.render.com',
         'PORT': '5432',
+        'OPTIONS': {
+            'sslmode': 'require', 
+        },
     }
   
 }
 
-# import dj_database_url
-# DATABASES = {'default': dj_database_url.parse('postgresql://bryo_user:Ba14jYMyFDYaqzsOHW40ulAIzZNHJa4F@dpg-d15b2nffte5s7390pslg-a.oregon-postgres.render.com/byro')}
+DATABASES = {
+    'default': {
+        'ENGINE': os.getenv('DB_ENGINE'),
+        'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('DB_USER'),
+        'PASSWORD': os.getenv('DB_PASSWORD'),
+        'HOST': os.getenv('DB_HOST'),
+        'PORT': os.getenv('DB_PORT'),
+    },
+    'OPTIONS': {
+            'sslmode': 'require', 
+        },
+}
+# postgresql://bryo_user:Ba14jYMyFDYaqzsOHW40ulAIzZNHJa4F@dpg-d15b2nffte5s7390pslg-a.oregon-postgres.render.com/bryo
+import dj_database_url
+
+DATABASES = {'default': dj_database_url.parse('postgresql://bryo_user:Ba14jYMyFDYaqzsOHW40ulAIzZNHJa4F@dpg-d15b2nffte5s7390pslg-a.oregon-postgres.render.com:5432/postgres?sslmode=require')}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
