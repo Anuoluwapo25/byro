@@ -54,8 +54,7 @@ pycryptodome==3.23.0
 pydantic==2.11.5
 pydantic_core==2.33.2
 pyhpke==0.6.2
-
-pyjwt<2.10.0 and >=1.7.1
+pyjwt>=1.7.1,<2.10.0
 python-dotenv==1.1.0
 pytz==2025.2
 pyunormalize==16.0.0

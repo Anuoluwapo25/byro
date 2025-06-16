@@ -101,19 +101,16 @@ WSGI_APPLICATION = 'api.wsgi.application'
 
 
 
-DATABASES = {
-    'default': {
-        'ENGINE': os.getenv('DB_ENGINE'),
-        'NAME': os.getenv('DB_NAME'),
-        'USER': os.getenv('DB_USER'),
-        'PASSWORD': os.getenv('DB_PASSWORD'),
-        'HOST': os.getenv('DB_HOST'),
-        'PORT': os.getenv('DB_PORT'),
-    },
-    'OPTIONS': {
-            'sslmode': 'require', 
-        },
-}
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'postgres',
+#         'USER': 'postgres',
+#         'PASSWORD': '',
+#         'HOST': 'db.eeymukkjfremuryhqray.supabase.co',
+#         'PORT': '5432',
+#     }
+# }
 # # postgresql://bryo_user:Ba14jYMyFDYaqzsOHW40ulAIzZNHJa4F@dpg-d15b2nffte5s7390pslg-a.oregon-postgres.render.com/bryo
 import dj_database_url
 
