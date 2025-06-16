@@ -775,11 +775,6 @@ export default function EventCreationForm() {
                 View Event Page
               </button>
             </div>
-<<<<<<< HEAD
-            
-=======
-           
->>>>>>> 7c12c35277716ee0eebca244fa248d7d114aaef9
           </div>
         </div>
       )}
