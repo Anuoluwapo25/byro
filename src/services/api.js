@@ -40,7 +40,7 @@ const API = {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-        transformRequest: (data) => data, // Prevent axios from transforming FormData
+        transformRequest: (data) => data, 
       });
       console.log("API Response:", response.data); // Debug log
       return response.data;
@@ -81,11 +81,6 @@ const API = {
         {
           name: userData.name,
           email: userData.email
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json'
-          }
         }
       );
       console.log("Registration response:", response.data);
@@ -146,7 +141,7 @@ const API = {
   // Privy
   getPrivyToken: async (accessToken) => {
     try {
-      const response = await axiosInstance.post("/privy/token/", { 
+      const response = await axiosInstance.post("/verify-token/", { 
         code: accessToken 
       }, {
         headers: {

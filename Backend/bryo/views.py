@@ -142,6 +142,24 @@ class WaitListViewSet(viewsets.ModelViewSet):
         serializer.save()
         return Response(serializer.data, status=201)
 
+    # @action(detail=False, methods=['get'], url_path='lists')
+    # def wait_list(self, request):
+    #     email=request.data.get('email')
+
+    #     if WaitList.objects.filter(email=email).exists():
+    #         return Response(
+    #             {
+    #                 'detail': 'Email already exists in waitlist'
+                    
+    #             }, status=400)
+
+    #     serializer = self.get_serializer(data=request.data)
+    #     if not serializer.is_valid():
+    #         return Response(serializer.errors, status=400)
+        
+    #     serializer.save()
+    #     return Response(serializer.data, status=201)
+
 
 
 @api_view(['GET'])
@@ -151,35 +169,35 @@ def drf_protected_view(request):
 
 
 
-@csrf_exempt
-@require_http_methods(["POST"])
-def verify_token(request):
-    try:
-        # Get token from Authorization header
-        auth_header = request.headers.get('Authorization', '')
-        if not auth_header.startswith('Bearer '):
-            return JsonResponse(
-                {'error': 'Invalid Authorization header format'},
-                status=401
-            )
+# @csrf_exempt
+# @require_http_methods(["POST"])
+# def verify_token(request):
+#     try:
+#         # Get token from Authorization header
+#         auth_header = request.headers.get('Authorization', '')
+#         if not auth_header.startswith('Bearer '):
+#             return JsonResponse(
+#                 {'error': 'Invalid Authorization header format'},
+#                 status=401
+#             )
         
-        token = auth_header.split(' ')[1]
+#         token = auth_header.split(' ')[1]
         
-        # Verify token
-        payload = privy_auth.verify_token(token)
+#         # Verify token
+#         payload = privy_auth.verify_token(token)
         
-        return JsonResponse({
-            'status': 'success',
-            'user_id': payload['sub'],
-            'app_id': payload.get('aud'),
-            'issuer': payload.get('iss')
-        })
+#         return JsonResponse({
+#             'status': 'success',
+#             'user_id': payload['sub'],
+#             'app_id': payload.get('aud'),
+#             'issuer': payload.get('iss')
+#         })
         
-    except Exception as e:
-        return JsonResponse(
-            {'error': str(e)},
-            status=401
-        )
+#     except Exception as e:
+#         return JsonResponse(
+#             {'error': str(e)},
+#             status=401
+#         )
 
 class EventViewSet(viewsets.ModelViewSet):
     queryset = Event.objects.all()
@@ -274,18 +292,6 @@ class EventViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-# class TicketViewSet(viewsets.ModelViewSet):
-#     queryset = Ticket.objects.all()
-#     serializer_class = TicketSerializer
-#     permission_classes = [AllowAny]
-    
-#     def get_queryset(self):
-#         queryset = super().get_queryset()
-#         email = self.request.query_params.get('email')
-#         if email:
-#             queryset = queryset.filter(
-#                 Q(original_owner_email=email) | Q(current_owner_email=email))
-#         return queryset
 
 class TicketViewSet(viewsets.ModelViewSet):
     """

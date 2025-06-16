@@ -5,7 +5,6 @@ from .views import (
     PaymentLinkViewSet, PaymentSettingsViewSet,
     WaitListViewSet,
     EventViewSet,
-    verify_token,
     TicketViewSet,
     TicketTransferViewSet
 )
@@ -31,8 +30,6 @@ urlpatterns = [
          name='event-register'),
 #     path('api/verify-token/', views.VerifyTokenView.as_view(), name='verify_token'),
 #     path('api/auth/verify/', views.verify_privy_token, name='verify_privy_token'),
-    path('api/auth/verify', verify_token, name='verify-token'),
-
     path('api/tickets/<uuid:ticket_id>/transfer/', 
          TicketViewSet.as_view({'post': 'transfer'}), 
          name='ticket-transfer'),
