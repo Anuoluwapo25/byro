@@ -128,7 +128,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'bryo',
-        'USER': 'postgres',
+        'USER': 'bryo_user',
         'PASSWORD': 'Ba14jYMyFDYaqzsOHW40ulAIzZNHJa4F',
         'HOST': 'dpg-d15b2nffte5s7390pslg-a.oregon-postgres.render.com',
         'PORT': '5432',
