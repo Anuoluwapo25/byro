@@ -106,7 +106,7 @@ WSGI_APPLICATION = 'api.wsgi.application'
 #         'ENGINE': 'django.db.backends.postgresql',
 #         'NAME': 'postgres',
 #         'USER': 'postgres',
-#         'PASSWORD': '',
+#         'PASSWORD': 'postgres',
 #         'HOST': 'db.eeymukkjfremuryhqray.supabase.co',
 #         'PORT': '5432',
 #     }
@@ -116,9 +116,10 @@ import dj_database_url
 
 # DATABASES = {'default': dj_database_url.parse('postgresql://bryo_user:Ba14jYMyFDYaqzsOHW40ulAIzZNHJa4F@dpg-d15b2nffte5s7390pslg-a.oregon-postgres.render.com:5432/postgres?sslmode=require')}
 
+
 DATABASES = {
     'default': dj_database_url.config(
-        default='postgresql://postgres:postgres@localhost:5432/mysite',
+        default='postgresql://postgres:Ba14jYMyFDYaqzsOHW40ulAIzZNHJa4F@dpg-d15b2nffte5s7390pslg-a.oregon-postgres.render.com/bryo',
         conn_max_age=600
     )
 }
@@ -166,6 +167,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SECURE = os.getenv('ENVIRONMENT') == 'production'
+
+
 
 
 CORS_ALLOWED_ORIGINS = [
