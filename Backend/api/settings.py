@@ -112,16 +112,27 @@ WSGI_APPLICATION = 'api.wsgi.application'
 #     }
 # }
 # # postgresql://bryo_user:Ba14jYMyFDYaqzsOHW40ulAIzZNHJa4F@dpg-d15b2nffte5s7390pslg-a.oregon-postgres.render.com/bryo
-import dj_database_url
+# import dj_database_url
 
 # DATABASES = {'default': dj_database_url.parse('postgresql://bryo_user:Ba14jYMyFDYaqzsOHW40ulAIzZNHJa4F@dpg-d15b2nffte5s7390pslg-a.oregon-postgres.render.com:5432/postgres?sslmode=require')}
 
 
+# DATABASES = {
+#     'default': dj_database_url.config(
+#         default='postgresql://postgres:Ba14jYMyFDYaqzsOHW40ulAIzZNHJa4F@dpg-d15b2nffte5s7390pslg-a.oregon-postgres.render.com/bryo',
+#         conn_max_age=600
+#     )
+# }
+
 DATABASES = {
-    'default': dj_database_url.config(
-        default='postgresql://postgres:Ba14jYMyFDYaqzsOHW40ulAIzZNHJa4F@dpg-d15b2nffte5s7390pslg-a.oregon-postgres.render.com/bryo',
-        conn_max_age=600
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'bryo',
+        'USER': 'postgres',
+        'PASSWORD': 'Ba14jYMyFDYaqzsOHW40ulAIzZNHJa4F',
+        'HOST': 'dpg-d15b2nffte5s7390pslg-a.oregon-postgres.render.com',
+        'PORT': '5432',
+    }
 }
 
 # Password validation
