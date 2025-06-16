@@ -50,7 +50,7 @@ class Event(models.Model):
     ]
 
     name = models.CharField(max_length=100)
-    slug = models.SlugField(max_length=10, unique=True, blank=True, null=True)
+    slug = models.SlugField(max_length=50, unique=True, blank=True, null=True)
     day = models.DateField()
     time_from = models.TimeField()
     time_to = models.TimeField()
