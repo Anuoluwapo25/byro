@@ -11,6 +11,7 @@ import Link from "next/link";
 const NewHeroPage = () => {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showCommunityMessage, setShowCommunityMessage] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -33,6 +34,7 @@ const NewHeroPage = () => {
       const response = await API.joinWaitlist({ email: trimmedEmail });
       if (response) {
         toast.success("Added to waitlist successfully");
+        setShowCommunityMessage(true);
         setEmail("");
       }
     } catch (error) {
@@ -96,9 +98,24 @@ const NewHeroPage = () => {
                   type="submit"
                   className="bg-[#16B979] px-8 py-4 text-base text-white rounded-full w-full sm:w-auto"
                 >
-                  Get Started
+                  Join
                 </button>
               </form>
+              {showCommunityMessage && (
+                <div className="mt-2 text-center md:text-left bg-white rounded">
+                  <p className="text-[#16B979] font-medium text-xl">
+                    Join our community to stay updated! 
+                    <a 
+                      href="https://chat.whatsapp.com/KiJj4KY6UOxD6fgkcOWKLv" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="ml-2 underline hover:text-[#0057FF] transition-colors"
+                    >
+                      Join Now
+                    </a>
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="hidden md:flex md:w-1/2 justify-center items-center">
