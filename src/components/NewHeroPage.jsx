@@ -81,35 +81,35 @@ const NewHeroPage = () => {
                 tickets. Host an unforgettable event today!
               </p>
 
-       
-              <form
-                onSubmit={handleSubmit}
-                className="flex flex-col sm:flex-row sm:py-5 md:py-8 gap-3 items-center"
-              >
-                <input
-                  type="email"
-                  placeholder="Email Address..."
-                  className="flex-grow border border-[#16B979] bg-[#E8F8F2] px-4 py-3 rounded-full placeholder:text-[#16B979] text-black focus:outline-none focus:text-black "
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-                <button
-                  type="submit"
-                  className="bg-[#16B979] px-8 py-4 text-base text-white rounded-full w-full sm:w-auto"
+              {!showCommunityMessage ? (
+                <form
+                  onSubmit={handleSubmit}
+                  className="flex flex-col sm:flex-row sm:py-5 md:py-8 gap-3 items-center"
                 >
-                  Join
-                </button>
-              </form>
-              {showCommunityMessage && (
-                <div className="mt-2 text-center md:text-left bg-white rounded">
-                  <p className="text-[#16B979] font-medium text-xl">
-                    Join our community to stay updated! 
+                  <input
+                    type="email"
+                    placeholder="Email Address..."
+                    className="flex-grow border border-[#16B979] bg-[#E8F8F2] px-4 py-3 rounded-full placeholder:text-[#16B979] text-black focus:outline-none focus:text-black "
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                  <button
+                    type="submit"
+                    className="bg-[#16B979] px-8 py-4 text-base text-white rounded-full w-full sm:w-auto"
+                  >
+                    Join Waitlist
+                  </button>
+                </form>
+              ) : (
+                <div className="mt-2 text-center md:text-left rounded">
+                  <p className="text-[#16B979] font-bold  text-xl">
+                    Join our community and stay updated! 
                     <a 
                       href="https://chat.whatsapp.com/KiJj4KY6UOxD6fgkcOWKLv" 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="ml-2 underline hover:text-[#0057FF] transition-colors"
+                      className="ml-2 underline hover:text-black transition-colors"
                     >
                       Join Now
                     </a>
