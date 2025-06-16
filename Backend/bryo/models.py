@@ -84,7 +84,8 @@ class Event(models.Model):
             while Event.objects.filter(slug=self.slug).exists():
                 self.slug = get_random_string(6)
         super().save(*args, **kwargs)
-    
+    class Meta:
+        db_table = 'bryo_event'
 
 
 class Ticket(models.Model):
