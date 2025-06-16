@@ -13,14 +13,16 @@ certifi==2025.4.26
 cffi==1.17.1
 charset-normalizer==3.4.1
 ckzg==2.1.1
-cryptography==44.0.3
+cryptography>=42.0.1,<45
 cytoolz==1.0.1
 distro==1.9.0
 dj-database-url==3.0.0
 Django==5.2
 django-cors-headers==4.7.0
 djangorestframework==3.16.0
-djangorestframework_simplejwt==5.5.0
+
+djangorestframework-simplejwt>=5.2.0
+
 dotenv==0.9.9
 drf-yasg==1.21.10
 eth-account==0.13.7
@@ -45,8 +47,7 @@ packaging==25.0
 parsimonious==0.10.0
 pillow==11.2.1
 privy==6.0.0
-privy-client==0.5.0
-propcache==0.3.1
+privy-client<0.5.0 
 psycopg2==2.9.10
 psycopg2-binary==2.9.10
 pycparser==2.22
@@ -54,7 +55,7 @@ pycryptodome==3.23.0
 pydantic==2.11.5
 pydantic_core==2.33.2
 pyhpke==0.6.2
-pyjwt>=1.7.1,<2.10.0
+PyJWT>=2.10.1
 python-dotenv==1.1.0
 pytz==2025.2
 pyunormalize==16.0.0
@@ -71,5 +72,5 @@ typing_extensions==4.13.2
 uritemplate==4.1.1
 urllib3==2.4.0
 web3==7.12.0
-websockets==15.0.1
+websockets==14.0
 yarl==1.20.0

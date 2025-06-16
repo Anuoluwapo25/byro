@@ -1,0 +1,8 @@
+[tool.poetry]
+name = "bryo"
+version = "0.1.0"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+privy = "^6.0.0"
+pyhpke = "^0.6.2"
