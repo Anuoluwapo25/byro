@@ -100,20 +100,6 @@ WSGI_APPLICATION = 'api.wsgi.application'
 # }
 
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'bryo',
-        'USER': 'bryo_user',
-        'PASSWORD': 'Ba14jYMyFDYaqzsOHW40ulAIzZNHJa4F',
-        'HOST': 'dpg-d15b2nffte5s7390pslg-a.oregon-postgres.render.com',
-        'PORT': '5432',
-        'OPTIONS': {
-            'sslmode': 'require', 
-        },
-    }
-  
-}
 
 DATABASES = {
     'default': {
@@ -128,10 +114,17 @@ DATABASES = {
             'sslmode': 'require', 
         },
 }
-# postgresql://bryo_user:Ba14jYMyFDYaqzsOHW40ulAIzZNHJa4F@dpg-d15b2nffte5s7390pslg-a.oregon-postgres.render.com/bryo
+# # postgresql://bryo_user:Ba14jYMyFDYaqzsOHW40ulAIzZNHJa4F@dpg-d15b2nffte5s7390pslg-a.oregon-postgres.render.com/bryo
 import dj_database_url
 
-DATABASES = {'default': dj_database_url.parse('postgresql://bryo_user:Ba14jYMyFDYaqzsOHW40ulAIzZNHJa4F@dpg-d15b2nffte5s7390pslg-a.oregon-postgres.render.com:5432/postgres?sslmode=require')}
+# DATABASES = {'default': dj_database_url.parse('postgresql://bryo_user:Ba14jYMyFDYaqzsOHW40ulAIzZNHJa4F@dpg-d15b2nffte5s7390pslg-a.oregon-postgres.render.com:5432/postgres?sslmode=require')}
+
+DATABASES = {
+    'default': dj_database_url.config(
+        default='postgresql://postgres:postgres@localhost:5432/mysite',
+        conn_max_age=600
+    )
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
