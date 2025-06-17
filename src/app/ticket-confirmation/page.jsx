@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { introduce } from "../../app/assets/index";
 
-const TicketConfirmation = () => {
+// Separate component that uses useSearchParams
+function TicketConfirmationContent() {
   const searchParams = useSearchParams();
   const [ticketData, setTicketData] = useState(null);
 
@@ -121,6 +122,17 @@ const TicketConfirmation = () => {
       </div>
     </div>
   );
-};
+}
 
-export default TicketConfirmation;
+// Main page component with Suspense boundary
+export default function TicketConfirmationPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    }>
+      <TicketConfirmationContent />
+    </Suspense>
+  );
+}
