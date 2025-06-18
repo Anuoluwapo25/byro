@@ -13,14 +13,14 @@ export default async function sitemap() {
 
     const events = await response.json();
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://byro.vercel.app';
-
+    
     const eventUrls = events.map((event) => ({
       url: `${baseUrl}/events/${event.slug}`,
       lastModified: new Date(event.updated_at),
       changeFrequency: 'weekly',
       priority: 0.8,
     }));
-
+  
     return [
       {
         url: baseUrl,
@@ -42,4 +42,4 @@ export default async function sitemap() {
       },
     ];
   }
-}
+  }

@@ -38,10 +38,17 @@ const NewHeroPage = () => {
         setEmail("");
       }
     } catch (error) {
-      console.error("Error joining waitlist:", error);
-      toast.error(
-        error.message || "Failed to join waitlist. Please try again."
-      );
+      if (
+        error.response &&
+        error.response.data &&
+        error.response.data.message === "Email already exists in waitlist."
+      ) {
+        toast.error("This email is already on the waitlist.");
+      } else {
+        toast.error(
+          error.message || "Failed to join waitlist. Please try again."
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -97,8 +104,9 @@ const NewHeroPage = () => {
                   <button
                     type="submit"
                     className="bg-[#16B979] px-8 py-4 text-base text-white rounded-full w-full sm:w-auto"
+                    disabled={loading}
                   >
-                    Join Waitlist
+                    {loading ? "Joining..." : "Join Waitlist"}
                   </button>
                 </form>
               ) : (
