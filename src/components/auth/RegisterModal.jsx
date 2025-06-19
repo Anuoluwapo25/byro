@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from "react";
 import { toast } from "react-toastify";
 import API from "../../services/api";
@@ -36,9 +38,22 @@ const RegisterModal = ({ isOpen, onClose, eventSlug, eventPrice = "Free" }) => {
       console.log("Registration response:", response);
       
       if (eventPrice === "Free") {
-        // For free events, show success message and close modal
-        toast.success("Ticket purchased successfully!");
-        onClose();
+        // For free events, store ticket data and redirect to confirmation page
+        const ticketData = {
+          eventName: response.event_name || "Event",
+          eventDate: response.event_date || "Date to be announced",
+          eventLocation: response.event_location || "Location to be announced",
+          timeFrom: response.event_time || "Time to be announced",
+          ticketId: response.ticket_id || Math.random().toString(36).substr(2, 9),
+          attendeeName: formData.name,
+          attendeeEmail: formData.email
+        };
+        
+        // Store ticket data in localStorage
+        localStorage.setItem('ticketData', JSON.stringify(ticketData));
+        
+        // Redirect to confirmation page
+        router.push('/ticket-confirmation');
       } else {
         // For paid events, redirect to payment page with event details
         if (response.ticket_url) {

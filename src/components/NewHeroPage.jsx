@@ -11,6 +11,7 @@ import Link from "next/link";
 const NewHeroPage = () => {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showCommunityMessage, setShowCommunityMessage] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -33,13 +34,21 @@ const NewHeroPage = () => {
       const response = await API.joinWaitlist({ email: trimmedEmail });
       if (response) {
         toast.success("Added to waitlist successfully");
+        setShowCommunityMessage(true);
         setEmail("");
       }
     } catch (error) {
-      console.error("Error joining waitlist:", error);
-      toast.error(
-        error.message || "Failed to join waitlist. Please try again."
-      );
+      if (
+        error.response &&
+        error.response.data &&
+        error.response.data.message === "Email already exists in waitlist."
+      ) {
+        toast.error("This email is already on the waitlist.");
+      } else {
+        toast.error(
+          error.message || "Failed to join waitlist. Please try again."
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -79,26 +88,42 @@ const NewHeroPage = () => {
                 tickets. Host an unforgettable event today!
               </p>
 
-       
-              <form
-                onSubmit={handleSubmit}
-                className="flex flex-col sm:flex-row sm:py-5 md:py-8 gap-3 items-center"
-              >
-                <input
-                  type="email"
-                  placeholder="Email Address..."
-                  className="flex-grow border border-[#16B979] bg-[#E8F8F2] px-4 py-3 rounded-full placeholder:text-[#16B979] text-black focus:outline-none focus:text-black "
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-                <button
-                  type="submit"
-                  className="bg-[#16B979] px-8 py-4 text-base text-white rounded-full w-full sm:w-auto"
+              {!showCommunityMessage ? (
+                <form
+                  onSubmit={handleSubmit}
+                  className="flex flex-col sm:flex-row sm:py-5 md:py-8 gap-3 items-center"
                 >
-                  Get Started
-                </button>
-              </form>
+                  <input
+                    type="email"
+                    placeholder="Email Address..."
+                    className="flex-grow border border-[#16B979] bg-[#E8F8F2] px-4 py-3 rounded-full placeholder:text-[#16B979] text-black focus:outline-none focus:text-black "
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                  <button
+                    type="submit"
+                    className="bg-[#16B979] px-8 py-4 text-base text-white rounded-full w-full sm:w-auto"
+                    disabled={loading}
+                  >
+                    {loading ? "Joining..." : "Join Waitlist"}
+                  </button>
+                </form>
+              ) : (
+                <div className="mt-2 text-center md:text-left rounded">
+                  <p className="text-[#16B979] font-bold  text-xl">
+                    Join our community and stay updated! 
+                    <a 
+                      href="https://chat.whatsapp.com/KiJj4KY6UOxD6fgkcOWKLv" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="ml-2 underline hover:text-black transition-colors"
+                    >
+                      Join Now
+                    </a>
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="hidden md:flex md:w-1/2 justify-center items-center">

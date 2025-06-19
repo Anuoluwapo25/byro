@@ -1,4 +1,3 @@
-
 import "./globals.css";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
@@ -20,8 +19,51 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Byro",
-  description: "Own Your Tickets. Own the Moment.",
+  title: {
+    default: "Byro - Create and Host Unforgettable Events",
+    template: "%s | Byro"
+  },
+  description: "Create your event page, invite friends, and start selling tickets. Host an unforgettable event today with Byro!",
+  keywords: ["event management", "ticket sales", "event hosting", "event creation", "event platform"],
+  authors: [{ name: "Byro Africa" }],
+  creator: "Byro Africa",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://byro.africa",
+    siteName: "Byro",
+    title: "Byro - Create and Host Unforgettable Events",
+    description: "Create your event page, invite friends, and start selling tickets. Host an unforgettable event today with Byro!",
+    images: [
+      {
+        url: "/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Byro - Event Management Platform"
+      }
+    ]
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Byro - Create and Host Unforgettable Events",
+    description: "Create your event page, invite friends, and start selling tickets. Host an unforgettable event today with Byro!",
+    images: ["/og-image.jpg"],
+    creator: "@byroafrica"
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  verification: {
+    google: "your-google-site-verification",
+  },
   icons: {
     icon: [
       {
