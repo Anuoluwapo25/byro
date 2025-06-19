@@ -6,7 +6,6 @@ import Image from "next/image";
 import Link from "next/link";
 import PrivyButton from "./auth/PrivyButton";
 
-
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDesktopSearchOpen, setIsDesktopSearchOpen] = useState(false);
@@ -15,7 +14,6 @@ const Navbar = () => {
 
   const desktopSearchInputRef = useRef<HTMLInputElement>(null);
   const mobileSearchInputRef = useRef<HTMLInputElement>(null);
-
 
   useEffect(() => {
     if (isDesktopSearchOpen && desktopSearchInputRef.current) {
@@ -48,11 +46,9 @@ const Navbar = () => {
     setIsMobileSearchOpen(true);
   };
 
-
   const handleSearchBlur = (
     setter: React.Dispatch<React.SetStateAction<boolean>>
   ) => {
-
     setTimeout(() => {
       setter(false);
     }, 100);
@@ -61,7 +57,7 @@ const Navbar = () => {
   return (
     <nav
       className="bg-white text-white py-4 shadow-md
-                    fixed top-0 left-0 w-full z-50
+                    sticky top-0 left-0 w-full z-50
                     lg:static lg:shadow-none"
     >
       <div className="container mx-auto px-4 flex items-center justify-between">
@@ -82,20 +78,23 @@ const Navbar = () => {
           {/* Conditional rendering for desktop search */}
           {!isDesktopSearchOpen ? (
             <>
-            {/* {isAuthenticated && ( */}
-            <>
-            <div className="flex items-center space-x-2 cursor-pointer py-2 px-4 transition-colors">
-            <Link href="/events"
-              className="text-gray-400"
-              >
-                Events
-              </Link>
-              
-              <Image src={eventIcon} alt="Event Icon" width={20} height={20} />
-            </div>
-            </>
-            
-            {/* )} */}
+              {/* {isAuthenticated && ( */}
+              <>
+                <div className="flex items-center space-x-2 cursor-pointer py-2 px-4 transition-colors">
+                  <Link href="/events" className="text-gray-400">
+                    Events
+                  </Link>
+
+                  <Image
+                    src={eventIcon}
+                    alt="Event Icon"
+                    width={20}
+                    height={20}
+                  />
+                </div>
+              </>
+
+              {/* )} */}
 
               <div
                 className="flex items-center space-x-2 cursor-pointer rounded-full py-2 px-4 hover:text-white transition-colors"
@@ -103,7 +102,12 @@ const Navbar = () => {
               >
                 <span className="text-gray-400">Explore Events</span>
                 {/* Search Icon */}
-                <Image src={searchIcon} alt="Search Icon" width={20} height={20} />
+                <Image
+                  src={searchIcon}
+                  alt="Search Icon"
+                  width={20}
+                  height={20}
+                />
               </div>
             </>
           ) : (
@@ -137,27 +141,21 @@ const Navbar = () => {
           )}
         </div>
 
-        
-        
-        
-        
-
-
         <div className="hidden lg:flex">
+          {/* {isAuthenticated && ( */}
 
-        {/* {isAuthenticated && ( */}
-          
           <div className="flex items-center space-x-2 cursor-pointer py-2 px-4 ">
-            <Link href="/events/create"
+            <Link
+              href="/events/create"
               className="text-[#09D059] font-black text cursor-pointer text-[16px] "
-              >
-                Create Event
-              </Link>
-              </div>
-              
-        {/* // )}; */}
-        
-          <PrivyButton 
+            >
+              Create Event
+            </Link>
+          </div>
+
+          {/* // )}; */}
+
+          <PrivyButton
           //  onLogin={() => setIsAuthenticated(true)}
           //  onLogout={() => setIsAuthenticated(false)}
           />
@@ -165,17 +163,19 @@ const Navbar = () => {
 
         {/* Mobile Navigation (flex items for mobile) */}
         <div className="flex items-center space-x-4 justify-between lg:hidden">
-
           <div className="block">
-            <PrivyButton 
+            <PrivyButton
             //  onLogin={() => setIsAuthenticated(true)}
             //  onLogout={() => setIsAuthenticated(false)}
             />
           </div>
 
-
           {/* Mobile Menu Button*/}
-          <button aria-label="hamburger-menu" onClick={toggleMenu} className="text-black focus:outline-none">
+          <button
+            aria-label="hamburger-menu"
+            onClick={toggleMenu}
+            className="text-black focus:outline-none"
+          >
             <svg
               className="w-8 h-8"
               fill="none"
@@ -205,8 +205,9 @@ const Navbar = () => {
 
       {/* MObile Menu */}
       <div
-        className={`lg:hidden overflow-hidden transition-all duration-300 ease-in-out ${isMenuOpen ? "max-h-screen opacity-100 py-4" : "max-h-0 opacity-0"
-          }`}
+        className={`lg:hidden overflow-hidden transition-all duration-300 ease-in-out ${
+          isMenuOpen ? "max-h-screen opacity-100 py-4" : "max-h-0 opacity-0"
+        }`}
       >
         <div className="flex flex-col items-center space-y-4 px-4">
           {/* Conditional rendering for mobile search */}
