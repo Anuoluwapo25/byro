@@ -21,10 +21,17 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: {
     default: "Byro - Create and Host Unforgettable Events",
-    template: "%s | Byro"
+    template: "%s | Byro",
   },
-  description: "Create your event page, invite friends, and start selling tickets. Host an unforgettable event today with Byro!",
-  keywords: ["event management", "ticket sales", "event hosting", "event creation", "event platform"],
+  description:
+    "Create your event page, invite friends, and start selling tickets. Host an unforgettable event today with Byro!",
+  keywords: [
+    "event management",
+    "ticket sales",
+    "event hosting",
+    "event creation",
+    "event platform",
+  ],
   authors: [{ name: "Byro Africa" }],
   creator: "Byro Africa",
   openGraph: {
@@ -33,22 +40,24 @@ export const metadata: Metadata = {
     url: "https://byro.africa",
     siteName: "Byro",
     title: "Byro - Create and Host Unforgettable Events",
-    description: "Create your event page, invite friends, and start selling tickets. Host an unforgettable event today with Byro!",
+    description:
+      "Create your event page, invite friends, and start selling tickets. Host an unforgettable event today with Byro!",
     images: [
       {
         url: "/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "Byro - Event Management Platform"
-      }
-    ]
+        alt: "Byro - Event Management Platform",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Byro - Create and Host Unforgettable Events",
-    description: "Create your event page, invite friends, and start selling tickets. Host an unforgettable event today with Byro!",
+    description:
+      "Create your event page, invite friends, and start selling tickets. Host an unforgettable event today with Byro!",
     images: ["/og-image.jpg"],
-    creator: "@byroafrica"
+    creator: "@byroafrica",
   },
   robots: {
     index: true,
@@ -56,9 +65,9 @@ export const metadata: Metadata = {
     googleBot: {
       index: true,
       follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
     },
   },
   verification: {
@@ -125,9 +134,7 @@ export default function RootLayout({
 
         <AuthProvider>
           <div className="flex flex-col min-h-screen">
-            <Navbar />
             <main className="flex-1">{children}</main>
-            <Footer />
           </div>
         </AuthProvider>
       </body>
