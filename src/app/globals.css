@@ -37,3 +37,12 @@ main {
   flex: 1;
   /* Adjust based on Navbar and Footer heights */
 }
+.input-container {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+input,
+textarea {
+  box-sizing: border-box;
+  max-width: 100%;
+}
