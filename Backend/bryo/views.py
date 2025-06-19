@@ -4,13 +4,10 @@ from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
-from rest_framework.decorators import action, api_view, permission_classes
 from .serializers import PaymentLinkCreateSerializer, PaymentSettingsSerializer, WaitListSerializer, EventSerializer, TicketSerializer, TicketTransferSerializer
 from rest_framework.permissions import IsAuthenticated
 from django.http import JsonResponse
-from rest_framework.authentication import BaseAuthentication
 from django.views.decorators.csrf import csrf_exempt
-from rest_framework.exceptions import AuthenticationFailed
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from .utils import privy_auth
@@ -24,7 +21,6 @@ from django.urls import reverse
 # from django.conf import settings
 from django.db import models
 from django.db.models import Q
-
 import os
 import uuid
 import requests
@@ -165,6 +161,76 @@ class WaitListViewSet(viewsets.ModelViewSet):
 @api_view(['GET'])
 def drf_protected_view(request):
     return Response({"user_id": request.user.privy_id})
+
+
+# views.py
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth import authenticate, login
+from django.contrib.auth.decorators import login_required
+from .services.privy_auth import PrivyAuthService
+
+import json
+import logging
+
+logger = logging.getLogger(__name__)
+
+@csrf_exempt
+def privy_login(request):
+    if request.method == 'POST':
+        token = None
+        
+        # Get token from Authorization header
+        auth_header = request.META.get('HTTP_AUTHORIZATION', '')
+        print(f"Authorization header: {auth_header}")
+        
+        if auth_header.startswith('Bearer '):
+            token = auth_header.split(' ')[1]
+            print(f"Extracted token: {token[:50]}...")  # Print first 50 chars for debugging
+        
+        # Fallback: try to get from request body if not in header
+        if not token and request.body:
+            try:
+                data = json.loads(request.body)
+                token = data.get('token')
+                print(f"Token from body: {token}")
+            except json.JSONDecodeError:
+                print("Failed to parse JSON body")
+        
+        if not token:
+            return JsonResponse({
+                'error': 'Token required',
+                'debug': f'Auth header: {auth_header[:50]}...' if auth_header else 'No auth header'
+            }, status=400)
+        
+        # Authenticate user
+        user = authenticate(request, privy_token=token)
+        if user:
+            login(request, user)
+            user_data = PrivyAuthService.get_user_data(user.username)
+            return JsonResponse({
+                'success': True,
+                'user': {
+                    'id': user.id,
+                    'username': user.username,
+                    'email': user.email
+                },
+            'debug_info': {
+                'privy_user_data': user_data,
+                'auth_methods': user_data.get('linked_accounts', []) if user_data else []
+            }
+            })
+        else:
+            return JsonResponse({'error': 'Invalid token'}, status=401)
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+@login_required
+def protected_view(request):
+    return JsonResponse({
+        'message': 'This is a protected endpoint',
+        'user': request.user.username
+    })
 
 
 

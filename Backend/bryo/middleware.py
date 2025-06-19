@@ -1,41 +1,22 @@
+# middleware.py
+from django.contrib.auth import authenticate, login
 from django.http import JsonResponse
-from .views import privy_verifier
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
-from django.utils.decorators import method_decorator
 import json
 
+class PrivyAuthMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
 
-
-@csrf_exempt
-@require_http_methods(["POST"])
-def verify_privy_token(request):
-    try:
-        # Parse request data
-        data = json.loads(request.body) if request.body else {}
-        token = data.get('token')
+    def __call__(self, request):
+        if request.path.startswith('/api/') and not request.user.is_authenticated:
+            auth_header = request.META.get('HTTP_AUTHORIZATION', '')
+            
+            if auth_header.startswith('Bearer '):
+                token = auth_header.split(' ')[1]
+                
+                user = authenticate(request, privy_token=token)
+                if user:
+                    login(request, user)
         
-        if not token:
-            return JsonResponse({
-                'success': False,
-                'message': 'Token is required'
-            }, status=400)
-        
-        # Verify token
-        decoded_token = privy_verifier.verify_token(token)
-        
-        return JsonResponse({
-            'success': True,
-            'message': 'Authentication successful',
-            'user': {
-                'user_id': decoded_token.get('sub'),
-                'email': decoded_token.get('email'),
-                # Add other user data as needed
-            }
-        })
-        
-    except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'message': f'Token verification failed: {str(e)}'
-        }, status=401)
+        response = self.get_response(request)
+        return response

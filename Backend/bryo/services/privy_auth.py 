@@ -1,0 +1,61 @@
+# services/privy_auth.py
+import jwt
+import requests
+from django.conf import settings
+from django.core.cache import cache
+import logging
+
+logger = logging.getLogger(__name__)
+
+class PrivyAuthService:
+    @staticmethod
+    def get_verification_key():
+        """Get and cache Privy's verification key"""
+        cache_key = "privy_verification_key"
+        verification_key = cache.get(cache_key)
+        
+        if not verification_key:
+            try:
+                response = requests.get(
+                    settings.PRIVY_VERIFICATION_KEY_URL,
+                    headers={
+                        'privy-app-id': settings.PRIVY_APP_ID,
+                        'privy-app-secret': settings.PRIVY_APP_SECRET
+                    }
+                )
+                response.raise_for_status()
+                verification_key = response.text
+                
+                # Cache for 1 hour
+                cache.set(cache_key, verification_key, 3600)
+                
+            except requests.RequestException as e:
+                logger.error(f"Failed to fetch Privy verification key: {e}")
+                return None
+                
+        return verification_key
+    
+    @staticmethod
+    def verify_token(token):
+        """Verify Privy JWT token"""
+        try:
+            verification_key = PrivyAuthService.get_verification_key()
+            if not verification_key:
+                return None
+            
+            # Decode and verify the JWT
+            decoded_token = jwt.decode(
+                token,
+                verification_key,
+                algorithms=['ES256'],
+                audience=settings.PRIVY_APP_ID
+            )
+            
+            return decoded_token
+            
+        except jwt.ExpiredSignatureError:
+            logger.error("Privy token has expired")
+            return None
+        except jwt.InvalidTokenError as e:
+            logger.error(f"Invalid Privy token: {e}")
+            return None
