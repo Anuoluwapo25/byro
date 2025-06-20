@@ -22,16 +22,17 @@ export const metadata: Metadata = {
     template: "%s | Byro",
   },
   description:
-    "Create your event page, invite friends, and start selling tickets. Host an unforgettable event today with Byro!",
+    "Create your event page and host an unforgettable event today with Byro!",
   keywords: [
     "event management",
     "ticket sales",
     "event hosting",
     "event creation",
     "event platform",
+    "event ticketing",
   ],
-  authors: [{ name: "Byro Africa" }],
-  creator: "Byro Africa",
+  authors: [{ name: "Byro" }],
+  creator: "Byro",
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -39,10 +40,10 @@ export const metadata: Metadata = {
     siteName: "Byro",
     title: "Byro - Create and Host Unforgettable Events",
     description:
-      "Create your event page, invite friends, and start selling tickets. Host an unforgettable event today with Byro!",
+      "Create your event page and host an unforgettable event today with Byro!",
     images: [
       {
-        url: "/og-image.jpg",
+        url: "/assets/waitlist.png",
         width: 1200,
         height: 630,
         alt: "Byro - Event Management Platform",
@@ -53,8 +54,8 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Byro - Create and Host Unforgettable Events",
     description:
-      "Create your event page, invite friends, and start selling tickets. Host an unforgettable event today with Byro!",
-    images: ["/og-image.jpg"],
+      "Create your event page and host an unforgettable event today with Byro!",
+    images: ["/assets/waitlist.png"],
     creator: "@byroafrica",
   },
   robots: {
