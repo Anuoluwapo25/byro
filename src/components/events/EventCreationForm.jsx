@@ -268,19 +268,19 @@ export default function EventCreationForm() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-8 bg-white rounded-3xl shadow-sm">
+    <div className="w-full max-w-4xl mx-auto p-4 sm:p-8 bg-white rounded-3xl shadow-sm">
       <div>
         {/* Event Name */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col-reverse lg:flex-row items-center justify-between mb-8">
           <input
             type="text"
             placeholder="Event Name"
             value={eventName}
             onChange={(e) => setEventName(e.target.value)}
-            className="text-3xl font-medium text-blue-500 focus:outline-none"
+            className="text-2xl sm:text-3xl font-medium text-blue-500 focus:outline-none w-full"
             aria-label="Event name"
           />
-          <div className="flex gap-4 cursor-pointer">
+          <div className="flex gap-4 cursor-pointer mb-2 lg:mb-0">
             {eventVisibility ? (
               <div
                 className="flex items-center bg-blue-100 px-4 py-2 rounded-full"
@@ -316,7 +316,7 @@ export default function EventCreationForm() {
         </div>
 
         {/* Date and Time */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-4 sm:mb-8">
           <div>
             <label className="font-medium mb-2 block text-black">Day</label>
             <div className="relative">
@@ -469,7 +469,7 @@ export default function EventCreationForm() {
 
         {/* Description and Image */}
         <div className="flex flex-col md:flex-row gap-6 mb-8">
-          <div className="flex-1">
+          <div className="flex-1 max-w-full">
             <label className="font-medium mb-2 block text-black">
               Description
             </label>
@@ -500,7 +500,7 @@ export default function EventCreationForm() {
               </div>
             </div>
           </div>
-          <div className="w-40">
+          <div className="w-full max-w-40">
             <input
               type="file"
               ref={fileInputRef}

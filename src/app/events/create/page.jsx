@@ -4,6 +4,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import EventCreationForm from "../../../components/events/EventCreationForm";
+import AppLayout from "@/layout/app";
 // import GetStarted from "../../../components/GetStarted";
 
 export default function CreateEventPage() {
@@ -21,17 +22,19 @@ export default function CreateEventPage() {
   // if (!ready) return <p>Loading...</p>;
 
   return (
-    <div className="bg-main-section bg-fixed bg-cover bg-center bg-no-repeat min-h-screen">
-      <div className="p-6">
-        <div className="flex items-center gap-4 mb-6">
-          <EventCreationForm />
-          {/* {authenticated ? (
+    <AppLayout>
+      <div className="bg-main-section bg-fixed bg-cover bg-center bg-no-repeat min-h-screen">
+        <div className="p-6">
+          <div className="flex items-center gap-4 mb-6">
+            <EventCreationForm />
+            {/* {authenticated ? (
             <EventCreationForm />
           ) : null
           // Or keep empty since login modal is open
           } */}
+          </div>
         </div>
       </div>
-    </div>
+    </AppLayout>
   );
 }
