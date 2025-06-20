@@ -160,6 +160,27 @@ const API = {
     }
   },
 
+  getIdToken: async (identityToken) => {
+    try{
+      const response = await axiosInstance.post ('/auth/privy/', {
+        code: identityToken
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${identityToken}` // Use identity token
+        }
+      });
+      return response.data
+    } catch (error) {
+      if (error.response?.status === 400) {
+        const errorMessage = error.response.data?.message || "Invalid identity token";
+        throw new Error(errorMessage);
+      }
+      throw handleApiError(error);
+    }
+  },
+
   // Waitlist
   joinWaitlist: async (data) => {
     try {

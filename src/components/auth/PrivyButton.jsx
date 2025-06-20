@@ -1,13 +1,13 @@
-import { usePrivy } from "@privy-io/react-auth";
+import { usePrivy, useIdentityToken } from "@privy-io/react-auth";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import API from "../../services/api";
 import SignupButton from "../SignupButton";
-// import { UserPill } from "@privy-io/react-auth/ui";
-// import {UserPill} from '@privy-io/react-auth/ui';
+
 
 export default function AuthButton() {
-  const { ready, authenticated, user, login, getAccessToken, logout } = usePrivy();
+  const { ready, authenticated, user, login, getAccessToken, logout, getIdToken } = usePrivy();
+  const { identityToken } = useIdentityToken();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const router = useRouter();
@@ -25,22 +25,29 @@ export default function AuthButton() {
         // Get access token from Privy
         console.log("Getting access token from Privy...");
         const accessToken = await getAccessToken();
+
         if (!accessToken) {
           throw new Error("Failed to get access token from Privy");
         }
-        console.log("Got access token from Privy");
+        if (!identityToken) {
+          throw new Error("Failed to get identity token from Privy");
+        }
+        console.log("Got access and identity tokens from Privy");
 
-        // send Privy access token to our backend 
-        const response = await API.getPrivyToken(accessToken);
-        console.log("Backend token response:", response);
-        
-        if (response?.token) {
-          // Store the token
-          localStorage.setItem("accessToken", response.token);
-          // Set auth token for future requests
-          API.setAuthToken(response.token);
+        // Send both tokens to backend
+        const accessTokenResponse = await API.getPrivyToken(accessToken);
+        const identityTokenResponse = await API.getIdToken(identityToken);
+
+        console.log("Backend access token response:", accessTokenResponse);
+        console.log("Backend identity token response:", identityTokenResponse);
+
+        // Use the identity token's backend response for auth
+        if (identityTokenResponse?.token) {
+          localStorage.setItem("accessToken", identityTokenResponse.token); // Use identity token's backend response as main token
+          API.setAuthToken(identityTokenResponse.token);
+          // Optionally, store the access token response separately if you want
+          localStorage.setItem("privyAccessToken", accessTokenResponse.token);
           console.log("Token exchange successful, redirecting to events...");
-          // Redirect to events page after successful authentication
           router.push("/events");
         } else {
           throw new Error("Invalid token response from backend");
@@ -51,6 +58,7 @@ export default function AuthButton() {
         // Don't logout on token exchange failure
         // Just clean up the local storage
         localStorage.removeItem("accessToken");
+        localStorage.removeItem("identityToken");
         API.setAuthToken(null);
       } finally {
         setLoading(false);
@@ -91,6 +99,7 @@ export default function AuthButton() {
       setError(null);
       // Clear local storage and API token
       localStorage.removeItem("accessToken");
+      localStorage.removeItem("identityToken");
       API.setAuthToken(null);
       // Call Privy logout
       await logout();
