@@ -277,7 +277,7 @@ export default function EventCreationForm() {
             placeholder="Event Name"
             value={eventName}
             onChange={(e) => setEventName(e.target.value)}
-            className="text-2xl sm:text-3xl font-medium text-blue-500 focus:outline-none w-full"
+            className=" text-2xl sm:text-3xl font-medium text-blue-500 focus:outline-none w-[60%] p-8 border rounded-3xl border-[#B3BBC3] placeholder:font-extrabold"
             aria-label="Event name"
           />
           <div className="flex gap-4 cursor-pointer mb-2 lg:mb-0">
@@ -324,7 +324,7 @@ export default function EventCreationForm() {
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full p-3 border border-gray-200 rounded-lg pl-10 focus:text-black text-black"
+                className="w-full p-3  border rounded-lg border-[#B3BBC3] pl-10 focus:text-black text-black"
                 aria-label="Event date"
               />
               <div className="absolute left-3 top-3.5 text-gray-400">
@@ -370,7 +370,7 @@ export default function EventCreationForm() {
                 type="time"
                 value={timeFrom}
                 onChange={(e) => setTimeFrom(e.target.value)}
-                className="w-full p-3 border border-gray-200 rounded-lg text-black"
+                className="w-full p-3 border  border-[#B3BBC3] rounded-lg text-black"
                 aria-label="Event start time"
               />
             </div>
@@ -385,7 +385,7 @@ export default function EventCreationForm() {
                 value={timeTo}
                 onChange={(e) => setTimeTo(e.target.value)}
                 min={timeFrom}
-                className="w-full p-3 border border-gray-200 rounded-lg text-black"
+                className="w-full p-3 border  border-[#B3BBC3] rounded-lg text-black"
                 aria-label="Event end time"
               />
             </div>
@@ -402,7 +402,7 @@ export default function EventCreationForm() {
                 placeholder="Physical location"
                 value={physicalLocation}
                 onChange={(e) => setPhysicalLocation(e.target.value)}
-                className="w-full p-3 border border-gray-200 rounded-lg pl-10 text-black"
+                className="w-full p-3 border  border-[#B3BBC3] rounded-lg pl-10 text-black"
                 aria-label="Physical location"
               />
               <div className="absolute left-3 top-3.5 text-gray-400">
@@ -436,7 +436,7 @@ export default function EventCreationForm() {
                 placeholder="Paste virtual link here"
                 value={virtualLink}
                 onChange={(e) => setVirtualLink(e.target.value)}
-                className="w-full p-3 border border-gray-200 rounded-lg pl-10 text-black"
+                className="w-full p-3 border  border-[#B3BBC3] rounded-lg pl-10 text-black"
                 aria-label="Virtual link"
               />
               <div className="absolute left-3 top-3.5 text-gray-400">
@@ -478,7 +478,7 @@ export default function EventCreationForm() {
                 placeholder="Tell us about the event"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="w-full p-3 border border-gray-200 rounded-lg pl-10 h-16 text-black"
+                className="w-full p-3 border  border-[#B3BBC3] rounded-lg pl-10 h-16 text-black"
                 aria-label="Event description"
               />
               <div className="absolute left-3 top-3.5 text-gray-400">
@@ -544,7 +544,7 @@ export default function EventCreationForm() {
             *All transactions must be made using USDC on Stellar network*
           </p>
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+            <div className="flex items-center justify-between p-4 border  border-[#B3BBC3] rounded-lg">
               <div className="flex items-center">
                 <div className="text-gray-400 mr-3">
                   <svg
@@ -574,7 +574,7 @@ export default function EventCreationForm() {
               </div>
               <div className="flex items-center">
                 <select
-                  className="p-2 rounded mr-2"
+                  className="p-2 rounded mr-2 text-[#999999]"
                   value={ticketPrice === "Free" ? "Free" : "Paid"}
                   onChange={(e) => {
                     if (e.target.value === "Free") {
@@ -600,7 +600,7 @@ export default function EventCreationForm() {
                       step="0.01"
                       value={ticketPrice}
                       onChange={(e) => setTicketPrice(e.target.value)}
-                      className="p-2 border border-gray-200 rounded w-24 pl-6 text-black"
+                      className="p-2 border  border-[#B3BBC3] rounded w-24 pl-6 text-black"
                       aria-label="Ticket price amount"
                     />
                     <span className="absolute left-2 top-2 text-gray-500">
@@ -694,7 +694,7 @@ export default function EventCreationForm() {
               </div>
               <div className="flex items-center">
                 <select
-                  className="p-2 rounded mr-2"
+                  className="p-2 rounded mr-2 text-[#999999]"
                   value={capacity === "Unlimited" ? "Unlimited" : "Limited"}
                   onChange={(e) => {
                     if (e.target.value === "Unlimited") {
