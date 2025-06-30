@@ -21,14 +21,4 @@ Byro is a decentralised event ticketing platform revolutionising how events are 
 - Blockchain Integration: Stellar
 - Database: SQLite (Development)
 
-### Getting Started
 
-[Coming soon]
-
-### Contributing
-
-[Coming soon]
-
-### License
-
-[Coming soon]
