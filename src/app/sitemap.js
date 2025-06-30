@@ -12,7 +12,7 @@ export default async function sitemap() {
     }
 
     const events = await response.json();
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://byro.vercel.app';
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://byro.africa';
     
     const eventUrls = events.map((event) => ({
       url: `${baseUrl}/events/${event.slug}`,
@@ -35,7 +35,7 @@ export default async function sitemap() {
     // Return just the homepage if there's an error
     return [
       {
-        url: process.env.NEXT_PUBLIC_BASE_URL || 'https://byro.vercel.app',
+        url: process.env.NEXT_PUBLIC_BASE_URL || 'https://byro.africa',
         lastModified: new Date(),
         changeFrequency: 'daily',
         priority: 1,

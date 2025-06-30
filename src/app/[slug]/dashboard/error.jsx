@@ -1,0 +1,373 @@
+"use client";
+
+import { useState } from "react";
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  Users,
+  Link,
+  Edit3,
+  Trash2,
+  Plus,
+  Copy,
+  ExternalLink,
+} from "lucide-react";
+import Navbar from "../../../components/Navbar";
+
+export default function EventDashboard({ params }) {
+  const [activeTab, setActiveTab] = useState("overview");
+  const [showAddHost, setShowAddHost] = useState(false);
+  const [newHostEmail, setNewHostEmail] = useState("");
+  const [newHostName, setNewHostName] = useState("");
+  const [copySuccess, setCopySuccess] = useState(false);
+
+  // Mock event data - in real app, this would come from your database
+  const [eventData, setEventData] = useState({
+    id: params.slug,
+    title: "BYRO LAUNCH",
+    date: "Tuesday, 28th April 2025",
+    time: "2:00 PM to 4:00 PM",
+    location: "Byro Headquarters",
+    city: "Lagos, Nigeria",
+    description: "Official launch event for Byro platform",
+    image: "/api/placeholder/400/300", // You'll replace this with actual image
+  });
+
+  const [hosts, setHosts] = useState([
+    {
+      id: 1,
+      name: "Francis David",
+      email: "disual0@byro.com",
+      role: "Creator",
+    },
+    {
+      id: 2,
+      name: "Robert Okechukwu",
+      email: "roke@byro.com",
+      role: "Host",
+    },
+    {
+      id: 3,
+      name: "Samuel Okoro",
+      email: "Samoro@byro.com",
+      role: "Event manager",
+    },
+  ]);
+
+  const handleCopyLink = async () => {
+    const eventLink = `${window.location.origin}/events/${eventData.id}`;
+    try {
+      await navigator.clipboard.writeText(eventLink);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy link");
+    }
+  };
+
+  const handleAddHost = () => {
+    if (newHostName && newHostEmail) {
+      const newHost = {
+        id: hosts.length + 1,
+        name: newHostName,
+        email: newHostEmail,
+        role: "Host",
+      };
+      setHosts([...hosts, newHost]);
+      setNewHostName("");
+      setNewHostEmail("");
+      setShowAddHost(false);
+    }
+  };
+
+  const handleRemoveHost = (hostId) => {
+    setHosts(hosts.filter((host) => host.id !== hostId));
+  };
+
+  const tabs = [
+    { id: "overview", label: "Overview" },
+    { id: "attendees", label: "Attendees" },
+    { id: "confirmation", label: "Confirmation" },
+    { id: "reminder", label: "Reminder" },
+  ];
+
+  return (
+    <div className="relative min-h-screen">
+      {/* Background image and overlay */}
+      <div className="absolute inset-0 bg-main-section bg-fixed bg-cover bg-center bg-no-repeat z-0" />
+      <div className="absolute inset-0 bg-gray-50 z-0 opacity-70" />
+
+      {/* Main content */}
+      <div className="relative z-10">
+        <Navbar />
+        <div className="bg-red-500">
+          <div className=" p-20
+">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg px-6 py-3">
+                <h1 className="text-2xl font-bold text-blue-600">{eventData.title}</h1>
+            </div>
+          </div>
+          {/* <div className="">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center py-6">
+              <div className="flex items-center space-x-4">
+                <div >
+                  <h1 >
+                    {eventData.title}
+                  </h1>
+                </div>
+              </div>
+              <div className="flex items-center space-x-3">
+                <button className="bg-blue-50 text-blue-600 px-4 py-2 rounded-lg border border-blue-200 hover:bg-blue-100 transition-colors flex items-center space-x-2">
+                  <Calendar className="w-4 h-4" />
+                  <span>Event Page</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div> */}
+
+          {/* Navigation Tabs */}
+          <div className="] border-b rounded-md">
+            <div className="max-w-[30%]  px-4 sm:px-6 lg:px-8 bg-gray-300 rounded-md">
+              <nav className="flex space-x-8">
+                {tabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                      activeTab === tab.id
+                        ? "border-blue-500 text-blue-600"
+                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </nav>
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            {activeTab === "overview" && (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Left Column - Event Details */}
+                <div className="lg:col-span-2 space-y-6">
+                  {/* Event Image and Info */}
+                  <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div className="relative h-64 bg-gradient-to-r from-blue-600 to-purple-600">
+                      {/* Crowd silhouette overlay */}
+                      <div className="absolute inset-0 bg-black/20"></div>
+                      <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black/60 to-transparent"></div>
+                      {/* Simulated crowd hands */}
+                      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+                        <div className="w-6 h-8 bg-white/80 rounded-full transform rotate-12"></div>
+                        <div className="w-5 h-7 bg-white/70 rounded-full transform -rotate-6"></div>
+                        <div className="w-6 h-9 bg-white/90 rounded-full transform rotate-3"></div>
+                        <div className="w-5 h-8 bg-white/75 rounded-full transform -rotate-12"></div>
+                        <div className="w-6 h-8 bg-white/85 rounded-full transform rotate-8"></div>
+                      </div>
+                      {/* Scattered dots for ambiance */}
+                      <div className="absolute top-8 left-12 w-2 h-2 bg-yellow-400 rounded-full opacity-80"></div>
+                      <div className="absolute top-16 right-20 w-1.5 h-1.5 bg-yellow-300 rounded-full opacity-70"></div>
+                      <div className="absolute top-12 right-32 w-2 h-2 bg-yellow-400 rounded-full opacity-60"></div>
+                      <div className="absolute top-20 left-24 w-1 h-1 bg-yellow-200 rounded-full opacity-80"></div>
+                    </div>
+
+                    <div className="p-6">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex items-center space-x-3">
+                          <button
+                            onClick={handleCopyLink}
+                            className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 transition-colors"
+                          >
+                            <Link className="w-5 h-5" />
+                            <span className="font-medium">
+                              {copySuccess ? "Link Copied!" : "Copy Event Link"}
+                            </span>
+                          </button>
+                        </div>
+                        <button className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 transition-colors">
+                          <Edit3 className="w-5 h-5" />
+                          <span className="font-medium">Edit Event</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column - Event Info Card */}
+                <div className="space-y-6">
+                  <div className="bg-blue-50 rounded-xl p-6 border border-blue-100">
+                    <div className="flex items-center space-x-2 mb-4">
+                      <Clock className="w-5 h-5 text-red-500" />
+                      <span className="font-semibold text-gray-900">
+                        {eventData.date}
+                      </span>
+                    </div>
+                    <div className="text-gray-700 mb-4">{eventData.time}</div>
+
+                    <div className="flex items-start space-x-3">
+                      <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                        <MapPin className="w-4 h-4 text-white" />
+                      </div>
+                      <div>
+                        <div className="font-semibold text-gray-900">
+                          {eventData.location}
+                        </div>
+                        <div className="text-gray-600">{eventData.city}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Host Management */}
+                  <div className="bg-white rounded-xl shadow-sm p-6">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        Host
+                      </h3>
+                      <button
+                        onClick={() => setShowAddHost(true)}
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>Add Host</span>
+                      </button>
+                    </div>
+
+                    <p className="text-gray-500 text-sm mb-6">
+                      Add, Host, Event Manager
+                    </p>
+
+                    <div className="space-y-4">
+                      {hosts.map((host) => (
+                        <div
+                          key={host.id}
+                          className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                        >
+                          <div className="flex-1">
+                            <div className="font-medium text-gray-900">
+                              {host.name}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {host.email}
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-3">
+                            <span className="text-sm text-blue-600 font-medium">
+                              {host.role}
+                            </span>
+                            {host.role !== "Creator" && (
+                              <button
+                                onClick={() => handleRemoveHost(host.id)}
+                                className="text-gray-400 hover:text-red-500 transition-colors"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Add Host Modal */}
+                    {showAddHost && (
+                      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                        <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+                          <h3 className="text-lg font-semibold mb-4">
+                            Add New Host
+                          </h3>
+                          <div className="space-y-4">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Name
+                              </label>
+                              <input
+                                type="text"
+                                value={newHostName}
+                                onChange={(e) => setNewHostName(e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="Enter host name"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Email
+                              </label>
+                              <input
+                                type="email"
+                                value={newHostEmail}
+                                onChange={(e) =>
+                                  setNewHostEmail(e.target.value)
+                                }
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="Enter email address"
+                              />
+                            </div>
+                          </div>
+                          <div className="flex justify-end space-x-3 mt-6">
+                            <button
+                              onClick={() => setShowAddHost(false)}
+                              className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={handleAddHost}
+                              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                            >
+                              Add Host
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Other Tab Content Placeholders */}
+            {activeTab === "attendees" && (
+              <div className="bg-white rounded-xl shadow-sm p-8 text-center">
+                <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Attendees Management
+                </h3>
+                <p className="text-gray-500">
+                  Manage your event attendees and RSVPs here.
+                </p>
+              </div>
+            )}
+
+            {activeTab === "confirmation" && (
+              <div className="bg-white rounded-xl shadow-sm p-8 text-center">
+                <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Confirmation Settings
+                </h3>
+                <p className="text-gray-500">
+                  Configure confirmation messages and settings.
+                </p>
+              </div>
+            )}
+
+            {activeTab === "reminder" && (
+              <div className="bg-white rounded-xl shadow-sm p-8 text-center">
+                <Clock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Reminder Settings
+                </h3>
+                <p className="text-gray-500">
+                  Set up automated reminders for your attendees.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

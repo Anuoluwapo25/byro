@@ -19,6 +19,7 @@ const EmptyState = ({ onCreateEvent }) => {
       >
         Create Event
       </button>
+      
     </div>
   );
 };

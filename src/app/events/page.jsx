@@ -46,14 +46,10 @@ export default function EventsPage() {
   };
 
   const handleCreateEvent = () => {
-    // In a real app, this would likely open a modal or navigate to a create event page
-    // console.log("Create event clicked");
-    // alert("Create event functionality would open here");
-
-    // In a real application, you might use a modal or redirect:
+    
+    
     router.push("/events/create");
-    // or
-    // setShowCreateEventModal(true);
+   
   };
 
   // Determine which events to display based on active tab
@@ -92,6 +88,7 @@ export default function EventsPage() {
         <div className="relative z-10 max-w-6xl mx-auto p-6">
           <div className="flex items-center gap-4 mb-6">
             <h1 className="text-4xl font-extrabold">Events</h1>
+           
             <EventsTabs activeTab={activeTab} onTabChange={handleTabChange} />
           </div>
 
@@ -103,8 +100,11 @@ export default function EventsPage() {
               onCreateEvent={handleCreateEvent}
             />
           )}
+
         </div>
       </div>
+
+     
     </AppLayout>
   );
 }
