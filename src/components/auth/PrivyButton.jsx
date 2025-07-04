@@ -12,6 +12,7 @@ export default function AuthButton() {
   const [error, setError] = useState(null);
   const router = useRouter();
 
+
   // Effect to handle token exchange after authentication
   useEffect(() => {
     const handleTokenExchange = async () => {

@@ -505,7 +505,6 @@ export default function EventCreationForm() {
               type="file"
               ref={fileInputRef}
               onChange={handleImageChange}
-              // value={eventImage}
               className="hidden"
               accept="image/*"
               aria-label="Upload event image"

@@ -1,6 +1,10 @@
 "use client";
-
+import API from "../../../services/api";
+import { use } from "react";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { eventIcon } from "../../../app/assets";
+import Image from "next/image";
 import {
   Calendar,
   Clock,
@@ -14,27 +18,41 @@ import {
   ExternalLink,
 } from "lucide-react";
 import Navbar from "../../../components/Navbar";
-// import { eventIcon } from "../../../app/assets/index";
 import DashboardTab from "@/components/DashboardTab";
+import EventDetails from "./EventDetails";
 
 export default function EventDashboard({ params }) {
+  const { slug } = use(params);
   const [activeTab, setActiveTab] = useState("overview");
   const [showAddHost, setShowAddHost] = useState(false);
   const [newHostEmail, setNewHostEmail] = useState("");
   const [newHostName, setNewHostName] = useState("");
   const [copySuccess, setCopySuccess] = useState(false);
+  const [ticketData, setTicketData] = useState(null);
+  const [event, setEvent] = useState(null);
 
-  // Mock event data - in real app, this would come from your database
-  const [eventData, setEventData] = useState({
-    id: "default-slug",
-    title: "BYRO LAUNCH",
-    date: "Tuesday, 28th April 2025",
-    time: "2:00 PM to 4:00 PM",
-    location: "Byro Headquarters",
-    city: "Lagos, Nigeria",
-    description: "Official launch event for Byro platform",
-    image: "/api/placeholder/400/300", // You'll replace this with actual image
-  });
+  const router = useRouter();
+
+  useEffect(() => {
+    async function fetchEvent() {
+      try {
+        const data = await API.getEvent(slug);
+        setEvent(data);
+      } catch (err) {
+        console.error("Error fetching event:", err);
+      }
+    }
+    if (slug) fetchEvent();
+  }, [slug]);
+
+  const handleViewEvent = async () => {
+    const viewEventLink = `${window.location.origin}/${event?.slug}`;
+    try {
+      window.open(viewEventLink, "_blank", "noopener,noreferrer");
+    } catch (err) {
+      console.error("Error opening event in new window:", err);
+    }
+  };
 
   const [hosts, setHosts] = useState([
     {
@@ -51,32 +69,11 @@ export default function EventDashboard({ params }) {
     },
     {
       id: 3,
-      name: "Samuel Okoro",
-      email: "Samoro@byro.com",
+      name: "Samuel Ajayi",
+      email: "Sam@byro.africa",
       role: "Event manager",
     },
   ]);
-
-  // Update eventData when params become available
-  useEffect(() => {
-    if (params?.slug) {
-      setEventData(prev => ({
-        ...prev,
-        id: params.slug
-      }));
-    }
-  }, [params?.slug]);
-
-  const handleCopyLink = async () => {
-    const eventLink = `${window.location.origin}/events/${eventData.id}`;
-    try {
-      await navigator.clipboard.writeText(eventLink);
-      setCopySuccess(true);
-      setTimeout(() => setCopySuccess(false), 2000);
-    } catch (err) {
-      console.error("Failed to copy link");
-    }
-  };
 
   const handleAddHost = () => {
     if (newHostName && newHostEmail) {
@@ -104,6 +101,8 @@ export default function EventDashboard({ params }) {
     { id: "reminder", label: "Reminder" },
   ];
 
+  console.log(ticketData);
+
   return (
     <div className="relative min-h-screen">
       {/* Background image and overlay */}
@@ -112,22 +111,24 @@ export default function EventDashboard({ params }) {
       <div className="relative">
         <Navbar />
 
-        <main className="bg-white w-[60%] mx-auto rounded-lg mt-10">
-          <div className="width-[50%]">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="flex justify-between items-center py-6">
-                <div className="flex items-center space-x-4">
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg px-10 py-5">
-                    <h1 className="text-2xl font-bold text-[#007AFF]">
-                      {eventData.title}
+        <main className="bg-white w-full sm:w-[85%] md:w-[75%] lg:w-[65%] xl:w-[55%] mx-auto rounded-lg mt-4 sm:mt-6 lg:mt-10 p-4 sm:p-6 lg:p-8">
+          {/* Header Section */}
+          <div className="w-full">
+            <div className="max-w-7xl mx-auto">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-4 sm:py-6 gap-4 sm:gap-0">
+                <div className="flex items-center space-x-4 w-full sm:w-auto">
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 sm:px-6 lg:px-10 py-3 sm:py-4 lg:py-5 w-full sm:w-auto">
+                    <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-[#007AFF] text-center sm:text-left">
+                      {event ? event.name : "Loading..."}
                     </h1>
                   </div>
                 </div>
-                <div className="flex items-center space-x-3">
-                  <button className="bg-blue-50 text-[#007AFF] px-4 py-2 rounded-2xl border-none hover:bg-blue-100 transition-colors flex items-center space-x-2">
-                    {/* <eventIcon className="w-4 h-4 text-[#007AFF]"/> */}
-
-                    <Calendar className="w-4 h-4" />
+                <div className="flex items-center space-x-3 w-full sm:w-auto justify-center sm:justify-end">
+                  <button
+                    onClick={handleViewEvent}
+                    className="bg-blue-50 text-[#007AFF] px-4 sm:px-6 py-3 sm:py-4 rounded-2xl border-none hover:bg-blue-100 transition-colors flex items-center space-x-3 text-sm sm:text-base lg:text-lg"
+                  >
+                    <eventIcon className="w-5 h-5 sm:w-6 sm:h-6" />
                     <span>Event Page</span>
                   </button>
                 </div>
@@ -135,8 +136,14 @@ export default function EventDashboard({ params }) {
             </div>
           </div>
 
+          {/* Dashboard Tabs */}
           <div>
             <DashboardTab />
+          </div>
+
+          {/* Event Details Section */}
+          <div className="mt-6 sm:mt-8">
+            <EventDetails params={params} />
           </div>
         </main>
       </div>

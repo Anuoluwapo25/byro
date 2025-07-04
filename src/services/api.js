@@ -142,7 +142,7 @@ const API = {
   getPrivyToken: async (accessToken) => {
     try {
       const response = await axiosInstance.post("/auth/privy/", { 
-        code: accessToken 
+        accessToken: accessToken 
       }, {
         headers: {
           'Content-Type': 'application/json',
@@ -163,7 +163,7 @@ const API = {
   getIdToken: async (identityToken) => {
     try{
       const response = await axiosInstance.post ('/auth/privy/', {
-        code: identityToken
+        identityToken: identityToken
       }, {
         headers: {
           'Content-Type': 'application/json',

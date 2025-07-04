@@ -1,10 +1,12 @@
 'use client';
 
 import { PrivyProvider } from '@privy-io/react-auth';
+
 import { ReactNode } from 'react';
 
 
 export default function AuthProvider({ children }: { children: ReactNode }) {
+
   const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
   const clientId = process.env.NEXT_PUBLIC_PRIVY_CLIENT_ID
 
@@ -22,6 +24,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
         embeddedWallets: {
           createOnLogin: 'users-without-wallets'
         }
+
       }}
     >
       {children}
