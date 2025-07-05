@@ -1,10 +1,8 @@
 "use client";
 import API from "../../../services/api";
-import { use } from "react";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { eventIcon } from "../../../app/assets";
-import Image from "next/image";
 import {
   Calendar,
   Clock,
@@ -20,18 +18,31 @@ import {
 import Navbar from "../../../components/Navbar";
 import DashboardTab from "@/components/DashboardTab";
 import EventDetails from "./EventDetails";
+import Payout from "./Payout";
+import Attendees from "./Attendees"
+import Image from "next/image";
 
-export default function EventDashboard({ params }) {
-  const { slug } = use(params);
+export default function EventDashboard() {
+  const params = useParams();
+  const { slug } = params;
   const [activeTab, setActiveTab] = useState("overview");
-  const [showAddHost, setShowAddHost] = useState(false);
-  const [newHostEmail, setNewHostEmail] = useState("");
-  const [newHostName, setNewHostName] = useState("");
   const [copySuccess, setCopySuccess] = useState(false);
   const [ticketData, setTicketData] = useState(null);
   const [event, setEvent] = useState(null);
+  const [activePage, setActivePage] = useState("overview");
 
   const router = useRouter();
+
+  let content;
+  if (activePage === "overview") {
+    content = <EventDetails />;
+  } else if (activePage === "payout") {
+    content = <Payout />;
+  } else if (activePage === "attendees"){
+    content = <Attendees />;
+  } else {
+
+  }
 
   useEffect(() => {
     async function fetchEvent() {
@@ -54,45 +65,7 @@ export default function EventDashboard({ params }) {
     }
   };
 
-  const [hosts, setHosts] = useState([
-    {
-      id: 1,
-      name: "Francis David",
-      email: "disual0@byro.com",
-      role: "Creator",
-    },
-    {
-      id: 2,
-      name: "Robert Okechukwu",
-      email: "roke@byro.com",
-      role: "Host",
-    },
-    {
-      id: 3,
-      name: "Samuel Ajayi",
-      email: "Sam@byro.africa",
-      role: "Event manager",
-    },
-  ]);
-
-  const handleAddHost = () => {
-    if (newHostName && newHostEmail) {
-      const newHost = {
-        id: hosts.length + 1,
-        name: newHostName,
-        email: newHostEmail,
-        role: "Host",
-      };
-      setHosts([...hosts, newHost]);
-      setNewHostName("");
-      setNewHostEmail("");
-      setShowAddHost(false);
-    }
-  };
-
-  const handleRemoveHost = (hostId) => {
-    setHosts(hosts.filter((host) => host.id !== hostId));
-  };
+  
 
   const tabs = [
     { id: "overview", label: "Overview" },
@@ -105,7 +78,8 @@ export default function EventDashboard({ params }) {
 
   return (
     <div className="relative min-h-screen">
-      {/* Background image and overlay */}
+      
+
       <div className="absolute inset-0 bg-main-section bg-fixed bg-cover bg-center bg-no-repeat z-0" />
       <div className="absolute inset-0 bg-gray-50 z-0 opacity-70" />
       <div className="relative">
@@ -128,7 +102,11 @@ export default function EventDashboard({ params }) {
                     onClick={handleViewEvent}
                     className="bg-blue-50 text-[#007AFF] px-4 sm:px-6 py-3 sm:py-4 rounded-2xl border-none hover:bg-blue-100 transition-colors flex items-center space-x-3 text-sm sm:text-base lg:text-lg"
                   >
-                    <eventIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+                    <Image
+                      src={eventIcon}
+                      alt="Event Icon"
+                      className="w-5 h-5 sm:w-6 sm:h-6"
+                    />
                     <span>Event Page</span>
                   </button>
                 </div>
@@ -138,13 +116,12 @@ export default function EventDashboard({ params }) {
 
           {/* Dashboard Tabs */}
           <div>
-            <DashboardTab />
+            <DashboardTab onNavigate={setActivePage} active={activePage} />
           </div>
 
           {/* Event Details Section */}
-          <div className="mt-6 sm:mt-8">
-            <EventDetails params={params} />
-          </div>
+
+          <div>{content}</div>
         </main>
       </div>
     </div>
