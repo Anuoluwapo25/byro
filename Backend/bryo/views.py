@@ -14,7 +14,10 @@ from .utils import privy_auth
 from django.utils.text import slugify
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
-from django.contrib.auth import login
+from django.http import JsonResponse
+from django.contrib.auth import authenticate, login
+from django.contrib.auth.decorators import login_required
+from .services.privy_auth import PrivyAuthService
 from .models import PrivyUser, WaitList, Event, PaymentSettings, Ticket, TicketTransfer
 # from django.core.mail import send_mail
 from django.urls import reverse
@@ -24,7 +27,7 @@ from django.db.models import Q
 import os
 import uuid
 import requests
-import os
+import json
 import logging
 
 logger = logging.getLogger(__name__)
@@ -163,24 +166,13 @@ def drf_protected_view(request):
     return Response({"user_id": request.user.privy_id})
 
 
-# views.py
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth import authenticate, login
-from django.contrib.auth.decorators import login_required
-from .services.privy_auth import PrivyAuthService
 
-import json
-import logging
-
-logger = logging.getLogger(__name__)
 
 @csrf_exempt
 def privy_login(request):
     if request.method == 'POST':
         token = None
         
-        # Get token from Authorization header
         auth_header = request.META.get('HTTP_AUTHORIZATION', '')
         print(f"Authorization header: {auth_header}")
         
@@ -188,7 +180,6 @@ def privy_login(request):
             token = auth_header.split(' ')[1]
             print(f"Extracted token: {token[:50]}...")  # Print first 50 chars for debugging
         
-        # Fallback: try to get from request body if not in header
         if not token and request.body:
             try:
                 data = json.loads(request.body)

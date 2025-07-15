@@ -1,4 +1,3 @@
-# authentication.py
 from django.contrib.auth.backends import BaseBackend
 from django.contrib.auth.models import User
 from .services.privy_auth import PrivyAuthService
@@ -12,33 +11,30 @@ class PrivyAuthenticationBackend(BaseBackend):
         if not decoded_token:
             return None
         
-        privy_user_id = decoded_token.get('sub')  
+        print("=== IDENTITY TOKEN DEBUG ===")
+        print(f"Full decoded token: {decoded_token}")
+        print("=== END DEBUG ===")
+        
+        privy_user_id = decoded_token.get('sub')
         
         if not privy_user_id:
             return None
         
-        user_data = PrivyAuthService.get_user_data(privy_user_id)
-        
         email = ''
         name = ''
         
-        if user_data:
-            print(f"User data from API: {user_data}")
-            if 'linked_accounts' in user_data:
-                for account in user_data.get('linked_accounts', []):
-                    if account.get('type') == 'email' and account.get('address'):
-                        email = account['address']
-                        break
-            
-            email = email or user_data.get('email') or user_data.get('email_address') or ''
-            name = user_data.get('name') or user_data.get('display_name') or ''
+        linked_accounts = decoded_token.get('linked_accounts', [])
+        for account in linked_accounts:
+            if account.get('type') == 'email':
+                email = account.get('address', '')
+                break
         
         if not email:
-            email = decoded_token.get('email') or ''
-        if not name:
-            name = decoded_token.get('name') or ''
+            email = decoded_token.get('email', '')
         
-        print(f"Final extracted - ID: {privy_user_id}, Email: {email}, Name: {name}")
+        name = decoded_token.get('name', '')
+        
+        print(f"Extracted - ID: {privy_user_id}, Email: {email}, Name: {name}")
         
         try:
             user = User.objects.get(username=privy_user_id)
