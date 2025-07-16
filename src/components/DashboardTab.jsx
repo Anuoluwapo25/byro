@@ -11,7 +11,7 @@ const DashboardTab = ({ onNavigate, active }) => {
       ];
   return (
     <div className="w-full rounded-md flex py-4 bg-white">
-      <nav className="flex space-x-8 bg-gray-200 rounded-lg px-4 py-2 shadow-sm mx-auto">
+      <nav className="flex space-x-8 bg-gray-100 rounded-lg px-2 py-2 shadow-sm mx-auto overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-gray-100 scrollbar-track-gray-50">
         {tabs.map((tab) => (
           <button
             key={tab.id}
