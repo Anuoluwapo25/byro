@@ -1,4 +1,3 @@
-# bryo/services/privy_auth.py or authentication.py
 import jwt
 import requests
 from django.conf import settings
