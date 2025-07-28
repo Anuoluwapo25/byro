@@ -1,17 +1,43 @@
-import { usePrivy, useIdentityToken } from "@privy-io/react-auth";
+import { usePrivy, useIdentityToken, useLogin } from "@privy-io/react-auth";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import API from "../../services/api";
 import SignupButton from "../SignupButton";
 
-
 export default function AuthButton() {
-  const { ready, authenticated, user, login, getAccessToken, logout, getIdToken } = usePrivy();
+  const { ready, authenticated, user, getAccessToken, logout, getIdToken } =
+    usePrivy();
   const { identityToken } = useIdentityToken();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const router = useRouter();
+  const { login } = useLogin({
+    onComplete: async ({ user }) => {
+      console.log("Logged in user:", user);
 
+      try {
+        const response = await fetch("/auth/privy", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: user.email,
+            id: user.id,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to send user info to backend");
+        }
+
+        const data = await response.json();
+        console.log("Backend response:", data);
+      } catch (error) {
+        console.error("Error sending user email to backend:", error);
+      }
+    },
+  });
 
   // Effect to handle token exchange after authentication
   useEffect(() => {
@@ -22,7 +48,7 @@ export default function AuthButton() {
         console.log("Starting token exchange...");
         setLoading(true);
         setError(null);
-        
+
         // Get access token from Privy
         console.log("Getting access token from Privy...");
         const accessToken = await getAccessToken();
@@ -77,12 +103,12 @@ export default function AuthButton() {
       console.log("Privy not ready yet");
       return;
     }
-    
+
     try {
       console.log("Starting signup process...");
       setLoading(true);
       setError(null);
-      
+
       console.log("Calling Privy login...");
       await login();
       console.log("Privy login completed");
@@ -134,7 +160,7 @@ export default function AuthButton() {
         showAddress={true}
         showEmail={true}
         truncateAddress={true}
-        text={ "Logout"}
+        text={"Logout"}
       />
     );
   }
