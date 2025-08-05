@@ -6,7 +6,7 @@ import Image from "next/image";
 import { Ticket } from "lucide-react";
 import RegisterModal from "../../components/auth/RegisterModal";
 import API from "../../services/api";
-import { toast } from "react-toastify";
+import { toast } from "sonner";
 
 const ViewEvent = () => {
   const { slug } = useParams();

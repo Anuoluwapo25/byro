@@ -3,7 +3,7 @@ import { eventFrame, globeTime, publicSymbol } from "../../app/assets";
 import Image from "next/image";
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "react-toastify";
+import { toast } from "sonner";
 import API from "../../services/api";
 
 export default function EventCreationForm() {

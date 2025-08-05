@@ -23,6 +23,11 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
         // Create embedded wallets for users who don't have a wallet
         embeddedWallets: {
           createOnLogin: 'users-without-wallets'
+        },
+        appearance: {
+          // theme: 'light',
+          // accentColor: '#FF6600', 
+          logo: '/assets/logo.svg',
         }
 
       }}

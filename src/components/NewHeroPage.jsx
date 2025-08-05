@@ -5,8 +5,8 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { ManSeating } from "../app/assets/index"; 
 import API from "../services/api";
-import { toast } from "react-toastify";
-import Link from "next/link"; 
+import { toast } from "sonner";
+// import Link from "next/link"; 
 
 const NewHeroPage = () => {
   const [email, setEmail] = useState("");
