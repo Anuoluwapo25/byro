@@ -1,16 +1,18 @@
 import React, { useState } from "react";
+import { toast } from "sonner";
 
 const Payout = () => {
   const [payoutMethod, setPayoutMethod] = useState("bank");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     // Bank details
     accountName: "",
     accountNumber: "",
     bankName: "",
 
-    // Wallet details
+    
     walletAddress: "",
-    walletType: "ethereum", // 'ethereum', 'polygon', 'bsc', etc.
+    walletType: "ethereum",
 
     // Common
     email: "",
@@ -77,7 +79,7 @@ const Payout = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (validateForm()) {
@@ -87,10 +89,39 @@ const Payout = () => {
         ...formData,
       });
 
-      // Here you would typically send the data to your backend
-      alert("Payout request submitted successfully!");
+      const emailResponse = await fetch("/api/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json"},
+        body: JSON.stringify({
+          emails: [
+            {
+              type:"payout",
+              to: formData.email,
+              data: {
+             name: formData.accountName || "User", // Use account name or fallback
+                  amount: formData.amount,
+                  method: payoutMethod,
+                   // Add more payout details as needed
+                  ...(payoutMethod === "bank" && {
+                    accountNumber: formData.accountNumber,
+                    bankName: formData.bankName,
+                  }),
+                  ...(payoutMethod === "wallet" && {
+                    walletAddress: formData.walletAddress,
+                    walletType: formData.walletType,
+                  }),
+              }
+            }
+          ]
+        })
+      })
+      if (emailResponse.ok) {
+     toast.success("Payout request submitted successfully! You'll receive a confirmation email.");
+    } else {
+      toast.error("Failed to submit payout request.");
     }
   };
+}
 
   return (
     <div className="max-w-md mx-auto bg-white rounded-lg  p-6">
@@ -143,7 +174,7 @@ const Payout = () => {
                 name="accountNumber"
                 value={formData.accountNumber}
                 onChange={handleInputChange}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none text-black focus:ring-2 focus:ring-blue-500 ${
                   errors.accountNumber ? "border-red-500" : "border-gray-300"
                 }`}
                 placeholder="Enter account number"
@@ -164,7 +195,7 @@ const Payout = () => {
                 name="bankName"
                 value={formData.bankName}
                 onChange={handleInputChange}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                className={`w-full px-3 py-2 border rounded-md text-black focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                   errors.bankName ? "border-red-500" : "border-gray-300"
                 }`}
                 placeholder="Enter bank name"
@@ -183,7 +214,7 @@ const Payout = () => {
                 name="accountName"
                 value={formData.accountName}
                 onChange={handleInputChange}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                className={`w-full px-3 py-2 border text-black rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                   errors.accountName ? "border-red-500" : "border-gray-300"
                 }`}
                 placeholder="Enter account holder name"
@@ -253,7 +284,7 @@ const Payout = () => {
               name="email"
               value={formData.email}
               onChange={handleInputChange}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              className={`w-full px-3 py-2 border rounded-md text-black focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                 errors.email ? "border-red-500" : "border-gray-300"
               }`}
               placeholder="jondoe@email.com"
@@ -272,7 +303,7 @@ const Payout = () => {
               name="amount"
               value={formData.amount}
               onChange={handleInputChange}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              className={`w-full px-3 py-2 text-black border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                 errors.amount ? "border-red-500" : "border-gray-300"
               }`}
               placeholder="0.00"
@@ -288,9 +319,14 @@ const Payout = () => {
        
         <button
           type="submit"
-          className="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-        >
-          Submit Payout Request
+          disabled={isSubmitting}
+          className={`w-full py-3 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors ${
+          isSubmitting 
+            ? "bg-gray-400 cursor-not-allowed" 
+            : "bg-blue-600 hover:bg-blue-700"
+        } text-white`}
+      >
+         {isSubmitting ? "Submitting..." : "Request Payout"}
         </button>
       </form>
 
@@ -301,4 +337,4 @@ const Payout = () => {
   );
 };
 
-export default Payout;
+export default Payout

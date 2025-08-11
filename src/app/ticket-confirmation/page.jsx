@@ -7,7 +7,6 @@ import Image from "next/image";
 import { introduce } from "../../app/assets/index";
 
 
-// Separate component that uses useSearchParams
 function TicketConfirmationContent() {
   const searchParams = useSearchParams();
   const [ticketData, setTicketData] = useState(null);
