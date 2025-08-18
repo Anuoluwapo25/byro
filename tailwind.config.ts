@@ -21,6 +21,16 @@ export default {
         background: "var(--background)",
         foreground: "var(--foreground)",
       },
+      backgroundImage: {
+        'main-section': "url('/assets/mainsection.png')",
+      },
+      float: {
+          '0%, 100%': { transform: 'translateY(0px)' },
+          '50%': { transform: 'translateY(-10px)' }, // Moves up by 10px
+        },
+        animation: {
+        float: 'float 3s ease-in-out infinite', // Apply the float keyframe over 3 seconds, ease-in-out, infinite
+      }
     },
   },
   plugins: [],

@@ -3,23 +3,34 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "next dev --turbopack",
+    "build": "ANALYZE=true next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "analyze": "ANALYZE=true next build"
   },
   "dependencies": {
-    "@coinbase/onchainkit": "^0.38.8",
-    "@privy-io/react-auth": "^2.12.0",
-    "next": "^15.3.1",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "@hookform/resolvers": "^5.0.1",
+    "@privy-io/react-auth": "^2.13.5",
+    "axios": "^1.9.0",
+    "lucide-react": "^0.508.0",
+    "next": "^15.3.3",
+    "nodemailer": "^7.0.5",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-hook-form": "^7.56.2",
+    "react-icons": "^5.5.0",
+    "react-toastify": "^11.0.5",
+    "sonner": "^2.0.7",
+    "yup": "^1.6.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@next/bundle-analyzer": "^15.3.2",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "depcheck": "^1.4.7",
     "eslint": "^9",
     "eslint-config-next": "15.1.7",
     "postcss": "^8",
