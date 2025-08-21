@@ -4,7 +4,8 @@ import { useState } from "react";
 
 // Event type definition
 const EventType = {
-  ONLINE: "ONLINE EVENT",
+  ONLINE: "VIRTUAL",
+  OFFLINE: "IN-PERSON",
 };
 
 // Sample event data

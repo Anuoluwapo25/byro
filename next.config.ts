@@ -7,6 +7,20 @@ const withAnalyzer = withBundleAnalyzer({
 
 const nextConfig: NextConfig = {
   turbopack: {},
+  images: {
+    domains: [
+      'byro.onrender.com',
+      'localhost',
+     'byro.africa'
+    ],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'byro.onrender.com',
+        pathname: '/**',
+      },
+    ],
+  },
 }
 
 export default withAnalyzer(nextConfig)
