@@ -2,7 +2,7 @@
 import API from "../../../services/api";
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { eventIcon } from "../../../app/assets";
+import { eventIcon } from "../../assets";
 import {
   Calendar,
   Clock,

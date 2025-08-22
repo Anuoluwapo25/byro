@@ -1,45 +1,126 @@
 // components/EventCard.jsx
-import { eventImage } from "../../app/assets/index";
+import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import React from "react";
 
 const EventCard = ({ event }) => {
+  const [imageError, setImageError] = useState(false);
+
+  // Extract event data
+  const eventId = event.id || event._id;
+  const eventTitle = event.title || event.name;
+  const eventDate = event.date || event.startDate || event.eventDate;
+  const eventLocation = event.location || event.venue;
+  const eventHost = event.host || event.organizer || "Host Name";
+  const eventPrice = event.price || event.ticketPrice || 0;
+  const isFree = event.isFree || eventPrice === 0;
+  const eventSlug = event.slug || eventId;
+  const eventType = event.eventType || event.type || "ONLINE EVENT";
+
+  // Get image URL
+  const getImageUrl = () => {
+    const imageField = event.image || event.imageUrl || event.banner;
+
+    if (!imageField || imageError) {
+      return "/assets/images/default-event.jpg";
+    }
+
+    if (imageField.startsWith("http")) {
+      return imageField;
+    }
+
+    const baseURL = process.env.NEXT_PUBLIC_API_URL || "https://byro.onrender.com/";
+    return `${baseURL.replace("/api/", "")}${imageField}`;
+  };
+
+  // Format date
+  const formatDate = (dateString) => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString("en-US", {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {
+      return dateString;
+    }
+  };
+
   return (
-    <div className="bg-white rounded-lg overflow-hidden shadow-md">
-      <div className="relative p-3">
-        <div className="h-48 bg-gray-200 overflow-hidden">
-          {/* Using a placeholder image since we can't load external images */}
-          {/* <img
-            src="/api/placeholder/400/320"
-            alt={event.title}
-            className="w-full h-full object-cover"
-          /> */}
+    <Link href={ `/${eventSlug}`} className="block group">
+      <div className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100">
+        {/* Event Image */}
+        <div className="relative h-48 w-full overflow-hidden">
           <Image
-            src={eventImage}
-            alt={event.title}
-            className="w-full h-full object-cover rounded-md"
+            src={getImageUrl()}
+            alt={eventTitle}
+            fill
+            className="object-cover group-hover:scale-105 transition-transform duration-300"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            onError={() => setImageError(true)}
           />
+
+          {/* FREE Badge */}
+          <div className="absolute top-3 left-3">
+            <span className="bg-white/90 backdrop-blur-sm text-blue-600 px-3 py-1 rounded-full text-xs font-semibold">
+              {isFree ? "FREE" : `$${eventPrice}`}
+            </span>
+          </div>
         </div>
-        {event.isFree && (
-          <span className="absolute top-5 left-5 bg-white text-xs text-[#007AFF] font-semibold px-2 py-1 rounded">
-            FREE
-          </span>
-        )}
-      </div>
-      <div className="p-4">
-        <Link
-          href="/events/viewevent/[id]"
-          as={`/events/viewevent/${event.id}`}
-        >
-          <h3 className="font-medium text-sm">{event.title}</h3>
-          <p className="text-blue-500 text-xs mt-1">{event.date}</p>
-          <p className="text-gray-500 text-xs mt-2">
-            {event.type} - {event.host}
+
+        {/* Event Content */}
+        <div className="p-5">
+          {/* Event Title */}
+          <h3 className="font-semibold text-gray-900 text-lg mb-3 line-clamp-2 group-hover:text-blue-600 transition-colors">
+            {eventTitle}
+          </h3>
+
+          {/* Event Date */}
+          <p className="text-blue-600 text-sm font-medium mb-4">
+            {formatDate(eventDate)}
           </p>
-        </Link>
+
+          {/* Action Buttons Row */}
+          <div className="flex items-center justify-between">
+           
+            {event.isUserHost ? (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  // Handle manage event
+                }}
+                className="bg-blue-50 text-blue-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors"
+              >
+                Manage Event
+              </button>
+            ) : (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  // Handle going to event
+                }}
+                className="bg-blue-50 text-blue-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors"
+              >
+                Going
+              </button>
+            )}
+
+        
+            <div className="text-right">
+              <p className="text-xs text-gray-500 uppercase tracking-wide font-medium mb-1">
+                {eventType}
+              </p>
+              <p className="text-sm text-gray-600">
+                {event.isUserHost ? "You hosted this event" : eventHost}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
+    </Link>
   );
 };
 

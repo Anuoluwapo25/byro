@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Trash2, Edit3 } from "lucide-react";
-import { going, notGoing, waitlist } from "../../../app/assets/index";
+import { going, notGoing, waitlist } from "../../assets/index";
 import Image from "next/image";
 
 const Attendees = () => {

@@ -1,7 +1,7 @@
 import API from "../../../services/api";
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import { Schedule, Location } from "../../../app/assets";
+import { Schedule, Location } from "../../assets";
 import Image from "next/image";
 import { Link, ExternalLink, Edit3, Plus, Trash2 } from "lucide-react";
 
