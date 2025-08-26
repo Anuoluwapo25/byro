@@ -5,9 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import PrivyButton from "./auth/PrivyButton";
-import { usePrivy } from '@privy-io/react-auth';
-
-
+import { usePrivy } from "@privy-io/react-auth";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -17,7 +15,7 @@ const Navbar = () => {
   const router = useRouter();
 
   useEffect(() => {
-    if (ready && authenticated){
+    if (ready && authenticated) {
       router.push("/events");
     }
   }, [ready, authenticated, router]);
@@ -66,12 +64,11 @@ const Navbar = () => {
 
   return (
     <nav
-      className="bg-none white text-white py-4 shadow-md
+      className="bg-white text-white py-4 shadow-md
                     sticky top-0 left-0 w-full z-50
                     lg:static lg:shadow-none "
     >
-      <div className="">
-
+      <div className="hidden lg:block">
         {ready && !authenticated && (
           <div className="container mx-auto px-4 flex items-center justify-between">
             <div>
@@ -89,8 +86,6 @@ const Navbar = () => {
               {/* Conditional rendering for desktop search */}
               {!isDesktopSearchOpen ? (
                 <>
-
-                  
                   <div
                     className="flex items-center space-x-2 cursor-pointer rounded-full py-2 px-4 hover:text-white transition-colors"
                     onClick={handleDesktopSearchClick}
@@ -137,15 +132,11 @@ const Navbar = () => {
               )}
             </div>
 
-
-            <PrivyButton
-            />
-
+            <PrivyButton />
           </div>
         )}
 
         {ready && authenticated && (
-
           <div className="container mx-auto px-4 flex items-center justify-between">
             <div>
               <Link href="/">
@@ -162,7 +153,6 @@ const Navbar = () => {
               {/* Conditional rendering for desktop search */}
               {!isDesktopSearchOpen ? (
                 <>
-
                   <>
                     <div className="flex items-center space-x-2 cursor-pointer py-2 px-4 transition-colors">
                       <Link href="/events" className="text-gray-400">
@@ -177,8 +167,6 @@ const Navbar = () => {
                       />
                     </div>
                   </>
-
-
 
                   <div
                     className="flex items-center space-x-2 cursor-pointer rounded-full py-2 px-4 hover:text-white transition-colors"
@@ -227,8 +215,6 @@ const Navbar = () => {
             </div>
 
             <div className="hidden lg:flex">
-
-
               <div className="flex items-center space-x-2 cursor-pointer py-2 px-4 ">
                 <Link
                   href="/events/create"
@@ -238,77 +224,54 @@ const Navbar = () => {
                 </Link>
               </div>
 
-
-
-              <PrivyButton
-              />
+              <PrivyButton />
             </div>
           </div>
-
         )}
-
-
-
-        {/* Mobile Navigation (flex items for mobile) */}
-        <div className="flex items-center space-x-4 justify-between lg:hidden">
-          <div className="block">
-            <PrivyButton
-           
-            />
-          </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-          {/* Mobile Menu Button*/}
-          <button
-            aria-label="hamburger-menu"
-            onClick={toggleMenu}
-            className="text-black focus:outline-none"
-          >
-            <svg
-              className="w-8 h-8"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              {isMenuOpen ? (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M6 18L18 6M6 6l12 12"
-                ></path>
-              ) : (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M4 6h16M4 12h16m-7 6h7"
-                ></path>
-              )}
-            </svg>
-          </button>
+      </div>
+      {/* Mobile Navigation (flex items for mobile) */}
+      <div className="flex items-center space-x-4 justify-between px-4 lg:hidden">
+        <div className="block">
+          <PrivyButton />
         </div>
+
+        {/* Mobile Menu Button*/}
+        <button
+          aria-label="hamburger-menu"
+          onClick={toggleMenu}
+          className="text-black focus:outline-none"
+        >
+          <svg
+            className="w-8 h-8"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            {isMenuOpen ? (
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M6 18L18 6M6 6l12 12"
+              ></path>
+            ) : (
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M4 6h16M4 12h16m-7 6h7"
+              ></path>
+            )}
+          </svg>
+        </button>
       </div>
 
       {/* MObile Menu */}
       <div
-        className={`lg:hidden overflow-hidden transition-all duration-300 ease-in-out ${isMenuOpen ? "max-h-screen opacity-100 py-4" : "max-h-0 opacity-0"
-          }`}
+        className={`lg:hidden overflow-hidden transition-all duration-300 ease-in-out ${
+          isMenuOpen ? "max-h-screen opacity-100 py-4" : "max-h-0 opacity-0"
+        }`}
       >
         <div className="flex flex-col items-center space-y-4 px-4">
           {/* Conditional rendering for mobile search */}

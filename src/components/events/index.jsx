@@ -175,7 +175,7 @@ export default function Events() {
         <EmptyState onCreateEvent={handleCreateEvent} />
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+          <div className="h-fit grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
             {(activeTab === "upcoming" ? upcomingEvents : pastEvents).map(
               (event) => (
                 <EventCard key={event.id} event={event} />

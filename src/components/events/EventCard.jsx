@@ -19,7 +19,8 @@ const EventCard = ({ event }) => {
 
   // Get image URL
   const getImageUrl = () => {
-    const imageField = event.image || event.imageUrl || event.banner;
+    const imageField = event.image || event.event_image || event.banner;
+    console.log("Image field", event?.event_image);
 
     if (!imageField || imageError) {
       return "/assets/images/default-event.jpg";
@@ -29,7 +30,8 @@ const EventCard = ({ event }) => {
       return imageField;
     }
 
-    const baseURL = process.env.NEXT_PUBLIC_API_URL || "https://byro.onrender.com/";
+    const baseURL =
+      process.env.NEXT_PUBLIC_API_URL || "https://byro.onrender.com/";
     return `${baseURL.replace("/api/", "")}${imageField}`;
   };
 
@@ -50,7 +52,7 @@ const EventCard = ({ event }) => {
   };
 
   return (
-    <Link href={ `/${eventSlug}`} className="block group">
+    <Link href={`/${eventSlug}`} className="block group">
       <div className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100">
         {/* Event Image */}
         <div className="relative h-48 w-full overflow-hidden">
@@ -85,7 +87,6 @@ const EventCard = ({ event }) => {
 
           {/* Action Buttons Row */}
           <div className="flex items-center justify-between">
-           
             {event.isUserHost ? (
               <button
                 onClick={(e) => {
@@ -108,7 +109,6 @@ const EventCard = ({ event }) => {
               </button>
             )}
 
-        
             <div className="text-right">
               <p className="text-xs text-gray-500 uppercase tracking-wide font-medium mb-1">
                 {eventType}

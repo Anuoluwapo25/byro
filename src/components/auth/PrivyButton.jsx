@@ -11,6 +11,7 @@ export default function AuthButton() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const router = useRouter();
+
   const { login } = useLogin({
     onComplete: async ({ user }) => {
       console.log("Logged in user:", user);
@@ -96,7 +97,7 @@ export default function AuthButton() {
     if (authenticated && user) {
       handleTokenExchange();
     }
-  }, [authenticated, user, getAccessToken, router]);
+  }, [authenticated, user, getAccessToken]);
 
   const handleSignup = async () => {
     if (!ready) {
@@ -165,12 +166,5 @@ export default function AuthButton() {
     );
   }
 
-  return (
-    <SignupButton
-      onClick={handleSignup}
-      disabled={loading || !ready}
-      loading={loading}
-      text={loading ? "Signing in..." : "Sign In"}
-    />
-  );
+  return <SignupButton onClick={handleSignup} text={"Sign In"} />;
 }
