@@ -55,7 +55,7 @@ const EventCard = ({ event }) => {
         {/* Event Image */}
         <div className="relative h-48 w-full overflow-hidden">
           <Image
-            src={event.event_imahe}
+            src={event.event_image}
             alt={eventTitle}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-300"
