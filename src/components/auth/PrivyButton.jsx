@@ -32,71 +32,70 @@ export default function AuthButton() {
         }
 
         const data = await response.json();
-        console.log("Backend response:", data);
+        // console.log("Backend response:", data);
       } catch (error) {
         console.error("Error sending user email to backend:", error);
       }
     },
   });
 
-  
-  useEffect(() => {
-    const handleTokenExchange = async () => {
-      if (!authenticated || !user) return;
+  // useEffect(() => {
+  //   const handleTokenExchange = async () => {
+  //     if (!authenticated || !user) return;
 
-      try {
-        console.log("Starting token exchange...");
-        setLoading(true);
-        setError(null);
+  //     try {
+  //       console.log("Starting token exchange...");
+  //       setLoading(true);
+  //       setError(null);
 
-        // Get access token from Privy
-        console.log("Getting access token from Privy...");
-        const accessToken = await getAccessToken();
+  //       // Get access token from Privy
+  //       console.log("Getting access token from Privy...");
+  //       const accessToken = await getAccessToken();
 
-        if (!accessToken) {
-          throw new Error("Failed to get access token from Privy");
-        }
-        if (!identityToken) {
-          throw new Error("Failed to get identity token from Privy");
-        }
-        console.log("Got access and identity tokens from Privy", { accessToken, identityToken });
+  //       if (!accessToken) {
+  //         throw new Error("Failed to get access token from Privy");
+  //       }
+  //       if (!identityToken) {
+  //         throw new Error("Failed to get identity token from Privy");
+  //       }
+  //       console.log("Got access and identity tokens from Privy", { accessToken, identityToken });
 
-        // Send both tokens to backend
-        const accessTokenResponse = await API.getPrivyToken(accessToken);
-        const identityTokenResponse = await API.getIdToken(identityToken);
+  //       // Send both tokens to backend
+  //       const accessTokenResponse = await API.getPrivyToken(accessToken);
+  //       const identityTokenResponse = await API.getIdToken(identityToken);
 
-        console.log("Backend access token response:", accessTokenResponse);
-        console.log("Backend identity token response:", identityTokenResponse);
+  //       console.log("Backend access token response:", accessTokenResponse);
+  //       console.log("Backend identity token response:", identityTokenResponse);
 
-        // Use the identity token's backend response for auth
-        if (identityTokenResponse?.token) {
-          localStorage.setItem("accessToken", identityTokenResponse.token); // Use identity token's backend response as main token
-          API.setAuthToken(identityTokenResponse.token);
-          // Optionally, store the access token response separately if you want
-          localStorage.setItem("privyAccessToken", accessTokenResponse.token);
-          console.log("Token exchange successful, redirecting to events...");
-          router.push("/events");
-        } else {
-          throw new Error("Invalid token response from backend");
-        }
-      } catch (err) {
-        console.error("Authentication error:", err);
-        setError(err.message || "Authentication failed");
-        // Don't logout on token exchange failure
-        // Just clean up the local storage
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("identityToken");
-        API.setAuthToken(null);
-      } finally {
-        setLoading(false);
-      }
-    };
+  //       // Use the identity token's backend response for auth
+  //       if (identityTokenResponse?.token) {
+  //         localStorage.setItem("accessToken", identityTokenResponse.token); // Use identity token's backend response as main token
+  //         API.setAuthToken(identityTokenResponse.token);
+  //         // Optionally, store the access token response separately if you want
+  //         localStorage.setItem("privyAccessToken", accessTokenResponse.token);
+  //         console.log("Token exchange successful, redirecting to events...");
+  //         router.push("/events");
+  //       } else {
+  //         throw new Error("Invalid token response from backend");
+  //       }
+  //     } catch (err) {
+  //       console.error("Authentication error:", err);
+  //       setError(err.message || "Authentication failed");
+  //       // Don't logout on token exchange failure
+  //       // Just clean up the local storage
+  //       localStorage.removeItem("accessToken");
+  //       localStorage.removeItem("identityToken");
+  //       API.setAuthToken(null);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
 
-    // Only run token exchange if we have a user and are authenticated
-    if (authenticated && user) {
-      handleTokenExchange();
-    }
-  }, [authenticated, user, getAccessToken, router]);
+  //   // Only run token exchange if we have a user and are authenticated
+  //   if (authenticated && user) {
+  //     handleTokenExchange();
+  //   }
+  // }, [authenticated, user, getAccessToken, router]);
 
   const handleSignup = async () => {
     if (!ready) {
@@ -105,14 +104,13 @@ export default function AuthButton() {
     }
 
     try {
-      console.log("Starting signup process...");
+  
       setLoading(true);
       setError(null);
 
-      console.log("Calling Privy login...");
+     
       await login();
       console.log("Privy login completed");
-      // The useEffect will handle the token exchange after authentication
     } catch (err) {
       console.error("Login error:", err);
       setError(err.message || "Login failed");
@@ -125,12 +123,11 @@ export default function AuthButton() {
       setLoading(true);
       setError(null);
       // Clear local storage and API token
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("identityToken");
+      localStorage.removeItem(user);
       API.setAuthToken(null);
       // Call Privy logout
       await logout();
-      // Redirect to home page after logout
+
       router.push("/");
     } catch (err) {
       console.error("Logout error:", err);
@@ -142,10 +139,10 @@ export default function AuthButton() {
 
   // Check if we already have a token
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
+    const token = localStorage.getItem(user);
     if (token) {
       API.setAuthToken(token);
-      console.log("Token set from localStorage");
+      console.log("User set from localStorage");
     }
   }, []);
 
@@ -165,11 +162,5 @@ export default function AuthButton() {
     );
   }
 
-  return (
-    <SignupButton
-      onClick={handleSignup}
-    
-      text={"Sign In"}
-    />
-  );
+  return <SignupButton onClick={handleSignup} text={"Sign In"} />;
 }
