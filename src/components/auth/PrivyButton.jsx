@@ -39,7 +39,7 @@ export default function AuthButton() {
     },
   });
 
-  // Effect to handle token exchange after authentication
+  
   useEffect(() => {
     const handleTokenExchange = async () => {
       if (!authenticated || !user) return;

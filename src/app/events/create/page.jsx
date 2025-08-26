@@ -12,14 +12,14 @@ export default function CreateEventPage() {
   const [loginTriggered, setLoginTriggered] = useState(false);
   const router = useRouter();
 
-  // useEffect(() => {
-  //   if (ready && !authenticated) {
-  //     login(); // Automatically open the Privy login modal
-  //     setLoginTriggered(true);
-  //   }
-  // }, [ready, authenticated, login]);
+  useEffect(() => {
+    if (ready && !authenticated) {
+      login(); // Automatically open the Privy login modal
+      setLoginTriggered(true);
+    }
+  }, [ready, authenticated, login]);
 
-  // if (!ready) return <p>Loading...</p>;
+  if (!ready) return <p>Loading...</p>;
 
   return (
     <AppLayout>
@@ -27,11 +27,11 @@ export default function CreateEventPage() {
         <div className="p-6">
           <div className="flex items-center gap-4 mb-6">
             <EventCreationForm />
-            {/* {authenticated ? (
+            {authenticated ? (
             <EventCreationForm />
           ) : null
           // Or keep empty since login modal is open
-          } */}
+          }
           </div>
         </div>
       </div>
