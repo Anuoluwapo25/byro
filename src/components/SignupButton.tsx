@@ -28,7 +28,7 @@ const SignupButton: React.FC<SignupButtonProps> = ({
       className={`${baseClasses} ${disabled ? disabledClasses : ''} ${className}`}
       aria-label={text}
     >
-      {loading ? "Loading..." : text}
+      {text}
     </button>
   );
 };

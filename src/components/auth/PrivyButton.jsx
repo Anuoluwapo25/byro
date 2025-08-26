@@ -59,7 +59,7 @@ export default function AuthButton() {
         if (!identityToken) {
           throw new Error("Failed to get identity token from Privy");
         }
-        console.log("Got access and identity tokens from Privy");
+        console.log("Got access and identity tokens from Privy", { accessToken, identityToken });
 
         // Send both tokens to backend
         const accessTokenResponse = await API.getPrivyToken(accessToken);
@@ -168,9 +168,8 @@ export default function AuthButton() {
   return (
     <SignupButton
       onClick={handleSignup}
-      disabled={loading || !ready}
-      loading={loading}
-      text={loading ? "Signing in..." : "Sign In"}
+    
+      text={"Sign In"}
     />
   );
 }
