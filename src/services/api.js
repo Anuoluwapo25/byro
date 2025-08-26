@@ -59,6 +59,16 @@ const API = {
     }
   },
 
+  getEventBySlug: async (slug) => {
+    try {
+      const response = await axiosInstance.get(`/events/${slug}/`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching event by slug:', error);
+      throw error;
+    }
+  },
+
   getEvents: async () => {
     try {
       const response = await axiosInstance.get("/events/");
@@ -103,6 +113,22 @@ const API = {
       }
       
       throw handleApiError(error);
+    }
+  },
+
+
+  // Update an event
+  updateEvent: async (slug, formData) => {
+    try {
+      const response = await axiosInstance.put(`/events/${slug}/`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error) {
+      handleApiError(error);
+      throw error;
     }
   },
 
@@ -202,6 +228,7 @@ const API = {
       throw handleApiError(error);
     }
   },
+
 };
 
 export default API;

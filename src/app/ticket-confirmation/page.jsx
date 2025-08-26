@@ -14,11 +14,11 @@ function TicketConfirmationContent() {
  
 
   useEffect(() => {
-    // Get ticket data from localStorage
+ 
     const storedData = localStorage.getItem("ticketData");
     if (storedData) {
       setTicketData(JSON.parse(storedData));
-      // Clear the data from localStorage after retrieving it
+      
       localStorage.removeItem("ticketData");
     }
   }, []);
