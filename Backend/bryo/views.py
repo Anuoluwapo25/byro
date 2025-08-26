@@ -294,6 +294,9 @@ class EventViewSet(viewsets.ModelViewSet):
             
             response_data = serializer.data
             response_data['event_url'] = event_url
+
+            if serializer.instance.event_image:  
+                response_data['event_image'] = request.build_absolute_uri(serializer.instance.event_image.url)
             
             return Response(response_data, status=status.HTTP_201_CREATED)
         

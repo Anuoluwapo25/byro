@@ -44,13 +44,15 @@ class PrivyUserSerializer(serializers.ModelSerializer):
 
 class EventSerializer(serializers.ModelSerializer):
     # is_transferable = serializers.BooleanField(source='transferable')
+    event_image_url = serializers.SerializerMethodField()
+
     class Meta:
         model = Event
         fields = [
             'slug', 'name', 'day', 'time_from', 'time_to', 
             'location', 'virtual_link', 'description', 
             'ticket_price', 'transferable', 'capacity', 
-            'visibility', 'timezone', 'event_image'
+            'visibility', 'timezone', 'event_image', 'event_image_url'
         ]
         extra_kwargs = {
             'ticket_price': {'required': False},
@@ -58,8 +60,15 @@ class EventSerializer(serializers.ModelSerializer):
             'capacity': {'required': False},
             'virtual_link': {'required': False},
             'description': {'required': False},
+           
             'event_image': {'required': False},
         }
+
+    def get_event_image_url(self, obj):
+        request = self.context.get('request')
+        if obj.event_image and request:
+            return request.build_absolute_uri(obj.event_image.url)
+        return None
     
     def validate(self, data):
         if data.get('time_from') and data.get('time_to'):
