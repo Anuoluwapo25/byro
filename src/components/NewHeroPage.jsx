@@ -10,13 +10,19 @@ import { toast } from "sonner";
 
 const NewHeroPage = () => {
   const [email, setEmail] = useState("");
+  const [waitlist, setWaitlist] = useState([]); 
   const [loading, setLoading] = useState(false);
   const [showCommunityMessage, setShowCommunityMessage] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const trimmedEmail = email.trim();
+    const trimmedEmail = email.trim().toLowerCase();
+
+        if (waitlist.includes(trimmedEmail)) {
+      toast.error("This email is already on the waitlist.");
+      return;
+    }
 
     if (!trimmedEmail) {
       toast.error("Please enter an email address");
@@ -35,6 +41,7 @@ const NewHeroPage = () => {
       if (response) {
         toast.success("Added to waitlist successfully");
         setShowCommunityMessage(true);
+        setWaitlist([...waitlist, trimmedEmail]);
         setEmail("");
       }
     } catch (error) {
