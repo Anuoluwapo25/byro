@@ -1,21 +1,20 @@
-from django.contrib.auth.backends import BaseBackend
-from .models import PrivyUser
+from django.contrib.auth import get_user_model
+from django.contrib.auth.backends import ModelBackend
 
-class PrivyAuthBackend(BaseBackend):
-    def authenticate(self, request, privy_id=None, email=None, wallet_address=None):
+class EmailBackend(ModelBackend):
+    def authenticate(self, request, email=None, password=None, **kwargs):
+        User = get_user_model()
         try:
-            # Prioritize privy_id if provided
-            if privy_id:
-                return PrivyUser.objects.get(privy_id=privy_id)
-            if email:
-                return PrivyUser.objects.get(email=email)
-            if wallet_address:
-                return PrivyUser.objects.get(wallet_address__iexact=wallet_address.lower())
-        except PrivyUser.DoesNotExist:
+            user = User.objects.get(email=email)
+            if user.check_password(password):
+                return user
+        except User.DoesNotExist:
             return None
+        return None
 
     def get_user(self, user_id):
+        User = get_user_model()
         try:
-            return PrivyUser.objects.get(pk=user_id)
-        except PrivyUser.DoesNotExist:
+            return User.objects.get(pk=user_id)
+        except User.DoesNotExist:
             return None
