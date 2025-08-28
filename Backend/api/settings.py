@@ -229,4 +229,10 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
 ]
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+AUTH_USER_MODEL = 'bryo.CustomUser'
+ 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+
+

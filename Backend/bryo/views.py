@@ -10,25 +10,30 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
-from .utils import privy_auth
 from django.utils.text import slugify
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from django.http import JsonResponse
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, get_user_model, login
 from django.contrib.auth.decorators import login_required
 from .services.privy_auth import PrivyAuthService
 from .models import PrivyUser, WaitList, Event, PaymentSettings, Ticket, TicketTransfer
-# from django.core.mail import send_mail
 from django.urls import reverse
-# from django.conf import settings
+from django.db import transaction
+
 from django.db import models
 from django.db.models import Q
+from django.http import JsonResponse
+from django.conf import settings    
 import os
+import jwt
 import uuid
 import requests
 import json
 import logging
+
+User = get_user_model()
+
 
 logger = logging.getLogger(__name__)
 
@@ -141,120 +146,90 @@ class WaitListViewSet(viewsets.ModelViewSet):
         serializer.save()
         return Response(serializer.data, status=201)
 
-    # @action(detail=False, methods=['get'], url_path='lists')
-    # def wait_list(self, request):
-    #     email=request.data.get('email')
-
-    #     if WaitList.objects.filter(email=email).exists():
-    #         return Response(
-    #             {
-    #                 'detail': 'Email already exists in waitlist'
-                    
-    #             }, status=400)
-
-    #     serializer = self.get_serializer(data=request.data)
-    #     if not serializer.is_valid():
-    #         return Response(serializer.errors, status=400)
-        
-    #     serializer.save()
-    #     return Response(serializer.data, status=201)
-
-
-
-@api_view(['GET'])
-def drf_protected_view(request):
-    return Response({"user_id": request.user.privy_id})
-
-
 
 
 @csrf_exempt
 def privy_login(request):
     if request.method == 'POST':
-        token = None
-        
-        auth_header = request.META.get('HTTP_AUTHORIZATION', '')
-        print(f"Authorization header: {auth_header}")
-        
-        if auth_header.startswith('Bearer '):
-            token = auth_header.split(' ')[1]
-            print(f"Extracted token: {token[:50]}...")  # Print first 50 chars for debugging
-        
-        if not token and request.body:
+        try:
             try:
                 data = json.loads(request.body)
-                token = data.get('token')
-                print(f"Token from body: {token}")
+                
+                email_data = data.get('email')
+                if isinstance(email_data, dict):
+                    email = email_data.get('address')
+                else:
+                    email = email_data
+                
+                privy_id = data.get('id') or data.get('privy_id')
+                
             except json.JSONDecodeError:
-                print("Failed to parse JSON body")
-        
-        if not token:
+                return JsonResponse({'error': 'Invalid JSON'}, status=400)
+            
+            if not email:
+                return JsonResponse({'error': 'Email is required'}, status=400)
+            if not privy_id:
+                return JsonResponse({'error': 'Privy ID is required'}, status=400)
+            
+            clean_privy_id = privy_id.replace('did:privy:', '') if privy_id.startswith('did:privy:') else privy_id
+            
+            try:
+                with transaction.atomic():
+                    # Try to find user by privy_id or email
+                    try:
+                        user = User.objects.get(privy_id=clean_privy_id)
+                        if user.email != email:
+                            user.email = email
+                            user.save()
+                            
+                    except User.DoesNotExist:
+                        try:
+                            user = User.objects.get(email=email)
+                            user.privy_id = clean_privy_id
+                            user.save()
+                            
+                        except User.DoesNotExist:
+                            user = User.objects.create_user(
+                                email=email,
+                                privy_id=clean_privy_id
+                            )
+
+                    from django.contrib.auth.backends import ModelBackend
+                    user.backend = 'bryo.backends.EmailBackend'
+                    
+                    # Log in the user
+                    login(request, user)
+                    
+                    return JsonResponse({
+                        'success': True,
+                        'user': {
+                            'id': user.id,
+                            'email': user.email,
+                            'username': user.username,
+                            'privy_id': user.privy_id,
+                        },
+                        'message': 'Login successful'
+                    })
+                    
+            except Exception as e:
+                print(f"User creation/login error: {e}")
+                return JsonResponse({
+                    'error': 'Failed to create/login user',
+                    'debug': str(e)
+                }, status=500)
+            
+        except Exception as e:
+            print(f"General login error: {str(e)}")
             return JsonResponse({
-                'error': 'Token required',
-                'debug': f'Auth header: {auth_header[:50]}...' if auth_header else 'No auth header'
-            }, status=400)
-        
-        # Authenticate user
-        user = authenticate(request, privy_token=token)
-        if user:
-            login(request, user)
-            user_data = PrivyAuthService.get_user_data(user.username)
-            return JsonResponse({
-                'success': True,
-                'user': {
-                    'id': user.id,
-                    'username': user.username,
-                    'email': user.email
-                },
-            'debug_info': {
-                'privy_user_data': user_data,
-                'auth_methods': user_data.get('linked_accounts', []) if user_data else []
-            }
-            })
-        else:
-            return JsonResponse({'error': 'Invalid token'}, status=401)
+                'error': 'An error occurred during login',
+                'debug': str(e)
+            }, status=500)
     
     return JsonResponse({'error': 'Method not allowed'}, status=405)
 
-@login_required
-def protected_view(request):
-    return JsonResponse({
-        'message': 'This is a protected endpoint',
-        'user': request.user.username
-    })
 
 
 
-
-# @csrf_exempt
-# @require_http_methods(["POST"])
-# def verify_token(request):
-#     try:
-#         # Get token from Authorization header
-#         auth_header = request.headers.get('Authorization', '')
-#         if not auth_header.startswith('Bearer '):
-#             return JsonResponse(
-#                 {'error': 'Invalid Authorization header format'},
-#                 status=401
-#             )
-        
-#         token = auth_header.split(' ')[1]
-        
-#         # Verify token
-#         payload = privy_auth.verify_token(token)
-        
-#         return JsonResponse({
-#             'status': 'success',
-#             'user_id': payload['sub'],
-#             'app_id': payload.get('aud'),
-#             'issuer': payload.get('iss')
-#         })
-        
-#     except Exception as e:
-#         return JsonResponse(
-#             {'error': str(e)},
-#             status=401
-#         )
 
 class EventViewSet(viewsets.ModelViewSet):
     queryset = Event.objects.all()
@@ -294,6 +269,9 @@ class EventViewSet(viewsets.ModelViewSet):
             
             response_data = serializer.data
             response_data['event_url'] = event_url
+
+            if serializer.instance.event_image:  
+                response_data['event_image'] = request.build_absolute_uri(serializer.instance.event_image.url)
             
             return Response(response_data, status=status.HTTP_201_CREATED)
         

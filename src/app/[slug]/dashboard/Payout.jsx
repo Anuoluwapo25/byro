@@ -84,10 +84,7 @@ const Payout = () => {
 
     if (validateForm()) {
       // Handle form submission
-      console.log("Payout details:", {
-        method: payoutMethod,
-        ...formData,
-      });
+  
 
       const emailResponse = await fetch("/api/send-email", {
         method: "POST",

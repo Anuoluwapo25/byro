@@ -3,24 +3,89 @@
 import React, { useState } from "react";
 import { toast } from "react-toastify";
 import API from "../../services/api";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 
 const RegisterModal = ({ isOpen, onClose, eventSlug, eventPrice = "Free" }) => {
   const [formData, setFormData] = useState({
     name: "",
-    email: ""
+    email: "",
   });
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { slug } = useParams();
+  const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    // Common validations
+    if (!formData.email) {
+      newErrors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = "Please enter a valid email";
+    }
+
+    if (!formData.name) {
+      newErrors.name = "name is required";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+
+  const sendTicketEmail = async (eventData) => {
+
+    try {
+      console.log("Sending ticket email...");
+      
+      const emailResponse = await fetch("/api/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          emails: [
+            {
+              type: "ticket",
+              to: formData.email,
+              data: {
+                name: formData.name || "User",
+                date: eventData.day || eventData.event_date || "Date to be announced",
+                time: `${eventData.time_from || eventData.event_time || "Time to be announced"}${eventData.time_to ? ` - ${eventData.time_to}` : ''}`,
+                location: eventData.location || eventData.virtual_link || eventData.event_location || "Location to be announced",
+                eventName: eventData.name || eventData.event_name || "Event",
+                timezone: eventData.timezone || "",
+              },
+            },
+          ],
+        }),
+      });
+
+      if (emailResponse.ok) {
+        console.log("Email sent successfully");
+        return true;
+      } else {
+        console.error("Email sending failed:", await emailResponse.text());
+        return false;
+      }
+    } catch (error) {
+      console.error("Error sending email:", error);
+      return false;
+    }
+  };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
+    if (!validateForm()) {
+     return
+    }
+
     if (!eventSlug) {
       toast.error("Invalid event");
       return;
@@ -36,7 +101,30 @@ const RegisterModal = ({ isOpen, onClose, eventSlug, eventPrice = "Free" }) => {
       console.log("Registering for event:", eventSlug, "with data:", formData);
       const response = await API.registerEvent(eventSlug, formData);
       console.log("Registration response:", response);
-      
+
+           // Step 2: Fetch event details for email
+      let eventData = {};
+      try {
+        const eventRes = await fetch(
+          `${window.location.origin}/${slug}`,
+          {
+            method: "GET",
+          }
+        );
+
+        if (eventRes.ok) {
+          eventData = await eventRes.json();
+          console.log("Event data fetched:", eventData);
+        } else {
+          console.warn("Failed to fetch event details for email");
+        }
+      } catch (error) {
+        console.warn("Error fetching event details:", error);
+      }
+
+      // Step 3: Send email after successful registration
+      const emailSent = await sendTicketEmail(eventData);
+
       if (eventPrice === "Free") {
         // For free events, store ticket data and redirect to confirmation page
         const ticketData = {
@@ -44,37 +132,40 @@ const RegisterModal = ({ isOpen, onClose, eventSlug, eventPrice = "Free" }) => {
           eventDate: response.event_date || "Date to be announced",
           eventLocation: response.event_location || "Location to be announced",
           timeFrom: response.event_time || "Time to be announced",
-          ticketId: response.ticket_id || Math.random().toString(36).substr(2, 9),
+          ticketId:
+            response.ticket_id || Math.random().toString(36).substr(2, 9),
           attendeeName: formData.name,
-          attendeeEmail: formData.email
+          attendeeEmail: formData.email,
         };
-        
+
         // Store ticket data in localStorage
-        localStorage.setItem('ticketData', JSON.stringify(ticketData));
-        
+        localStorage.setItem("ticketData", JSON.stringify(ticketData));
+
         // Redirect to confirmation page
-        router.push('/ticket-confirmation');
+        router.push("/ticket-confirmation");
       } else {
         // For paid events, redirect to payment page with event details
         if (response.ticket_url) {
           const paymentData = {
             amount: eventPrice,
             description: `Ticket for ${formData.name}`,
-            name: formData.name
+            name: formData.name,
           };
-          
+
           // Store payment data in localStorage for the payment page
-          localStorage.setItem('paymentData', JSON.stringify(paymentData));
-          
+          localStorage.setItem("paymentData", JSON.stringify(paymentData));
+
           // Redirect to payment page
-          router.push('/payment');
+          router.push("/payment");
         }
       }
     } catch (error) {
       console.error("Registration failed:", error);
       // Check for specific error types
       if (error.response?.status === 400) {
-        toast.error(error.response.data?.message || "Invalid registration data");
+        toast.error(
+          error.response.data?.message || "Invalid registration data"
+        );
       } else if (error.response?.status === 401) {
         toast.error("Please sign in to register for events");
       } else if (error.response?.status === 404) {
@@ -110,7 +201,10 @@ const RegisterModal = ({ isOpen, onClose, eventSlug, eventPrice = "Free" }) => {
           )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="name" className="block text-sm font-semibold text-gray-900">
+              <label
+                htmlFor="name"
+                className="block text-sm font-semibold text-gray-900"
+              >
                 Full Name:
               </label>
               <div className="mt-2">
@@ -128,7 +222,10 @@ const RegisterModal = ({ isOpen, onClose, eventSlug, eventPrice = "Free" }) => {
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-semibold text-gray-900">
+              <label
+                htmlFor="email"
+                className="block text-sm font-semibold text-gray-900"
+              >
                 Email:
               </label>
               <div className="mt-2">
@@ -150,7 +247,11 @@ const RegisterModal = ({ isOpen, onClose, eventSlug, eventPrice = "Free" }) => {
               disabled={loading}
               className="flex w-full justify-center rounded-md bg-blue-500 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? "Processing..." : eventPrice === "Free" ? "Get Ticket" : "Proceed to Payment"}
+              {loading
+                ? "Processing..."
+                : eventPrice === "Free"
+                ? "Get Ticket"
+                : "Proceed to Payment"}
             </button>
           </form>
         </div>
