@@ -39,8 +39,8 @@ export default function AuthButton() {
       }
     },
   });
+  useEffect(() => {}, []);
 
-  
   useEffect(() => {
     const handleTokenExchange = async () => {
       if (!authenticated || !user) return;
@@ -94,10 +94,9 @@ export default function AuthButton() {
     };
 
     // Only run token exchange if we have a user and are authenticated
-    if (authenticated && user) {
-      handleTokenExchange();
-    }
-  }, [authenticated, user, getAccessToken]);
+
+    handleTokenExchange();
+  }, []);
 
   const handleSignup = async () => {
     if (!ready) {

@@ -62,12 +62,8 @@ const Navbar = () => {
   };
 
   return (
-    <nav
-      className="bg-white text-white py-4 shadow-md
-                    sticky top-0 left-0 w-full z-50
-                    lg:static lg:shadow-none "
-    >
-      <div className="hidden lg:block">
+    <nav className="bg-blue-50 shadow-md top-0 left-0 w-full z-50">
+      <div className="container mx-auto px-4">
         {ready && !authenticated && (
           <>
             {/* Desktop View */}
@@ -83,10 +79,8 @@ const Navbar = () => {
                 </Link>
               </div>
 
-            <div className="hidden lg:flex items-center space-x-8 flex-grow justify-center">
-              {/* Conditional rendering for desktop search */}
-              {!isDesktopSearchOpen ? (
-                <>
+              <div className="flex items-center space-x-8 flex-grow justify-center">
+                {!isDesktopSearchOpen ? (
                   <div
                     className="flex items-center space-x-2 cursor-pointer rounded-full py-2 px-4 hover:text-gray-600 transition-colors"
                     onClick={handleDesktopSearchClick}
@@ -146,7 +140,7 @@ const Navbar = () => {
 
                 <div className="flex items-center space-x-3">
                   <PrivyButton />
-                  
+
                   <button
                     aria-label="hamburger-menu"
                     onClick={toggleMenu}
@@ -233,25 +227,28 @@ const Navbar = () => {
 
         {/* AUTHENTICATED STATE */}
         {ready && authenticated && (
-          <div className="container mx-auto px-4 flex items-center justify-between">
-            <div>
-              <Link href="/">
-                <Image
-                  src="/assets/images/logo.svg"
-                  alt="byro logo"
-                  width={100}
-                  height={40}
-                />
-              </Link>
-            </div>
+          <>
+            {/* Desktop View */}
+            <div className="hidden lg:flex items-center justify-between py-4">
+              <div>
+                <Link href="/">
+                  <Image
+                    src="/assets/images/logo.svg"
+                    alt="byro logo"
+                    width={100}
+                    height={40}
+                  />
+                </Link>
+              </div>
 
-            <div className="hidden lg:flex items-center space-x-8 flex-grow justify-center">
-              {/* Conditional rendering for desktop search */}
-              {!isDesktopSearchOpen ? (
-                <>
+              <div className="flex items-center space-x-8 flex-grow justify-center">
+                {!isDesktopSearchOpen ? (
                   <>
                     <div className="flex items-center space-x-2 cursor-pointer py-2 px-4 transition-colors">
-                      <Link href="/events" className="text-gray-400 hover:text-gray-600">
+                      <Link
+                        href="/events"
+                        className="text-gray-400 hover:text-gray-600"
+                      >
                         Events
                       </Link>
                       <Image
@@ -303,8 +300,6 @@ const Navbar = () => {
                 )}
               </div>
 
-            <div className="hidden lg:flex">
-              <div className="flex items-center space-x-2 cursor-pointer py-2 px-4 ">
               <div className="flex items-center space-x-4">
                 <Link
                   href="/events/create"
@@ -314,8 +309,6 @@ const Navbar = () => {
                 </Link>
                 <PrivyButton />
               </div>
-
-              <PrivyButton />
             </div>
 
             {/* Mobile View */}
@@ -334,7 +327,7 @@ const Navbar = () => {
 
                 <div className="flex items-center space-x-3">
                   <PrivyButton />
-                  
+
                   <button
                     aria-label="hamburger-menu"
                     onClick={toggleMenu}
@@ -366,46 +359,6 @@ const Navbar = () => {
                   </button>
                 </div>
               </div>
-          </div>
-        )}
-      </div>
-      {/* Mobile Navigation (flex items for mobile) */}
-      <div className="flex items-center space-x-4 justify-between px-4 lg:hidden">
-        <div className="block">
-          <PrivyButton />
-        </div>
-
-        {/* Mobile Menu Button*/}
-        <button
-          aria-label="hamburger-menu"
-          onClick={toggleMenu}
-          className="text-black focus:outline-none"
-        >
-          <svg
-            className="w-8 h-8"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            {isMenuOpen ? (
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M6 18L18 6M6 6l12 12"
-              ></path>
-            ) : (
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M4 6h16M4 12h16m-7 6h7"
-              ></path>
-            )}
-          </svg>
-        </button>
-      </div>
 
               {/* Mobile Menu */}
               <div
@@ -415,12 +368,14 @@ const Navbar = () => {
               >
                 <div className="flex flex-col space-y-4 px-4">
                   {/* Events Link */}
-                  <Link 
-                    href="/events" 
+                  <Link
+                    href="/events"
                     className="flex items-center justify-center space-x-2 py-2 px-4 transition-colors"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    <span className="text-gray-400 hover:text-gray-600">Events</span>
+                    <span className="text-gray-400 hover:text-gray-600">
+                      Events
+                    </span>
                     <Image
                       src={eventIcon}
                       alt="Event Icon"
@@ -471,12 +426,14 @@ const Navbar = () => {
                   )}
 
                   {/* Create Event */}
-                  <Link 
-                    href="/events/create" 
+                  <Link
+                    href="/events/create"
                     className="flex items-center justify-center py-2 px-4 transition-colors"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    <span className="text-[#09D059] font-black text-[16px] hover:text-green-600">Create Event</span>
+                    <span className="text-[#09D059] font-black text-[16px] hover:text-green-600">
+                      Create Event
+                    </span>
                   </Link>
                 </div>
               </div>
