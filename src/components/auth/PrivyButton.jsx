@@ -3,6 +3,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import API from "../../services/api";
 import SignupButton from "../SignupButton";
+import axiosInstance from "@/utils/axios";
+import { toast } from "sonner";
 
 export default function AuthButton() {
   const { ready, authenticated, user, getAccessToken, logout, getIdToken } =
@@ -17,22 +19,29 @@ export default function AuthButton() {
       console.log("Logged in user:", user);
 
       try {
-        const response = await fetch("/auth/privy", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: user.email,
+        const response = await axiosInstance.post(
+          "/auth/privy/",
+          {
+            email: user.email.address,
             id: user.id,
-          }),
-        });
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
 
-        if (!response.ok) {
+        console.log("response", response);
+
+        if (response.status == 200) {
+          console.log(response.data.user);
+          toast.success(response.data.message);
+          return;
+        } else {
           throw new Error("Failed to send user info to backend");
         }
 
-        const data = await response.json();
         // console.log("Backend response:", data);
       } catch (error) {
         console.error("Error sending user email to backend:", error);
