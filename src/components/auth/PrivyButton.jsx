@@ -41,8 +41,6 @@ export default function AuthButton() {
         } else {
           throw new Error("Failed to send user info to backend");
         }
-
-        // console.log("Backend response:", data);
       } catch (error) {
         console.error("Error sending user email to backend:", error);
       }

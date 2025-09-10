@@ -165,7 +165,7 @@ const API = {
 
 
   // Privy
-  getPrivyToken: async (accessToken) => {
+  getPrivyToken: async (accessToken) => { 
     try {
       const response = await axiosInstance.post("/auth/privy/", { 
         accessToken: accessToken 
