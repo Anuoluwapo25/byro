@@ -36,7 +36,6 @@ const EventsContainer = () => {
   if (loading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-4">
-       
         {[...Array(3)].map((_, i) => (
           <div
             key={i}
@@ -108,7 +107,7 @@ const EventsContainer = () => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-4">
-      {events.map((event) => (
+      {events.slice(0, 6).map((event) => (
         <EventCard key={event.id || event._id || Math.random()} event={event} />
       ))}
     </div>

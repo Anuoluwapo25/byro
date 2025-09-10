@@ -30,7 +30,11 @@ export default function CreateEventPage() {
       <div className="bg-main-section bg-fixed bg-cover bg-center bg-no-repeat min-h-screen">
         <div className="p-6">
           <div className="flex items-center gap-4 mb-6">
+<<<<<<< HEAD
             <EventCreationForm />
+=======
+            {authenticated && ready ? <EventCreationForm /> : null}
+>>>>>>> 91a3d2559c66740a83ffe043aa203866a7a4946b
           </div>
         </div>
       </div>

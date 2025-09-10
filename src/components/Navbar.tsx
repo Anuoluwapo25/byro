@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import PrivyButton from "./auth/PrivyButton";
-import { usePrivy } from '@privy-io/react-auth';
+import { usePrivy } from "@privy-io/react-auth";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -14,11 +14,11 @@ const Navbar = () => {
   const { ready, authenticated } = usePrivy();
   const router = useRouter();
 
-  useEffect(() => {
-    if (ready && authenticated) {
-      router.push("/events");
-    }
-  }, [ready, authenticated, router]);
+  // useEffect(() => {
+  //   if (ready && authenticated) {
+  //     router.push("/events");
+  //   }
+  // }, [ready, authenticated, router]);
 
   const desktopSearchInputRef = useRef<HTMLInputElement>(null);
   const mobileSearchInputRef = useRef<HTMLInputElement>(null);
@@ -64,8 +64,6 @@ const Navbar = () => {
   return (
     <nav className="bg-blue-50 shadow-md top-0 left-0 w-full z-50">
       <div className="container mx-auto px-4">
-        
-       
         {ready && !authenticated && (
           <>
             {/* Desktop View */}
@@ -142,7 +140,7 @@ const Navbar = () => {
 
                 <div className="flex items-center space-x-3">
                   <PrivyButton />
-                  
+
                   <button
                     aria-label="hamburger-menu"
                     onClick={toggleMenu}
@@ -247,7 +245,10 @@ const Navbar = () => {
                 {!isDesktopSearchOpen ? (
                   <>
                     <div className="flex items-center space-x-2 cursor-pointer py-2 px-4 transition-colors">
-                      <Link href="/events" className="text-gray-400 hover:text-gray-600">
+                      <Link
+                        href="/events"
+                        className="text-gray-400 hover:text-gray-600"
+                      >
                         Events
                       </Link>
                       <Image
@@ -326,7 +327,7 @@ const Navbar = () => {
 
                 <div className="flex items-center space-x-3">
                   <PrivyButton />
-                  
+
                   <button
                     aria-label="hamburger-menu"
                     onClick={toggleMenu}
@@ -367,12 +368,14 @@ const Navbar = () => {
               >
                 <div className="flex flex-col space-y-4 px-4">
                   {/* Events Link */}
-                  <Link 
-                    href="/events" 
+                  <Link
+                    href="/events"
                     className="flex items-center justify-center space-x-2 py-2 px-4 transition-colors"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    <span className="text-gray-400 hover:text-gray-600">Events</span>
+                    <span className="text-gray-400 hover:text-gray-600">
+                      Events
+                    </span>
                     <Image
                       src={eventIcon}
                       alt="Event Icon"
@@ -423,12 +426,14 @@ const Navbar = () => {
                   )}
 
                   {/* Create Event */}
-                  <Link 
-                    href="/events/create" 
+                  <Link
+                    href="/events/create"
                     className="flex items-center justify-center py-2 px-4 transition-colors"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    <span className="text-[#09D059] font-black text-[16px] hover:text-green-600">Create Event</span>
+                    <span className="text-[#09D059] font-black text-[16px] hover:text-green-600">
+                      Create Event
+                    </span>
                   </Link>
                 </div>
               </div>

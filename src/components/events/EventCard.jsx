@@ -33,6 +33,27 @@ const EventCard = ({ event }) => {
   const eventSlug = event.slug || eventId;
   const eventType = event.eventType || event.type || "ONLINE EVENT";
 
+<<<<<<< HEAD
+=======
+  // Get image URL
+  const getImageUrl = () => {
+    const imageField = event.image || event.event_image || event.banner;
+    console.log("Image field", event?.event_image);
+
+    if (!imageField || imageError) {
+      return "/assets/images/default-event.jpg";
+    }
+
+    if (imageField.startsWith("http")) {
+      return imageField;
+    }
+
+    const baseURL =
+      process.env.NEXT_PUBLIC_API_URL || "https://byro.onrender.com/";
+    return `${baseURL.replace("/api/", "")}${imageField}`;
+  };
+
+>>>>>>> 91a3d2559c66740a83ffe043aa203866a7a4946b
   // Format date
   const formatDate = (dateString) => {
     try {
@@ -88,7 +109,6 @@ const EventCard = ({ event }) => {
 
           {/* Action Buttons Row */}
           <div className="flex items-center justify-between">
-           
             {event.isUserHost ? (
               <button
                 onClick={(e) => {
@@ -111,7 +131,6 @@ const EventCard = ({ event }) => {
               </button>
             )}
 
-        
             <div className="text-right">
               <p className="text-xs text-gray-500 uppercase tracking-wide font-medium mb-1">
                 {eventType}

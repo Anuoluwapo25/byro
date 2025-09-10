@@ -20,7 +20,7 @@ const ViewEvent = () => {
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
- 
+
   console.log("Event Data:", useParams());
 
   // Memoize handlers
@@ -192,7 +192,7 @@ const ViewEvent = () => {
             <div className="w-full h-52 md:w-52 md:h-52 rounded-lg overflow-hidden mx-auto md:mx-0">
               {event.event_image ? (
                 <img
-                  src={event.event_image}
+                  src={event?.event_image}
                   alt={event.name}
                   className="w-full h-full object-cover"
                 />
@@ -221,9 +221,7 @@ const ViewEvent = () => {
 
             {/* Hosted by section */}
             <div className="mt-6 mb-6">
-              <div className="font-bold text-black text-xl mb-1">
-                Hosted by
-              </div>
+              <div className="font-bold text-black text-xl mb-1">Hosted by</div>
               <div className="font-medium text-black text-sm mb-1">
                 Byro office (Host not specified)
               </div>
@@ -250,10 +248,7 @@ const ViewEvent = () => {
                   {showTransferInput && (
                     <form onSubmit={handleTransferSubmit} className="mt-2">
                       <div className="flex flex-col space-y-2">
-                        <label
-                          htmlFor="name"
-                          className="text-sm text-gray-600"
-                        >
+                        <label htmlFor="name" className="text-sm text-gray-600">
                           Recipient's Name:
                         </label>
                         <input
