@@ -7,34 +7,30 @@ import EventCreationForm from "../../../components/events/EventCreationForm";
 import AppLayout from "@/layout/app";
 
 export default function CreateEventPage() {
-  // const { ready, authenticated, login} = usePrivy();
-  // // const router = useRouter();
-  // const [checkedAuth, setCheckedAuth] = useState(false);
+  const { ready, authenticated, login} = usePrivy();
+  // const router = useRouter();
+  const [checkedAuth, setCheckedAuth] = useState(false);
 
-  // useEffect(() => {
-  //   if (!ready) return; // wait until Privy is fully initialized
+  useEffect(() => {
+    if (!ready) return; 
 
-  //   if (!authenticated) {
-  //     login() // shows login modal
-  //   } else {
-  //     setCheckedAuth(true); // we know user is authenticated
-  //   }
-  // }, [ready, authenticated, login]);
+    if (!authenticated) {
+      login() // shows login modal
+    } else {
+      setCheckedAuth(true); // we know user is authenticated
+    }
+  }, [ready, authenticated, login]);
 
-  // if (!ready || !checkedAuth) {
-  //   return <p>Loading...</p>; // don’t render anything until auth is stable
-  // }
+  if (!ready || !checkedAuth) {
+    return <p>Loading...</p>; 
+  }
 
   return (
     <AppLayout>
       <div className="bg-main-section bg-fixed bg-cover bg-center bg-no-repeat min-h-screen">
         <div className="p-6">
           <div className="flex items-center gap-4 mb-6">
-<<<<<<< HEAD
-            <EventCreationForm />
-=======
             {authenticated && ready ? <EventCreationForm /> : null}
->>>>>>> 91a3d2559c66740a83ffe043aa203866a7a4946b
           </div>
         </div>
       </div>

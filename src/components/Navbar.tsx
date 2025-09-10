@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
 import { searchIcon, eventIcon } from "../app/assets/index";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import PrivyButton from "./auth/PrivyButton";
@@ -12,7 +12,7 @@ const Navbar = () => {
   const [isDesktopSearchOpen, setIsDesktopSearchOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const { ready, authenticated } = usePrivy();
-  const router = useRouter();
+  // const router = useRouter();
 
   // useEffect(() => {
   //   if (ready && authenticated) {

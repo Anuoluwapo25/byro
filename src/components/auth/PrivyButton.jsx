@@ -58,12 +58,6 @@ export default function AuthButton() {
           
           return;
         }
-<<<<<<< HEAD
-
-        throw new Error(response.data?.message || "Failed to process login");
-
-=======
->>>>>>> 91a3d2559c66740a83ffe043aa203866a7a4946b
       } catch (error) {
         console.error("Login error details:", {
           status: error.response?.status,
