@@ -7,22 +7,22 @@ import EventCreationForm from "../../../components/events/EventCreationForm";
 import AppLayout from "@/layout/app";
 
 export default function CreateEventPage() {
-  const { ready, authenticated, login} = usePrivy();
+  const { ready, authenticated, login } = usePrivy();
   // const router = useRouter();
   const [checkedAuth, setCheckedAuth] = useState(false);
 
   useEffect(() => {
-    if (!ready) return; 
+    if (!ready) return;
 
     if (!authenticated) {
-      login() // shows login modal
+      login(); // shows login modal
     } else {
-      setCheckedAuth(true); // we know user is authenticated
+      setCheckedAuth(true);
     }
   }, [ready, authenticated, login]);
 
   if (!ready || !checkedAuth) {
-    return <p>Loading...</p>; 
+    return;
   }
 
   return (
