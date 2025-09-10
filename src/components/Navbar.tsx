@@ -14,11 +14,11 @@ const Navbar = () => {
   const { ready, authenticated } = usePrivy();
   const router = useRouter();
 
-  useEffect(() => {
-    if (ready && authenticated) {
-      router.push("/events");
-    }
-  }, [ready, authenticated, router]);
+  // useEffect(() => {
+  //   if (ready && authenticated) {
+  //     router.push("/events");
+  //   }
+  // }, [ready, authenticated, router]);
 
   const desktopSearchInputRef = useRef<HTMLInputElement>(null);
   const mobileSearchInputRef = useRef<HTMLInputElement>(null);
