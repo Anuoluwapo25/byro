@@ -42,10 +42,10 @@ const API = {
         },
         transformRequest: (data) => data, 
       });
-      console.log("API Response:", response.data); // Debug log
+      console.log("API Response:", response.data); 
       return response.data;
     } catch (error) {
-      console.error("API Error:", error.response?.data || error); // Debug log
+      console.error("API Error:", error.response?.data || error);
       throw handleApiError(error);
     }
   },

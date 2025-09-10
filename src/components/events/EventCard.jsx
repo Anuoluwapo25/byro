@@ -6,6 +6,22 @@ import Link from "next/link";
 const EventCard = ({ event }) => {
   const [imageError, setImageError] = useState(false);
 
+  // Get image URL with fallback
+  const getImageUrl = () => {
+    if (!event.event_image || imageError) {
+      return "/assets/images/default-event.jpg"; // Make sure this fallback image exists
+    }
+
+    // If it's already a full URL
+    if (event.event_image.startsWith('http')) {
+      return event.event_image;
+    }
+
+    // If it's a relative path from your API
+    const baseURL = process.env.NEXT_PUBLIC_API_URL || "https://byro.onrender.com";
+    return `${baseURL}${event.event_image}`;
+  };
+
   // Extract event data
   const eventId = event.id || event._id;
   const eventTitle = event.title || event.name;
@@ -16,22 +32,6 @@ const EventCard = ({ event }) => {
   const isFree = event.isFree || eventPrice === 0;
   const eventSlug = event.slug || eventId;
   const eventType = event.eventType || event.type || "ONLINE EVENT";
-
-  // Get image URL
-  const getImageUrl = () => {
-    const imageField = event.image || event.imageUrl || event.banner;
-
-    if (!imageField || imageError) {
-      return "/assets/images/default-event.jpg";
-    }
-
-    if (imageField.startsWith("http")) {
-      return imageField;
-    }
-
-    const baseURL = process.env.NEXT_PUBLIC_API_URL || "https://byro.onrender.com/";
-    return `${baseURL.replace("/api/", "")}${imageField}`;
-  };
 
   // Format date
   const formatDate = (dateString) => {
@@ -50,17 +50,20 @@ const EventCard = ({ event }) => {
   };
 
   return (
-    <Link href={ `/${eventSlug}`} className="block group">
+    <Link href={`/${eventSlug}`} className="block group">
       <div className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100">
         {/* Event Image */}
         <div className="relative h-48 w-full overflow-hidden">
           <Image
-            src={event.event_image}
-            alt={eventTitle}
+            src={getImageUrl()}
+            alt={eventTitle || "Event"}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-300"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             onError={() => setImageError(true)}
+            priority={false}
+            loading="lazy"
+            quality={75}
           />
 
           {/* FREE Badge */}

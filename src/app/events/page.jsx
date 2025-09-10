@@ -1,4 +1,4 @@
-// pages/events.js (or app/events/page.js in App Router)
+
 "use client";
 
 import { useState, useEffect } from "react";

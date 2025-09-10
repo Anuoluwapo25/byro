@@ -9,16 +9,26 @@ import { toast } from "sonner";
 export default function AuthButton() {
   const { ready, authenticated, user, getAccessToken, logout, getIdToken } =
     usePrivy();
-  const { identityToken } = useIdentityToken();
+  // const { identityToken } = useIdentityToken();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const router = useRouter();
 
-  const { login } = useLogin({
+ const { login } = useLogin({
     onComplete: async ({ user }) => {
-      console.log("Logged in user:", user);
+      if (!user?.email?.address || !user?.id) {
+        toast.error("Missing user data");
+        return;
+      }
 
       try {
+        setLoading(true);
+        
+        console.log("Sending user data:", {
+          email: user.email.address,
+          id: user.id
+        });
+
         const response = await axiosInstance.post(
           "/auth/privy/",
           {
@@ -28,23 +38,48 @@ export default function AuthButton() {
           {
             headers: {
               "Content-Type": "application/json",
+              "Accept": "application/json"
             },
+           
+            timeout: 10000
           }
         );
 
-        console.log("response", response);
-
-        if (response.status == 200) {
-          console.log(response.data.user);
-          toast.success(response.data.message);
+       
+        if (response.status === 200 && response.data) {
+          console.log("User data saved successfully:", response.data);
+          toast.success(response.data.message || "Successfully signed in!");
+          
+         
+          if (response.data.token) {
+            localStorage.setItem('token', response.data.token);
+            API.setAuthToken(response.data.token);
+          }
+          
           return;
-        } else {
-          throw new Error("Failed to send user info to backend");
         }
 
-       
+        throw new Error(response.data?.message || "Failed to process login");
+
       } catch (error) {
-        console.error("Error sending user email to backend:", error);
+        console.error("Login error details:", {
+          status: error.response?.status,
+          data: error.response?.data,
+          message: error.message
+        });
+
+        // Handle specific error cases
+        if (error.response?.status === 500) {
+          toast.error("Server error. Please try again later.");
+        } else if (error.response?.status === 400) {
+          toast.error(error.response.data?.message || "Invalid user data");
+        } else {
+          toast.error("Failed to complete sign in. Please try again.");
+        }
+        
+        setError(error.message);
+      } finally {
+        setLoading(false);
       }
     },
   });
