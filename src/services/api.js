@@ -38,6 +38,7 @@ const API = {
       console.log("Sending form data to API:", formData); 
       const response = await axiosInstance.post("/events/", formData, {
         headers: {
+          "Accept": "application/json",
           "Content-Type": "multipart/form-data",
         },
         transformRequest: (data) => data, 
