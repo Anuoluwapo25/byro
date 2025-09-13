@@ -16,6 +16,27 @@ const Navbar = () => {
   const { ready, authenticated } = usePrivy();
   const pathname = usePathname();
   // const router = useRouter();
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const profileDropdownRef = useRef<HTMLDivElement>(null);
+
+  const user = JSON.parse(localStorage.getItem("userDetails"));
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        profileDropdownRef.current &&
+        !profileDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsProfileDropdownOpen(false);
+      }
+    }
+    if (isProfileDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isProfileDropdownOpen]);
 
   // useEffect(() => {
   //   if (ready && authenticated) {
@@ -317,9 +338,29 @@ const Navbar = () => {
               </div>
 
               <div className="flex items-center space-x-4">
-                <div className="flex items-center gap-3 bg-[#FAFAFA] py-3 px-4 rounded-lg">
-                  <FaRegUserCircle color="black" size={20} />{" "}
-                  <span className="text-[#444444]">User Profile</span>
+                <div className="relative" ref={profileDropdownRef}>
+                  <button
+                    className="flex items-center gap-3 bg-[#FAFAFA] py-3 px-4 rounded-lg focus:outline-none"
+                    onClick={() => setIsProfileDropdownOpen((prev) => !prev)}
+                  >
+                    <FaRegUserCircle color="black" size={20} />
+                    <span className="text-[#444444]">User Profile</span>
+                  </button>
+                  {isProfileDropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-64 bg-white border rounded-lg shadow-lg z-50">
+                      <div className="p-4 border-b">
+                        <div className="font-bold text-lg text-[#1e1e1e]">
+                          {user?.username || "No Name"}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {user?.email || "No Email"}
+                        </div>
+                      </div>
+                      <div className="p-4">
+                        <PrivyButton />
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <Link
                   href={"/events/create"}

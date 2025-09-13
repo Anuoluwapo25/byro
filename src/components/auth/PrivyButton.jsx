@@ -14,7 +14,7 @@ export default function AuthButton() {
   const [error, setError] = useState(null);
   const router = useRouter();
 
- const { login } = useLogin({
+  const { login } = useLogin({
     onComplete: async ({ user }) => {
       if (!user?.email?.address || !user?.id) {
         toast.error("Missing user data");
@@ -23,10 +23,10 @@ export default function AuthButton() {
 
       try {
         setLoading(true);
-        
+
         console.log("Sending user data:", {
           email: user.email.address,
-          id: user.id
+          id: user.id,
         });
 
         const response = await axiosInstance.post(
@@ -38,31 +38,33 @@ export default function AuthButton() {
           {
             headers: {
               "Content-Type": "application/json",
-              "Accept": "application/json"
+              Accept: "application/json",
             },
-           
-            timeout: 10000
+
+            timeout: 10000,
           }
         );
 
-       
         if (response.status === 200 && response.data) {
           console.log("User data saved successfully:", response.data);
+          localStorage.setItem(
+            "userDetails",
+            JSON.stringify(response.data.user)
+          );
           toast.success(response.data.message || "Successfully signed in!");
-          
-         
+
           if (response.data.token) {
-            localStorage.setItem('token', response.data.token);
+            localStorage.setItem("token", response.data.token);
             API.setAuthToken(response.data.token);
           }
-          
+
           return;
         }
       } catch (error) {
         console.error("Login error details:", {
           status: error.response?.status,
           data: error.response?.data,
-          message: error.message
+          message: error.message,
         });
 
         // Handle specific error cases
@@ -73,7 +75,7 @@ export default function AuthButton() {
         } else {
           toast.error("Failed to complete sign in. Please try again.");
         }
-        
+
         setError(error.message);
       } finally {
         setLoading(false);
