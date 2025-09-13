@@ -2,9 +2,12 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { IoLocationSharp } from "react-icons/io5";
+import { usePrivy } from "@privy-io/react-auth";
 
 const EventCard = ({ event }) => {
   const [imageError, setImageError] = useState(false);
+  const { ready, authenticated } = usePrivy();
 
   // Get image URL with fallback
   const getImageUrl = () => {
@@ -13,19 +16,21 @@ const EventCard = ({ event }) => {
     }
 
     // If it's already a full URL
-    if (event.event_image.startsWith('http')) {
+    if (event.event_image.startsWith("http")) {
       return event.event_image;
     }
 
     // If it's a relative path from your API
-    const baseURL = process.env.NEXT_PUBLIC_API_URL || "https://byro.onrender.com";
+    const baseURL =
+      process.env.NEXT_PUBLIC_API_URL || "https://byro.onrender.com";
     return `${baseURL}${event.event_image}`;
   };
 
   // Extract event data
   const eventId = event.id || event._id;
   const eventTitle = event.title || event.name;
-  const eventDate = event.date || event.startDate || event.eventDate;
+  const eventDate = event.day || event.startDate || event.eventDate;
+  const time = event?.time_from;
   const eventLocation = event.location || event.venue;
   const eventHost = event.host || event.organizer || "Host Name";
   const eventPrice = event.price || event.ticketPrice || 0;
@@ -69,9 +74,9 @@ const EventCard = ({ event }) => {
 
   return (
     <Link href={`/${eventSlug}`} className="block group">
-      <div className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100">
+      <div className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 p-3">
         {/* Event Image */}
-        <div className="relative h-48 w-full overflow-hidden">
+        <div className="relative h-48 w-full overflow-hidden rounded-lg">
           <Image
             src={getImageUrl()}
             alt={eventTitle || "Event"}
@@ -85,17 +90,25 @@ const EventCard = ({ event }) => {
           />
 
           {/* FREE Badge */}
-          <div className="absolute top-3 left-3">
-            <span className="bg-white/90 backdrop-blur-sm text-blue-600 px-3 py-1 rounded-full text-xs font-semibold">
-              {isFree ? "FREE" : `$${eventPrice}`}
-            </span>
-          </div>
+          {authenticated && (
+            <div className="absolute top-2 left-2">
+              <span
+                className={`${
+                  isFree
+                    ? "bg-[#007AFF] text-white"
+                    : "bg-[#D9EBFF] text-[#007AFF]"
+                } backdrop-blur-sm px-3 py-1 rounded-[5px] text-[10px] font-semibold`}
+              >
+                {isFree ? "Going" : `Manage`}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Event Content */}
-        <div className="p-5">
+        <div className="p-2">
           {/* Event Title */}
-          <h3 className="font-semibold text-gray-900 text-lg mb-3 line-clamp-2 group-hover:text-blue-600 transition-colors">
+          <h3 className="font-semibold text-gray-900 mb-3 line-clamp-2 group-hover:text-blue-600 transition-colors">
             {eventTitle}
           </h3>
 
@@ -105,7 +118,7 @@ const EventCard = ({ event }) => {
           </p>
 
           {/* Action Buttons Row */}
-          <div className="flex items-center justify-between">
+          {/* <div className="flex items-center justify-between">
             {event.isUserHost ? (
               <button
                 onClick={(e) => {
@@ -136,6 +149,14 @@ const EventCard = ({ event }) => {
                 {event.isUserHost ? "You hosted this event" : eventHost}
               </p>
             </div>
+          </div> */}
+          <div className="flex items-center gap-1">
+            <div>
+              <IoLocationSharp size={15} color="#007AFF" />
+            </div>
+            <p className="text-[#7E7E7E] text-[12px]">
+              {isFree ? eventLocation : "Event hosted by you"}
+            </p>
           </div>
         </div>
       </div>

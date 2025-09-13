@@ -6,12 +6,15 @@ import Image from "next/image";
 import Link from "next/link";
 import PrivyButton from "./auth/PrivyButton";
 import { usePrivy } from "@privy-io/react-auth";
+import { FaRegUserCircle } from "react-icons/fa";
+import { usePathname } from "next/navigation";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDesktopSearchOpen, setIsDesktopSearchOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const { ready, authenticated } = usePrivy();
+  const pathname = usePathname();
   // const router = useRouter();
 
   // useEffect(() => {
@@ -19,6 +22,8 @@ const Navbar = () => {
   //     router.push("/events");
   //   }
   // }, [ready, authenticated, router]);
+
+  const isActive = (href: string) => pathname === href;
 
   const desktopSearchInputRef = useRef<HTMLInputElement>(null);
   const mobileSearchInputRef = useRef<HTMLInputElement>(null);
@@ -62,7 +67,7 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-blue-50 shadow-md top-0 left-0 w-full z-50">
+    <nav className="bg-white shadow-md top-0 left-0 w-full z-50 border border-b">
       <div className="container mx-auto px-4">
         {ready && !authenticated && (
           <>
@@ -229,7 +234,7 @@ const Navbar = () => {
         {ready && authenticated && (
           <>
             {/* Desktop View */}
-            <div className="hidden lg:flex items-center justify-between py-4">
+            <div className="hidden lg:flex items-center justify-between py-4 bg-[#FFFFFF]">
               <div>
                 <Link href="/">
                   <Image
@@ -245,25 +250,36 @@ const Navbar = () => {
                 {!isDesktopSearchOpen ? (
                   <>
                     <div className="flex items-center space-x-2 cursor-pointer py-2 px-4 transition-colors">
-                      <Link
-                        href="/events"
-                        className="text-gray-400 hover:text-gray-600"
-                      >
-                        Events
-                      </Link>
                       <Image
                         src={eventIcon}
                         alt="Event Icon"
                         width={20}
                         height={20}
+                        color={`${isActive("/events") ? "blue" : "gray"}`}
                       />
+                      <Link
+                        href="/events"
+                        className={`${
+                          isActive("/events")
+                            ? "text-blue-600"
+                            : "text-gray-400 hover:text-gray-600"
+                        }`}
+                      >
+                        My Events
+                      </Link>
                     </div>
 
-                    <div
-                      className="flex items-center space-x-2 cursor-pointer rounded-full py-2 px-4 hover:text-gray-600 transition-colors"
-                      onClick={handleDesktopSearchClick}
-                    >
-                      <span className="text-gray-400">Explore Events</span>
+                    <div className="flex items-center space-x-2 cursor-pointer rounded-full py-2 px-4 hover:text-gray-600 transition-colors">
+                      <Link
+                        href="/events/browse"
+                        className={`${
+                          isActive("/events/browse")
+                            ? "text-blue-600"
+                            : "text-gray-400 hover:text-gray-600"
+                        }`}
+                      >
+                        Explore
+                      </Link>
                       <Image
                         src={searchIcon}
                         alt="Search Icon"
@@ -301,13 +317,17 @@ const Navbar = () => {
               </div>
 
               <div className="flex items-center space-x-4">
+                <div className="flex items-center gap-3 bg-[#FAFAFA] py-3 px-4 rounded-lg">
+                  <FaRegUserCircle color="black" size={20} />{" "}
+                  <span className="text-[#444444]">User Profile</span>
+                </div>
                 <Link
-                  href="/events/create"
-                  className="text-[#09D059] font-black cursor-pointer text-[16px] hover:text-green-600 transition-colors"
+                  href={"/events/create"}
+                  className="bg-[#1F6BFF] text-white rounded-[20px] py-[12px] px-[16px]"
                 >
                   Create Event
                 </Link>
-                <PrivyButton />
+                {/* <PrivyButton /> */}
               </div>
             </div>
 
