@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -12,6 +11,7 @@ import {
 } from "../../services/eventServices";
 import { mainBg } from "../assets";
 import AppLayout from "@/layout/app";
+import EventSearch from "@/components/events/EventSearch";
 
 export default function EventsPage() {
   const [activeTab, setActiveTab] = useState("upcoming");
@@ -59,7 +59,7 @@ export default function EventsPage() {
     return (
       <AppLayout>
         {" "}
-        <div className="bg-main-section bg-fixed bg-cover bg-center bg-no-repeat min-h-screen">
+        <div className=" min-h-screen">
           <div className="max-w-6xl mx-auto p-6">
             <div className="flex items-center gap-4 mb-6">
               <h1 className="text-4xl font-extrabold">Events</h1>
@@ -77,14 +77,21 @@ export default function EventsPage() {
   return (
     <AppLayout>
       {" "}
-      <div className="relative bg-main-section bg-fixed bg-cover bg-center bg-no-repeat h-fit min-h-screen">
+      <div className="relative  h-fit min-h-screen">
         {/* Soft overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-indigo-100/70 to-pink-100/70 z-0" />
+        <div className="absolute inset-0 bg-white z-0" />
 
         {/* Content goes here */}
         <div className="relative z-10 max-w-6xl mx-auto p-6">
-          <div className="flex items-center gap-4 mb-6">
-            <h1 className="text-4xl font-extrabold">Events</h1>
+          {!showEmptyState && (
+            <div className="pb-3">
+              {" "}
+              <EventSearch />
+            </div>
+          )}
+
+          <div className="flex items-center justify-between gap-4 mb-5">
+            <h1 className="text-[28px] text-[#1A1A1A] font-bold ">My Events</h1>
 
             <EventsTabs activeTab={activeTab} onTabChange={handleTabChange} />
           </div>

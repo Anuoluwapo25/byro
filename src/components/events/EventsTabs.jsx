@@ -4,7 +4,7 @@ import Tab from "./Tab";
 
 const EventsTabs = ({ activeTab, onTabChange }) => {
   return (
-    <div className="flex space-x-2 bg-blue-50 p-1 rounded-full">
+    <div className="flex space-x-2 bg-[#FAFAFA] p-1 rounded-lg">
       <Tab
         label="Upcoming"
         isActive={activeTab === "upcoming"}

@@ -1,15 +1,16 @@
-"use client"
+"use client";
 import React, { useState } from "react";
 
 import { Box, Users, Palette, Dumbbell, Monitor, Settings } from "lucide-react";
+import EventsContainer from "./EventsContainer";
 
 const CategoryCard = ({
   title,
   eventCount,
   icon: Icon,
   bgColor = "bg-blue-100",
-  isSelected, 
-  onClick
+  isSelected,
+  onClick,
 }) => {
   return (
     <div
@@ -28,14 +29,14 @@ const CategoryCard = ({
 };
 
 export default function Categories() {
-    const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState(null);
 
-    const handleCategoryClick = (category) => {
-      setSelectedCategory(selectedCategory === category ? null : category);
-      // Here you would typically trigger your filtering logic
-      console.log('Filtering events by category:', category);
-    };
-  
+  const handleCategoryClick = (category) => {
+    setSelectedCategory(selectedCategory === category ? null : category);
+    // Here you would typically trigger your filtering logic
+    console.log("Filtering events by category:", category);
+  };
+
   const categories = [
     {
       id: 1,
@@ -78,13 +79,14 @@ export default function Categories() {
   return (
     <div className="max-w-6xl mx-auto p-6">
       <div className=" mb-10">
-        <h1 className="font-black text-4xl text-black mb-3">Browse Events</h1>
-        <p className="font-medium text-black">
+        <h1 className="font-bold text-[28px] text-[#1E1E1E] mb-3">
+          Browse Events
+        </h1>
+        <p className="font-medium text-[#707070] text-[20px]">
           Discover popular events near you, browse by category and explore for
           more options
         </p>
       </div>
-      <h1 className="text-4xl font-bold text-gray-900 mb-8">Categories</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {categories.map((category, index) => (
@@ -103,9 +105,12 @@ export default function Categories() {
       {selectedCategory && (
         <div className="mt-6 p-4 bg-gray-50 rounded-lg">
           <p className="text-gray-700">
-            Filtering events by: <span className="font-semibold text-blue-600">{categories.find(cat => cat.id === selectedCategory)?.title}</span>
+            Filtering events by:{" "}
+            <span className="font-semibold text-blue-600">
+              {categories.find((cat) => cat.id === selectedCategory)?.title}
+            </span>
           </p>
-          <button 
+          <button
             onClick={() => setSelectedCategory(null)}
             className="mt-2 text-sm text-blue-600 hover:text-blue-800 underline"
           >
@@ -113,7 +118,12 @@ export default function Categories() {
           </button>
         </div>
       )}
-
+      <div className="flex flex-col py-3 gap-y-1">
+        <p className="text-black font-extrabold text-[36px]">Feature Events</p>
+        <div>
+          <EventsContainer />
+        </div>
+      </div>
     </div>
   );
 }
