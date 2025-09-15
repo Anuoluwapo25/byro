@@ -1,5 +1,13 @@
 import React, { Component, useState } from "react";
-import { Trash2, Edit3, Search, Download } from "lucide-react";
+import {
+  Trash2,
+  Edit3,
+  Search,
+  Download,
+  UserPlus,
+  Check,
+  X,
+} from "lucide-react";
 import { going, notGoing, waitlist } from "../../assets/index";
 import Image from "next/image";
 import { useReactToPrint } from "react-to-print";
@@ -21,12 +29,9 @@ const PrintableAttendeeList = React.forwardRef(({ attendeesData }, ref) => {
 
   return (
     <div ref={ref} className="p-6 bg-white">
-      <div className="text-center mb-6"></div>
       <div className="text-center mb-6">
         <h1 className="text-xl font-bold text-gray-900 mb-2">
-          {eventName
-            ? `${eventName} Attendee List`
-            : "Event Attendees List"}
+          {eventName ? `${eventName} Attendee List` : "Event Attendees List"}
         </h1>
         <p className="text-gray-600 text-sm">
           Approved Attendees ({goingAttendees.length})
@@ -87,20 +92,32 @@ const Attendees = () => {
     },
     {
       id: 2,
-      name: "Samuel Ajayi",
-      email: "sam@byro.africa",
+      name: "Robert Okechukwu",
+      email: "roke@byro.africa",
       isGoing: false,
     },
     {
       id: 3,
-      name: "Robert Aruleba",
-      email: "Robert@byro.africa",
+      name: "Kira d Great",
+      email: "kira@byro.africa",
       isGoing: false,
     },
     {
       id: 4,
       name: "Temitope",
-      email: "Temi@byro.africa",
+      email: "temi@byro.africa",
+      isGoing: true,
+    },
+    {
+      id: 5,
+      name: "Caleb",
+      email: "caleb@byro.africa",
+      isGoing: false,
+    },
+    {
+      id: 6,
+      name: "Samuel Ajayi",
+      email: "Ajaece@tyms.com",
       isGoing: true,
     },
   ]);
@@ -128,9 +145,7 @@ const Attendees = () => {
   const notGoingCount = attendeesData.filter(
     (attendee) => !attendee.isGoing
   ).length;
-  const waitlistCount = attendeesData.filter(
-    (attendee) => attendee.isWaitlisted
-  ).length;
+  const waitlistCount = 35; // As shown in the image
 
   const filteredAttendees = attendeesData.filter(
     (attendee) =>
@@ -138,59 +153,73 @@ const Attendees = () => {
       attendee.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const toggleAttendeeStatus = (attendeeId, newStatus) => {
+    setAttendeesData((prev) =>
+      prev.map((attendee) =>
+        attendee.id === attendeeId
+          ? { ...attendee, isGoing: newStatus }
+          : attendee
+      )
+    );
+  };
+
   return (
-    <div className="p-3 sm:p-4 max-w-5xl mx-auto">
-      {/* Top Section - Stats and Actions */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-around gap-4 mb-6">
-        
-        <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-3 sm:p-4">
-          <div className="flex justify-center space-x-4 sm:space-x-6">
+    <div className="p-4 max-w-6xl mx-auto">
+      {/* Stats Section */}
+      <div className="flex justify-start mb-6">
+        <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+          <div className="flex justify-center space-x-8">
             <div className="flex flex-col items-center space-y-2">
-              <div className="flex items-center space-x-1 sm:space-x-2">
-                <Image src={waitlist} className="h-4 w-4 sm:h-5 sm:w-5" alt="Waitlist" />
-                <p className="text-gray-600 text-xs sm:text-sm font-medium">Waitlist</p>
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 bg-gray-400 rounded-sm flex items-center justify-center">
+                  <UserPlus className="w-3 h-3 text-white" />
+                </div>
+                <p className="text-gray-600 text-sm font-medium">
+                  Attendees Cap
+                </p>
               </div>
-              <p className="text-gray-900 font-bold text-lg sm:text-xl">
-                {waitlistCount}
-              </p>
+              <p className="text-gray-900 font-bold text-xl">50</p>
             </div>
 
             <div className="flex flex-col items-center space-y-2">
-              <div className="flex items-center space-x-1 sm:space-x-2">
-                <Image src={going} className="h-4 w-4 sm:h-5 sm:w-5" alt="Going" />
-                <p className="text-gray-600 text-xs sm:text-sm font-medium">Going</p>
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 bg-green-500 rounded-sm flex items-center justify-center">
+                  <Check className="w-3 h-3 text-white" />
+                </div>
+                <p className="text-gray-600 text-sm font-medium">Going</p>
               </div>
-              <p className="text-green-600 font-bold text-lg sm:text-xl">{goingCount}</p>
+              <p className="text-green-600 font-bold text-xl">{goingCount}</p>
             </div>
 
             <div className="flex flex-col items-center space-y-2">
-              <div className="flex items-center space-x-1 sm:space-x-2">
-                <Image src={notGoing} className="h-4 w-4 sm:h-5 sm:w-5" alt="Not Going" />
-                <p className="text-gray-600 text-xs sm:text-sm font-medium">Not Going</p>
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 bg-red-500 rounded-sm flex items-center justify-center">
+                  <X className="w-3 h-3 text-white" />
+                </div>
+                <p className="text-gray-600 text-sm font-medium">Not Going</p>
               </div>
-              <p className="text-red-500 font-bold text-lg sm:text-xl">{notGoingCount}</p>
+              <p className="text-red-500 font-bold text-xl">{notGoingCount}</p>
             </div>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-col space-y-2 lg:flex-shrink-0">
-          <button className="bg-[#007AFF] hover:bg-[#0056CC] text-white font-medium px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg transition-colors duration-200 shadow-sm text-sm">
+        <div className="ml-6 flex flex-col space-y-2">
+          <button className="bg-[#007AFF] hover:bg-[#0056CC] text-white font-medium px-6 py-2 rounded-lg transition-colors duration-200 shadow-sm text-sm">
             Invite
           </button>
 
-          <button className="flex items-center justify-center space-x-2 bg-[#007AFF] hover:bg-[#0056CC] text-white font-medium px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg transition-colors duration-200 shadow-sm text-sm">
+          <button className="flex items-center justify-center space-x-2 bg-[#007AFF] hover:bg-[#0056CC] text-white font-medium px-6 py-2 rounded-lg transition-colors duration-200 shadow-sm text-sm">
             <Edit3 className="w-4 h-4" />
-            <span>Edit Event</span>
+            <span>Check In</span>
           </button>
         </div>
       </div>
 
       {/* Header and Search */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+      <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-gray-900 font-bold text-lg sm:text-xl">Attendees</h1>
-  
+          <h1 className="text-gray-900 font-bold text-xl">Attendees</h1>
         </div>
 
         <div className="relative">
@@ -199,8 +228,8 @@ const Attendees = () => {
             type="search"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="bg-gray-50 border border-none pl-9 pr-3 py-2 sm:py-2.5 rounded-lg text-gray-900 placeholder-gray-500 outline-none focus:ring-2 focus:ring-gray-300 focus:border-transparent transition-all duration-200 w-full sm:w-64 text-sm"
-            placeholder="Search for attendee..."
+            className="bg-gray-50 border-0 pl-9 pr-3 py-2 rounded-lg text-gray-900 placeholder-gray-500 outline-none focus:ring-2 focus:ring-gray-300 focus:border-transparent transition-all duration-200 w-64 text-sm"
+            placeholder="search for attendee..."
           />
         </div>
       </div>
@@ -215,59 +244,64 @@ const Attendees = () => {
             <h3 className="text-base font-semibold text-gray-900 mb-2">
               No attendees found
             </h3>
-            <p className="text-gray-600 text-sm">Try adjusting your search terms</p>
+            <p className="text-gray-600 text-sm">
+              Try adjusting your search terms
+            </p>
           </div>
         ) : (
           <div className="divide-y divide-gray-100">
             {filteredAttendees.map((attendee, index) => (
               <div
                 key={attendee.id}
-                className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 hover:bg-gray-50 transition-colors duration-150 gap-3 sm:gap-0"
+                className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors duration-150"
               >
                 {/* Attendee Info */}
                 <div className="flex items-center space-x-3 flex-1">
-                  <div className="w-8 h-8 bg-gradient-to-br from-[#007AFF] to-[#0056CC] rounded-full flex items-center justify-center text-white font-semibold text-xs flex-shrink-0">
+                  <div className="w-8 h-8 bg-gradient-to-br from-[#007AFF] to-[#0056CC] rounded-full flex items-center justify-center text-white font-semibold text-sm">
                     {attendee.name.charAt(0).toUpperCase()}
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-gray-900 font-semibold text-sm truncate">
+                    <h3 className="text-gray-900 font-medium text-sm">
                       {attendee.name}
                     </h3>
-                    {/* Show email on mobile */}
-                    <p className="text-gray-600 text-xs truncate sm:hidden">
-                      {attendee.email}
-                    </p>
                   </div>
                 </div>
 
-                {/* Email - Hidden on mobile */}
-                <div className="flex-1 min-w-0 px-3 hidden sm:block">
-                  <p className="text-gray-600 text-sm truncate">
-                    {attendee.email}
-                  </p>
+                {/* Email */}
+                <div className="flex-1 min-w-0 px-4">
+                  <p className="text-gray-600 text-sm">{attendee.email}</p>
                 </div>
 
                 {/* Status and Actions */}
-                <div className="flex items-center justify-between sm:justify-end space-x-3 flex-shrink-0">
+                <div className="flex items-center space-x-3">
                   {/* Status Badge */}
                   <span
                     className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
                       attendee.isGoing
-                        ? "bg-green-100 text-green-700 border border-green-200"
-                        : "bg-red-100 text-red-700 border border-red-200"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-100 text-red-700"
                     }`}
                   >
-                    {attendee.isGoing ? "Going" : "Not Going"}
+                    {attendee.isGoing ? "Going" : "Not going"}
                   </span>
 
-                  {/* Action Buttons */}
+                  {/* Action Icons */}
                   <div className="flex items-center space-x-1">
-                    <button className="p-1.5 text-gray-400 hover:text-[#007AFF] hover:bg-blue-50 rounded-lg transition-colors duration-150">
-                      <Edit3 className="w-3.5 h-3.5" />
+                    <button
+                      onClick={() => toggleAttendeeStatus(attendee.id, true)}
+                      className="p-1.5 text-gray-400 hover:text-green-500 hover:bg-green-50 rounded-lg transition-colors duration-150"
+                    >
+                      <Check className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => toggleAttendeeStatus(attendee.id, false)}
+                      className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors duration-150"
+                    >
+                      <X className="w-4 h-4" />
                     </button>
                     <button className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors duration-150">
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
@@ -275,17 +309,6 @@ const Attendees = () => {
             ))}
           </div>
         )}
-      </div>
-
-      {/* Download Button */}
-      <div className="mt-4">
-        <button
-          onClick={handlePrint}
-          className="flex items-center justify-center space-x-2 bg-green-600 hover:bg-green-700 text-white font-medium px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg transition-colors duration-200 shadow-sm text-sm"
-        >
-          <Download className="w-4 h-4" />
-          <span>Download PDF</span>
-        </button>
       </div>
 
       {/* Hidden Printable Component */}
