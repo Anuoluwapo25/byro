@@ -22,8 +22,6 @@ export { default as searchIcon } from "./images/Vector.svg";
 export { default as eventIcon } from "./images/event-icon.svg";
 export { default as introduce } from "./images/introduce.svg";
 export { default as waitlist } from "./images/waitlist.png";
-export { default as going} from "./images/going.png";
+export { default as going } from "./images/going.png";
 export { default as notGoing } from "./images/not-going.png";
-
-
-
+export { default as schedule } from "./images/Schedule.png";

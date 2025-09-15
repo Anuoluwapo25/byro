@@ -8,7 +8,7 @@ import AppLayout from "@/layout/app";
 import API from "@/services/api";
 import { toast } from "react-toastify";
 
-export default function CreateEventPage() {
+export default function EditEventPage() {
   const { ready, authenticated, login } = usePrivy();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);

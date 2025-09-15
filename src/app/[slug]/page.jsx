@@ -1,12 +1,14 @@
 "use client";
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Transfer, Schedule, Location, nft } from "../assets/index";
+import { Transfer, Schedule, Location, nft, schedule } from "../assets/index";
 import Image from "next/image";
-import { Ticket } from "lucide-react";
+import { ChevronLeft, Calendar, MapPin, Users, Ticket } from "lucide-react";
 import RegisterModal from "../../components/auth/RegisterModal";
 import API from "../../services/api";
 import { toast } from "sonner";
+import Navbar from "@/components/Navbar";
+import { TbArrowBackUp } from "react-icons/tb";
 
 const ViewEvent = () => {
   const { slug } = useParams();
@@ -180,304 +182,328 @@ const ViewEvent = () => {
       </div>
     );
 
+  if (!event) return null;
+
   return (
-    <div className="relative min-h-screen">
-      <div className="absolute inset-0 bg-main-section bg-fixed bg-cover bg-center bg-no-repeat z-0" />
-      <div className="absolute inset-0 bg-gray-50 z-0 opacity-70" />
-      <main className="relative z-10 mx-auto p-4 md:p-6 lg:p-10 w-full lg:w-[80%] xl:w-[70%] 2xl:w-[60%] ">
-        <div className="flex flex-col md:flex-row gap-6 md:gap-10 lg:gap-14 justify-center items-start pt-20">
-          {/* Left column */}
-          <div className="w-full md:w-auto">
-            {/* Event image */}
-            <div className="w-full h-52 md:w-52 md:h-52 rounded-lg overflow-hidden mx-auto md:mx-0">
+    <div className="relative min-h-screen bg-white">
+      <Navbar />
+
+      {/* Header */}
+      <div className=" mt-6">
+        <div className="max-w-[90%] mx-auto p-4">
+          <div className="flex items-center">
+            <TbArrowBackUp
+              className="w-5 h-5 text-gray-600 mr-3 cursor-pointer"
+              onClick={() => router.back()}
+            />
+            <span
+              className="text-gray-600 text-sm cursor-pointer"
+              onClick={() => router.back()}
+            >
+              Back
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-[90%] mx-auto p-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Left Column */}
+          <div className="space-y-6">
+            {/* Event Title */}
+            <div className=" rounded-lg p-1">
+              <div className="rounded-[20px] px-6 py-4 border border-[#8E8E93]">
+                <h1 className="text-[#007AFF] font-semibold text-[27px]">
+                  {event.name}
+                </h1>
+              </div>
+            </div>
+
+            {/* Event Details */}
+            <div className="bg-white rounded-lg p-6 space-y-4">
+              <div className="flex items-center text-red-600 text-sm">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center mr-3">
+                  <Image src={schedule} alt="schedule" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-medium">{formattedDate}</span>
+                  <div className="text-gray-600 text-sm">
+                    {event.time_from &&
+                      new Date(
+                        `1970-01-01T${event.time_from}`
+                      ).toLocaleTimeString("en-US", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: true,
+                      })}{" "}
+                    to{" "}
+                    {event.time_to &&
+                      new Date(
+                        `1970-01-01T${event.time_to}`
+                      ).toLocaleTimeString("en-US", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: true,
+                      })}{" "}
+                    {/* {event.timezone && `(${event.timezone})`} */}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center text-gray-700 text-sm">
+                <div className="w-8 h-8 flex items-center justify-center mr-3">
+                  <Image src={Location} alt="location" />
+                </div>
+                <div>
+                  <div className="font-medium">
+                    {event.location || "Byro Headquarters"}
+                  </div>
+                  <div className="text-gray-500 text-xs">Lagos, Nigeria</div>
+                </div>
+              </div>
+
+              {/* Registration Status */}
+              {registered ? (
+                <div className="mt-6 space-y-3 rounded-[18px] shadow-md bg-white p-[20px] w-fit">
+                  <div>
+                    <h3 className="font-semibold text-gray-800">
+                      You've Registered
+                    </h3>
+                    <div className="text-xs text-gray-500">
+                      Check in status:{" "}
+                      <span className="text-green-600 font-medium">
+                        Approved
+                      </span>
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      No longer able to attend?{" "}
+                      <button
+                        onClick={handleCancelRegistration}
+                        className="text-blue-600 underline"
+                      >
+                        cancel registration
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex space-x-3">
+                    <button
+                      className=" text-white px-6 py-2 rounded-full text-sm font-medium transition-colors"
+                      style={{
+                        background:
+                          "linear-gradient(90deg, #63D0A5 0%, #16B979 100%)",
+                      }}
+                    >
+                      View ticket
+                    </button>
+                    <button className="bg-[#007AFF] hover:bg-blue-700 text-white px-4 py-2 rounded-full text-sm font-medium flex items-center transition-colors">
+                      <Image
+                        src={nft}
+                        alt="NFT icon"
+                        width={16}
+                        height={16}
+                        className="mr-2"
+                      />
+                      Mint Byro NFT
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-6 space-y-3 rounded-[18px] shadow-md bg-white p-[20px] w-fit">
+                  <div>
+                    <h3 className="font-semibold text-gray-800">
+                      Registration
+                    </h3>
+                    <div className="text-xs text-gray-500">
+                      To join the event, please click register
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={handleOpen}
+                    className="text-white px-8 py-3 rounded-full text-sm font-medium transition-colors bg-gradient-to-r"
+                    style={{
+                      background:
+                        "linear-gradient(90deg, #63D0A5 0%, #16B979 100%)",
+                    }}
+                  >
+                    Register
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Right Column */}
+          <div className="space-y-6">
+            {/* Event Image */}
+            <div className="bg-white rounded-lg overflow-hidden">
               {event.event_image ? (
                 <img
-                  src={event?.event_image}
+                  src={event.event_image}
                   alt={event.name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-48 object-cover"
                 />
               ) : (
-                <div className="w-full h-full bg-gradient-to-br from-blue-400 to-blue-600 flex flex-col items-center justify-center">
-                  <svg
-                    className="h-12 w-12 text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                    />
-                  </svg>
-                  <div className="text-white text-xs text-center mt-1">
-                    <div>Event</div>
-                    <div>Image</div>
-                  </div>
+                <div
+                  className="h-48 bg-cover bg-center relative"
+                  style={{
+                    backgroundImage: `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400"><rect fill="%23111827" width="100%" height="100%"/><g transform="translate(100,100)"><circle cx="50" cy="50" r="20" fill="%23f59e0b" opacity="0.7"/><circle cx="150" cy="80" r="15" fill="%23f59e0b" opacity="0.5"/><circle cx="250" cy="60" r="18" fill="%23f59e0b" opacity="0.6"/><circle cx="350" cy="90" r="12" fill="%23f59e0b" opacity="0.4"/><circle cx="450" cy="70" r="16" fill="%23f59e0b" opacity="0.8"/><circle cx="550" cy="85" r="14" fill="%23f59e0b" opacity="0.5"/></g><g transform="translate(50,200)"><rect x="20" y="20" width="30" height="60" rx="15" fill="%23e5e7eb" opacity="0.9"/><rect x="80" y="10" width="30" height="70" rx="15" fill="%23e5e7eb" opacity="0.8"/><rect x="140" y="25" width="30" height="55" rx="15" fill="%23e5e7eb" opacity="0.9"/><rect x="200" y="15" width="30" height="65" rx="15" fill="%23e5e7eb" opacity="0.7"/><rect x="260" y="30" width="30" height="50" rx="15" fill="%23e5e7eb" opacity="0.8"/><rect x="320" y="20" width="30" height="60" rx="15" fill="%23e5e7eb" opacity="0.9"/><rect x="380" y="25" width="30" height="55" rx="15" fill="%23e5e7eb" opacity="0.8"/><rect x="440" y="10" width="30" height="70" rx="15" fill="%23e5e7eb" opacity="0.7"/><rect x="500" y="20" width="30" height="60" rx="15" fill="%23e5e7eb" opacity="0.9"/><rect x="560" y="15" width="30" height="65" rx="15" fill="%23e5e7eb" opacity="0.8"/><rect x="620" y="25" width="30" height="55" rx="15" fill="%23e5e7eb" opacity="0.9"/></g></svg>')`,
+                  }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
                 </div>
               )}
             </div>
 
-            {/* Hosted by section */}
-            <div className="mt-6 mb-6">
-              <div className="font-bold text-black text-xl mb-1">Hosted by</div>
-              <div className="font-medium text-black text-sm mb-1">
-                Byro office (Host not specified)
-              </div>
-              {!registered && (
-                <div className="text-sm text-gray-600 mb-2">
-                  Is ticket transferable? {event.transferable ? "Yes" : "No"}
-                </div>
-              )}
-              {registered && event.transferable && (
+            {/* Event Info Card */}
+            <div className="bg-white flex gap-6 rounded-lg p-6 space-y-4">
+              <div>
+                {" "}
                 <div>
-                  <button
-                    onClick={handleTransferClick}
-                    className="flex items-center text-blue-500 text-sm"
-                  >
-                    <Image
-                      src={Transfer}
-                      alt="Transfer Icon"
-                      width={24}
-                      height={24}
-                      className="mr-1"
-                    />
-                    Transfer Ticket
-                  </button>
-                  {showTransferInput && (
-                    <form onSubmit={handleTransferSubmit} className="mt-2">
-                      <div className="flex flex-col space-y-2">
-                        <label htmlFor="name" className="text-sm text-gray-600">
-                          Recipient's Name:
-                        </label>
-                        <input
-                          type="text"
-                          id="name"
-                          value={transferName}
-                          onChange={(e) => setTransferName(e.target.value)}
-                          className="border border-gray-300 rounded px-3 py-2 text-sm"
-                          placeholder="John Doe"
-                          required
-                        />
-                        <label
-                          htmlFor="email"
-                          className="text-sm text-gray-600"
-                        >
-                          Recipient's Email:
-                        </label>
-                        <input
-                          type="email"
-                          id="email"
-                          value={transferEmail}
-                          onChange={(e) => setTransferEmail(e.target.value)}
-                          className="border border-gray-300 rounded px-3 py-2 text-sm"
-                          placeholder="example@email.com"
-                          required
-                        />
+                  <h3 className="font-medium text-gray-800 mb-2">Hosted by</h3>
+                  <div className="text-sm text-gray-600">Byro africa</div>
+                </div>
+                {!registered && (
+                  <div className="pt-2">
+                    <div className="text-sm font-medium text-gray-800 mb-1">
+                      Is ticket transferrable?
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      {event.transferable ? "Yes" : "No"}
+                    </div>
+                  </div>
+                )}
+                {registered && event.transferable && (
+                  <div>
+                    <button
+                      onClick={handleTransferClick}
+                      className="flex items-center text-blue-600 text-sm"
+                    >
+                      <Image
+                        src={Transfer}
+                        alt="Transfer Icon"
+                        width={16}
+                        height={16}
+                        className="mr-2"
+                      />
+                      <span className="underline cursor-pointer">
+                        Transfer Ticket
+                      </span>
+                    </button>
+                    {showTransferInput && (
+                      <form
+                        onSubmit={handleTransferSubmit}
+                        className="mt-4 space-y-3"
+                      >
+                        <div>
+                          <label
+                            htmlFor="name"
+                            className="block text-sm font-medium text-gray-700 mb-1"
+                          >
+                            Recipient's Name:
+                          </label>
+                          <input
+                            type="text"
+                            id="name"
+                            value={transferName}
+                            onChange={(e) => setTransferName(e.target.value)}
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="John Doe"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label
+                            htmlFor="email"
+                            className="block text-sm font-medium text-gray-700 mb-1"
+                          >
+                            Recipient's Email:
+                          </label>
+                          <input
+                            type="email"
+                            id="email"
+                            value={transferEmail}
+                            onChange={(e) => setTransferEmail(e.target.value)}
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="example@email.com"
+                            required
+                          />
+                        </div>
                         <div className="flex space-x-2">
                           <button
                             type="submit"
-                            className="bg-blue-500 text-white px-4 py-1 rounded text-sm"
+                            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm transition-colors"
                           >
                             Send
                           </button>
                           <button
                             type="button"
                             onClick={() => setShowTransferInput(false)}
-                            className="bg-gray-300 text-gray-700 px-4 py-1 rounded text-sm"
+                            className="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg text-sm transition-colors"
                           >
                             Cancel
                           </button>
                         </div>
-                      </div>
-                    </form>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Price section */}
-            <div className="flex items-center mb-6 bg-gray-50 border-2 rounded-lg w-full max-w-xs">
-              <Ticket className="bg-blue-500 mx-3 transform -rotate-12" />
-              <div className="py-2">
-                <div className="font-bold text-black text-xl">
-                  {parseFloat(event.ticket_price) === 0
-                    ? "Free"
-                    : `$${event.ticket_price}`}
-                </div>
-                <div className="text-xs text-black">USDC ON </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right column */}
-          <div className="w-full md:w-[50%] space-y-4 mt-4 md:mt-0">
-            {/* Event name */}
-            <div className="bg-gray-50 border-2 rounded-lg w-full">
-              <h1 className="text-xl font-semibold text-[#2653EB] p-5 text-center md:text-left">
-                {event.name}
-              </h1>
-            </div>
-
-            {/* Date and time */}
-            <div className="flex items-start">
-              <span className="mt-1">
-                <Image
-                  src={Schedule}
-                  alt="Schedule Icon"
-                  width={24}
-                  height={24}
-                />
-              </span>
-              <div className="ml-2">
-                <p className="text-lg font-semibold text-black">
-                  {formattedDate}
-                </p>
-                <p className="text-black">
-                  {event.time_from} to {event.time_to} ({event.timezone})
-                </p>
-              </div>
-            </div>
-
-            {/* Location */}
-            <div className="flex items-start">
-              <span className="mt-1">
-                <Image
-                  src={Location}
-                  alt="Location Icon"
-                  width={24}
-                  height={24}
-                />
-              </span>
-              <div className="ml-2">
-                <p className="text-lg font-semibold text-black">
-                  {event.location || "Virtual Event"}
-                </p>
-                {event.virtual_link && (
-                  <a
-                    href={event.virtual_link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-500 hover:underline"
-                  >
-                    Join Virtual Event
-                  </a>
+                      </form>
+                    )}
+                  </div>
                 )}
-              </div>
-            </div>
-
-            {/* Capacity */}
-            <div className="flex items-start">
-              <span className="mt-1">
-                <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M17 8C17 10.2091 15.2091 12 13 12C10.7909 12 9 10.2091 9 8C9 5.79086 10.7909 4 13 4C15.2091 4 17 5.79086 17 8Z"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M1 20.5C1 17.6 3.4 14 9 14C14.6 14 17 17.6 17 20.5"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                  <path
-                    d="M19 8H25"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                  <path
-                    d="M22 5V11"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </span>
-              <div className="ml-2">
-                <p className="text-lg font-semibold text-black">Capacity</p>
-                <p className="text-black">
-                  {event.capacity ? event.capacity : "Unlimited"}
-                </p>
-              </div>
-            </div>
-
-            {/* Registration card */}
-            <div className="w-full">
-              <div className="bg-white p-4 md:p-6 rounded-lg shadow-md">
-                {registered ? (
-                  <div className="text-center md:text-left">
-                    <h3 className="text-lg font-bold mb-1 text-black">
-                      You've Registered
-                    </h3>
-                    <p className="text-sm text-gray-500 mb-4">
-                      No longer able to attend? <br />
-                      Notify the host by{" "}
-                      <button
-                        onClick={handleCancelRegistration}
-                        className="text-blue-500 underline"
-                      >
-                        canceling your registration
-                      </button>
-                      .
-                    </p>
-                    <div className="flex flex-col sm:flex-row justify-center md:justify-start gap-3 md:gap-4">
-                      <button className="bg-green-500 text-sm text-white py-2 px-6 rounded-full w-full sm:w-auto">
-                        View ticket
-                      </button>
-                      <button className="bg-blue-500 text-sm text-white py-2 px-6 rounded-full flex items-center justify-center w-full sm:w-auto">
-                        <Image
-                          src={nft}
-                          alt="NFT icon"
-                          width={20}
-                          height={20}
-                          className="mr-2"
-                        />
-                        Mint Byro NFT
-                      </button>
+                {/* Capacity Info */}
+                {event.capacity && (
+                  <div className="pt-2 border-t border-gray-200">
+                    <div className="text-sm font-medium text-gray-800 mb-1">
+                      Capacity
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      {event.capacity}
                     </div>
                   </div>
-                ) : (
-                  <div className="text-center">
-                    <h3 className="text-lg font-bold text-black mb-2">
-                      Registration
-                    </h3>
-                    <p className="text-sm text-gray-500 mb-4">
-                      Welcome! To join the event, please register below.
-                    </p>
-                    <button
-                      onClick={handleOpen}
-                      className="bg-green-500 text-white py-2 px-6 rounded-lg w-full sm:w-[80%] cursor-pointer"
+                )}
+                {/* Virtual Link */}
+                {event.virtual_link && (
+                  <div className="pt-2">
+                    <a
+                      href={event.virtual_link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline text-sm"
                     >
-                      Register
-                    </button>
+                      Join Virtual Event
+                    </a>
                   </div>
                 )}
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center mr-3 transform rotate-12">
+                    <Ticket className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-xl text-gray-800">
+                      {parseFloat(event.ticket_price) === 0
+                        ? "Free"
+                        : `$${event.ticket_price}`}
+                    </div>
+                    <div className="text-xs text-gray-500">USDC ON BASE</div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-
-        {/* About section */}
-        <section className="mt-8 p-4 md:p-6">
-          <h3 className="text-2xl md:text-3xl font-semibold text-gray-800 mb-2">
-            About Event
-          </h3>
-          <p className="text-base md:text-xl text-gray-600 leading-relaxed">
-            {event.description || "No description available."}
+        {/* About Event */}
+        <div className="bg-white rounded-lg p-6">
+          <h2 className="font-bold text-gray-800 text-xl mb-4">About Event</h2>
+          <p className="text-gray-600 text-sm leading-relaxed">
+            {event.description ||
+              "Lorem ipsum dolor sit amet consectetur. Sit elementum enim fermentum at tristique luctus vulputate tellus felis. Rhoncus amet commodo sit aliquam pretium. Sed lacus sed adipiscing sit magna mus eros sit. Lacus molestie in vivamus metus tincidunt. Sem diam neque amet gravida quis. At gravida diam sit lobortis purus sit nullam venenatis. Urna parturient quam integer consectetur in lacus nec. Purus vitae in tellus sit nulla nibh magna. Lacinia semper urna mi cursus libero malesuada eu sit."}
           </p>
-        </section>
-      </main>
+        </div>
+      </div>
+
       <RegisterModal
         isOpen={showRegisterModal}
         onClose={handleClose}

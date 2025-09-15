@@ -19,7 +19,10 @@ const Navbar = () => {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
 
-  const user = JSON.parse(localStorage.getItem("userDetails"));
+  const user = (() => {
+    const stored = localStorage.getItem("userDetails");
+    return stored ? JSON.parse(stored) : null;
+  })();
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -90,7 +93,7 @@ const Navbar = () => {
   return (
     <nav className="bg-white shadow-md top-0 left-0 w-full z-50 border border-b">
       <div className="container mx-auto px-4">
-        {ready && !authenticated && (
+        {!authenticated && (
           <>
             {/* Desktop View */}
             <div className="hidden lg:flex items-center justify-between py-4">
@@ -252,7 +255,7 @@ const Navbar = () => {
         )}
 
         {/* AUTHENTICATED STATE */}
-        {ready && authenticated && (
+        {authenticated && (
           <>
             {/* Desktop View */}
             <div className="hidden lg:flex items-center justify-between py-4 bg-[#FFFFFF]">
