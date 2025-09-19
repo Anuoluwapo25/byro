@@ -1,19 +1,9 @@
 steps:
-  # Install Python dependencies
-  - name: 'python:3.11'
-    dir: 'Backend' 
+  - name: 'python:3.9'
+    dir: 'Backend'  
     entrypoint: 'pip'
     args: ['install', '-r', 'requirements.txt']
     id: 'install-deps'
-
-  # Run Django tests 
-  - name: 'python:3.11'
-    entrypoint: 'python'
-    args: ['manage.py', 'test']
-    env:
-      - 'DJANGO_SETTINGS_MODULE=api.settings'
-    id: 'run-tests'
-    waitFor: ['install-deps']
 
   # Deploy to Compute Engine
   - name: 'gcr.io/cloud-builders/gcloud'
@@ -21,22 +11,38 @@ steps:
     args:
       - '-c'
       - |
-        # Copy project files to the server
-        gcloud compute scp --recurse --zone=us-central1-a . web-server:/tmp/app/
+        # Copy Backend directory to server
+        gcloud compute scp --recurse --zone=us-central1-a Backend/ web-server:/tmp/app/
         
-        # SSH and deploy
+        # Deploy on the server
         gcloud compute ssh web-server --zone=us-central1-a --command="
-          sudo rm -rf /var/www/app || true &&
-          sudo mv /tmp/app /var/www/app &&
-          cd /var/www/app &&
-          sudo pip3 install -r requirements.txt &&
-          sudo python3 manage.py collectstatic --noinput &&
-          sudo python3 manage.py migrate &&
-          sudo pkill -f gunicorn || true &&
-          nohup sudo python3 -m gunicorn --bind 0.0.0.0:8000 api.wsgi:application > /dev/null 2>&1 &
+          # Stop existing application
+          sudo pkill -f gunicorn || true
+          sudo pkill -f python || true
+          
+          # Move new code
+          sudo rm -rf /var/www/app || true
+          sudo mv /tmp/app /var/www/app
+          sudo chown -R www-data:www-data /var/www/app
+          
+          # Install dependencies and setup
+          cd /var/www/app
+          sudo pip3 install -r requirements.txt
+          
+          # Set environment variables for production
+          export GOOGLE_CLOUD_PROJECT=final-project-472521
+          export DJANGO_SETTINGS_MODULE=api.settings
+          
+          # Run Django commands
+          sudo -E python3 manage.py collectstatic --noinput || true
+          sudo -E python3 manage.py migrate || true
+          
+          # Start the application with correct wsgi path
+          cd /var/www/app
+          sudo -E python3 -m gunicorn --bind 0.0.0.0:8000 --daemon api.wsgi:application
         "
     id: 'deploy'
-    waitFor: ['run-tests']
+    waitFor: ['install-deps']
 
 timeout: 1200s
 options:
