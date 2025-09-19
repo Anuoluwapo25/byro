@@ -58,6 +58,7 @@ class CustomUser(AbstractUser):
     def __str__(self):
         return self.email
 
+
 class PrivyUser(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,  
@@ -96,12 +97,9 @@ class PaymentSettings(models.Model):
         verbose_name_plural = "Payment Settings"
 
 
-
-
 class WaitList(models.Model):
     email = models.EmailField(unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
-
 
 
 class Event(models.Model):
@@ -112,6 +110,13 @@ class Event(models.Model):
 
     name = models.CharField(max_length=100)
     slug = models.SlugField(max_length=50, unique=True, blank=True, null=True)
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.CASCADE, 
+        related_name='owned_events',
+        null=True, blank=True,
+        help_text="The user who created and owns this event"
+    )
     day = models.DateField()
     time_from = models.TimeField()
     time_to = models.TimeField()
@@ -136,7 +141,9 @@ class Event(models.Model):
         default='GMT+0:00 Lagos'
     )
     hosted_by = models.CharField(max_length=200, default='Byro africa')
+    is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
         if not self.slug:  
@@ -145,8 +152,44 @@ class Event(models.Model):
             while Event.objects.filter(slug=self.slug).exists():
                 self.slug = get_random_string(6)
         super().save(*args, **kwargs)
+    
+    def is_owner_or_cohost(self, user):
+        """Check if user is owner or co-host of this event"""
+        if not user.is_authenticated:
+            return False
+        if self.owner == user:
+            return True
+        return self.cohosts.filter(user=user).exists()
+    
     class Meta:
         db_table = 'bryo_event'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.name} - {self.owner.email}"
+
+
+class EventCoHost(models.Model):
+    """Model to track event co-hosts"""
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='cohosts')
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.CASCADE,
+        related_name='cohosted_events'
+    )
+    added_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='added_cohosts'
+    )
+    added_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ('event', 'user')
+        ordering = ['-added_at']
+    
+    def __str__(self):
+        return f"{self.user.email} - Co-host of {self.event.name}"
 
 
 class Ticket(models.Model):
@@ -163,6 +206,10 @@ class Ticket(models.Model):
     class Meta:
         ordering = ['-created_at']
 
+    def __str__(self):
+        return f"Ticket {self.ticket_id} - {self.event.name}"
+
+
 class TicketTransfer(models.Model):
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='transfers')
     from_user_name = models.CharField(null=True, blank=True)
@@ -175,3 +222,6 @@ class TicketTransfer(models.Model):
     
     class Meta:
         ordering = ['-transferred_at']
+
+    def __str__(self):
+        return f"Transfer {self.transfer_key} - {self.ticket.event.name}"
