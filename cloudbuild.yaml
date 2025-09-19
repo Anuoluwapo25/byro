@@ -1,0 +1,43 @@
+steps:
+  # Install Python dependencies
+  - name: 'python:3.9'
+    dir: 'Backend' 
+    entrypoint: 'pip'
+    args: ['install', '-r', 'requirements.txt']
+    id: 'install-deps'
+
+  # Run Django tests 
+  - name: 'python:3.9'
+    entrypoint: 'python'
+    args: ['manage.py', 'test']
+    env:
+      - 'DJANGO_SETTINGS_MODULE=api.settings'
+    id: 'run-tests'
+    waitFor: ['install-deps']
+
+  # Deploy to Compute Engine
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        # Copy project files to the server
+        gcloud compute scp --recurse --zone=us-central1-a . web-server:/tmp/app/
+        
+        # SSH and deploy
+        gcloud compute ssh web-server --zone=us-central1-a --command="
+          sudo rm -rf /var/www/app || true &&
+          sudo mv /tmp/app /var/www/app &&
+          cd /var/www/app &&
+          sudo pip3 install -r requirements.txt &&
+          sudo python3 manage.py collectstatic --noinput &&
+          sudo python3 manage.py migrate &&
+          sudo pkill -f gunicorn || true &&
+          nohup sudo python3 -m gunicorn --bind 0.0.0.0:8000 api.wsgi:application > /dev/null 2>&1 &
+        "
+    id: 'deploy'
+    waitFor: ['run-tests']
+
+timeout: 1200s
+options:
+  logging: CLOUD_LOGGING_ONLY
