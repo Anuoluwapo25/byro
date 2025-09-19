@@ -12,7 +12,7 @@ const EventCard = ({ event }) => {
   // Get image URL with fallback
   const getImageUrl = () => {
     if (!event.event_image || imageError) {
-      return "/assets/images/default-event.jpg"; // Make sure this fallback image exists
+      return "/assets/images/default-event.jpg"; 
     }
 
     // If it's already a full URL

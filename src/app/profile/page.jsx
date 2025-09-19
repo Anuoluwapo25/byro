@@ -6,13 +6,14 @@ import { useEffect, useState } from "react";
 import { LuCircleUserRound } from "react-icons/lu";
 import { MdLogout, MdOutlineNotificationsActive } from "react-icons/md";
 import { wallet } from "../assets";
-import { usePrivy } from "@privy-io/react-auth";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { useRouter } from "next/navigation";
 
 const ProfileSettings = () => {
   const [isEditing, setIsEditing] = useState(false);
   const { ready, authenticated } = usePrivy();
   const router = useRouter();
+  const { wallets } = useWallets();
   const [formData, setFormData] = useState({
     firstName: "Alex",
     lastName: "Young",
@@ -25,6 +26,10 @@ const ProfileSettings = () => {
     smsUpdates: false,
     marketingUpdates: false,
   });
+
+  const embeddedWallet = wallets.find(
+    (wallet) => wallet.walletClientType === "privy"
+  );
 
   useEffect(() => {
     if (!authenticated) {
@@ -89,7 +94,11 @@ const ProfileSettings = () => {
                       className="p-1"
                     />
                     <span className="text-[14px] text-[#707070]">
-                      0x2wad...a4f33
+                      <strong>
+                        {" "}
+                        {embeddedWallet?.address.slice(0, 6)} ...{" "}
+                        {embeddedWallet?.address.slice(-4)}
+                      </strong>
                     </span>
                   </div>
                 </div>

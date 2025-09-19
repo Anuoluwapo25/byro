@@ -22,8 +22,28 @@ const ViewEvent = () => {
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+    const [imageError, setImageError] = useState(false);
+  
 
   console.log("Event Data:", useParams());
+
+ // Get image URL with fallback
+  const getImageUrl = () => {
+    if (!event.event_image || imageError) {
+      return "/assets/images/default-event.jpg"; 
+    }
+
+    // If it's already a full URL
+    if (event.event_image.startsWith("http")) {
+      return event.event_image;
+    }
+
+    // If it's a relative path from your API
+    const baseURL =
+      process.env.NEXT_PUBLIC_API_URL || "https://byro.onrender.com";
+    return `${baseURL}${event.event_image}`;
+  };
+
 
   // Memoize handlers
   const handleOpen = useCallback(() => setShowRegisterModal(true), []);
@@ -341,7 +361,7 @@ const ViewEvent = () => {
             <div className="bg-white rounded-lg overflow-hidden">
               {event.event_image ? (
                 <img
-                  src={event.event_image}
+                  src={getImageUrl()}
                   alt={event.name}
                   className="w-full h-48 object-cover"
                 />
