@@ -215,9 +215,8 @@ const Navbar = () => {
 
               {/* Mobile Menu */}
               <div
-                className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                  isMenuOpen ? "max-h-96 opacity-100 pb-4" : "max-h-0 opacity-0"
-                }`}
+                className={`overflow-hidden transition-all duration-300 ease-in-out ${isMenuOpen ? "max-h-96 opacity-100 pb-4" : "max-h-0 opacity-0"
+                  }`}
               >
                 <div className="flex flex-col space-y-4 px-4">
                   {!isMobileSearchOpen ? (
@@ -294,11 +293,10 @@ const Navbar = () => {
                       />
                       <Link
                         href="/events"
-                        className={`${
-                          isActive("/events")
+                        className={`${isActive("/events")
                             ? "text-blue-600"
                             : "text-gray-400 hover:text-gray-600"
-                        }`}
+                          }`}
                       >
                         My Events
                       </Link>
@@ -307,11 +305,10 @@ const Navbar = () => {
                     <div className="flex items-center space-x-2 cursor-pointer rounded-full py-2 px-4 hover:text-gray-600 transition-colors">
                       <Link
                         href="/events/browse"
-                        className={`${
-                          isActive("/events/browse")
+                        className={`${isActive("/events/browse")
                             ? "text-blue-600"
                             : "text-gray-400 hover:text-gray-600"
-                        }`}
+                          }`}
                       >
                         Explore
                       </Link>
@@ -354,11 +351,12 @@ const Navbar = () => {
               <div className="flex items-center space-x-4">
                 <div className="relative" ref={profileDropdownRef}>
                   <button
-                    className="flex items-center gap-3 bg-[#FAFAFA] py-3 px-4 rounded-lg focus:outline-none"
+                    aria-label="profile-menu"
+                    className="flex items-center gap-3 py-3 px-4 rounded-lg focus:outline-none cursor-pointer"
                     onClick={() => setIsProfileDropdownOpen((prev) => !prev)}
                   >
                     <FaRegUserCircle color="black" size={20} />
-                    <span className="text-[#444444]">User Profile</span>
+
                   </button>
                   {isProfileDropdownOpen && (
                     <div className="absolute right-0 mt-2 w-64 bg-white border rounded-lg shadow-lg z-50">
@@ -439,9 +437,8 @@ const Navbar = () => {
 
               {/* Mobile Menu */}
               <div
-                className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                  isMenuOpen ? "max-h-96 opacity-100 pb-4" : "max-h-0 opacity-0"
-                }`}
+                className={`overflow-hidden transition-all duration-300 ease-in-out ${isMenuOpen ? "max-h-96 opacity-100 pb-4" : "max-h-0 opacity-0"
+                  }`}
               >
                 <div className="flex flex-col space-y-4 px-4">
                   {/* Events Link */}
