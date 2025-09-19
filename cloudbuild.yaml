@@ -1,6 +1,6 @@
 steps:
   # Install Python dependencies
-  - name: 'python:3.9'
+  - name: 'python:3.11'
     dir: 'Backend' 
     entrypoint: 'pip'
     args: ['install', '-r', 'requirements.txt']
