@@ -7,7 +7,7 @@ steps:
     id: 'install-deps'
 
   # Run Django tests 
-  - name: 'python:3.9'
+  - name: 'python:3.11'
     entrypoint: 'python'
     args: ['manage.py', 'test']
     env:
