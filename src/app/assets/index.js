@@ -25,3 +25,4 @@ export { default as waitlist } from "./images/waitlist.png";
 export { default as going } from "./images/going.png";
 export { default as notGoing } from "./images/not-going.png";
 export { default as schedule } from "./images/Schedule.png";
+export { default as wallet } from "./images/wallet.svg";

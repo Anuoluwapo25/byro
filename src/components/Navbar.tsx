@@ -19,10 +19,21 @@ const Navbar = () => {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
 
-  const user = (() => {
-    const stored = localStorage.getItem("userDetails");
-    return stored ? JSON.parse(stored) : null;
-  })();
+  type UserDetails = {
+    username?: string;
+    email?: string;
+    // add other fields if needed
+  };
+
+  const [user, setUser] = useState<UserDetails | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("userDetails");
+      setUser(stored ? JSON.parse(stored) : null);
+    }
+  }, []);
+
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -351,14 +362,16 @@ const Navbar = () => {
                   </button>
                   {isProfileDropdownOpen && (
                     <div className="absolute right-0 mt-2 w-64 bg-white border rounded-lg shadow-lg z-50">
-                      <div className="p-4 border-b">
-                        <div className="font-bold text-lg text-[#1e1e1e]">
-                          {user?.username || "No Name"}
+                      <Link href={"/profile"}>
+                        <div className="p-4 border-b">
+                          <div className="font-bold text-lg text-[#1e1e1e]">
+                            {user?.username || "No Name"}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {user?.email || "No Email"}
+                          </div>
                         </div>
-                        <div className="text-sm text-gray-500">
-                          {user?.email || "No Email"}
-                        </div>
-                      </div>
+                      </Link>{" "}
                       <div className="p-4">
                         <PrivyButton />
                       </div>
