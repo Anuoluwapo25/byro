@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework_simplejwt',
     'corsheaders',
     'bryo',
 ]
@@ -111,14 +112,16 @@ WSGI_APPLICATION = 'api.wsgi.application'
 
 # DATABASES = {
 #     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'postgres',
-#         'USER': 'postgres',
-#         'PASSWORD': 'postgres',
-#         'HOST': 'db.eeymukkjfremuryhqray.supabase.co',
-#         'PORT': '5432',
+#         'ENGINE': os.getenv('DB_ENGINE'),
+#         'NAME': os.getenv('DB_NAME'),
+#         'USER': os.getenv('DB_USER'),
+#         'PASSWORD': os.getenv('DB_PASSWORD'),
+#         'HOST': os.getenv('DB_HOST'),
+#         'PORT': os.getenv('DB_PORT'),
 #     }
 # }
+
+
 
 
 # # postgresql://bryo_user:Ba14jYMyFDYaqzsOHW40ulAIzZNHJa4F@dpg-d15b2nffte5s7390pslg-a.oregon-postgres.render.com/bryo
@@ -134,58 +137,61 @@ WSGI_APPLICATION = 'api.wsgi.application'
 #     )
 # }
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE'={os.getenv('DB_ENGINE')},
-#         'NAME'={os.getenv('DB_NAME')},
-#         'USER'={os.getenv('DB_USER')},
-#         'PASSWORD'={os.getenv('DB_PASSWORD')},
-#         'HOST'={os.getenv('DB_HOST')},
-#         'PORT'={os.getenv('DB_PORT')},
-#     }
-# }
-import os
 
-if os.environ.get('final-project-472521'):
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'bryo_db',
-            'USER': 'webapp_user',
-            'PASSWORD': 'Oluwarebecca100%',
-            'HOST': '10.143.0.3',  
-            'PORT': '5432',
-        }
-    }
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',  
+    ),
+}
+
+
+# if os.environ.get('final-project-472521'):
+#     DATABASES = {
+#         'default': {
+#             'ENGINE': 'django.db.backends.postgresql',
+#             'NAME': 'bryo_db',
+#             'USER': 'webapp_user',
+#             'PASSWORD': 'Oluwarebecca100%',
+#             'HOST': '10.143.0.3',  
+#             'PORT': '5432',
+#         }
+#     }
     
-    DEBUG = False
-    ALLOWED_HOSTS = ['*']
+#     DEBUG = False
+#     ALLOWED_HOSTS = ['*']
     
-    # Static files
-    STATIC_ROOT = '/var/www/app/staticfiles'
-else:
-    # Keep your existing development settings
-    DEBUG = True
-    ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+#     # Static files
+#     STATIC_ROOT = '/var/www/app/staticfiles'
+# else:
+#     # Keep your existing development settings
+#     DEBUG = True
+#     ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 # Static files configuration
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
 ] if os.path.exists(os.path.join(BASE_DIR, 'static')) else []
-# DATABASES = {
-#     'default': {
-#         'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),  
-#         'NAME': os.getenv('DB_NAME'),                                     
-#         'USER': os.getenv('DB_USER'),                                     
-#         'PASSWORD': os.getenv('DB_PASSWORD'),                             
-#         'HOST': os.getenv('DB_HOST'),                                    
-#         'PORT': os.getenv('DB_PORT'),                                    
-#         'OPTIONS': {
-#             'sslmode': 'require', 
-#         }
-#     }
-# }
+
+
+DATABASES = {
+    'default': {
+        'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),  
+        'NAME': os.getenv('DB_NAME'),                                     
+        'USER': os.getenv('DB_USER'),                                     
+        'PASSWORD': os.getenv('DB_PASSWORD'),                             
+        'HOST': os.getenv('DB_HOST'),                                    
+        'PORT': os.getenv('DB_PORT'),                                    
+        'OPTIONS': {
+            'sslmode': 'require', 
+        }
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -256,6 +262,15 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
 ]
+
+
+from datetime import timedelta
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ALGORITHM': 'HS256',  
+}
+
 
 AUTH_USER_MODEL = 'bryo.CustomUser'
  

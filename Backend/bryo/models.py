@@ -148,7 +148,6 @@ class Event(models.Model):
     def save(self, *args, **kwargs):
         if not self.slug:  
             self.slug = get_random_string(6)  
-            # Ensure uniqueness
             while Event.objects.filter(slug=self.slug).exists():
                 self.slug = get_random_string(6)
         super().save(*args, **kwargs)
@@ -212,7 +211,7 @@ class Ticket(models.Model):
 
 class TicketTransfer(models.Model):
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='transfers')
-    from_user_name = models.CharField(null=True, blank=True)
+    from_user_name = models.CharField(max_length=255, null=True, blank=True)
     from_user_email = models.EmailField(null=True, blank=True)
     to_user_name = models.CharField(max_length=255)
     to_user_email = models.EmailField()
