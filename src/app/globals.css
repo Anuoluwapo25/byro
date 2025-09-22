@@ -46,3 +46,16 @@ textarea {
   box-sizing: border-box;
   max-width: 100%;
 }
+
+/* In your main CSS file or a style block */
+.rainbow-border::before {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border-radius: 100px;
+  background: linear-gradient(to right, #007AFF, #ff6584, #ffdf12, #09d059);
+  z-index: 0;
+}
