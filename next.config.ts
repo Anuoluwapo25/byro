@@ -9,14 +9,14 @@ const nextConfig: NextConfig = {
   turbopack: {},
   images: {
     domains: [
-      'byro.onrender.com',
+      'byro-32ux.onrender.com',
       'localhost',
      'byro.africa'
     ],
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'byro.onrender.com',
+        hostname: 'byro-32ux.onrender.com',
         pathname: '/**',
       },
     ],
