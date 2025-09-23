@@ -16,6 +16,7 @@ from django.views.decorators.cache import never_cache
 from django.http import JsonResponse
 from django.contrib.auth import authenticate, get_user_model, login
 from django.contrib.auth.decorators import login_required
+from rest_framework_simplejwt.tokens import RefreshToken
 from .services.privy_auth import PrivyAuthService
 from .models import PrivyUser, WaitList, Event, PaymentSettings, Ticket, TicketTransfer, EventCoHost
 from django.urls import reverse
@@ -197,6 +198,9 @@ def privy_login(request):
                     user.backend = 'bryo.backends.EmailBackend'
                     
                     login(request, user)
+
+                    refresh = RefreshToken.for_user(user)
+                    access_token = str(refresh.access_token)
                     
                     return JsonResponse({
                         'success': True,
@@ -205,6 +209,10 @@ def privy_login(request):
                             'email': user.email,
                             'username': user.username,
                             'privy_id': user.privy_id,
+                        },
+                        'tokens': {
+                            'access': access_token,
+                            'refresh': str(refresh),
                         },
                         'message': 'Login successful'
                     })
