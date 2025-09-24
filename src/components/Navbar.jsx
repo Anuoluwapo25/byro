@@ -19,17 +19,8 @@ const Navbar = () => {
   const pathname = usePathname();
   // const router = useRouter();
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
-  const profileDropdownRef = useRef<HTMLDivElement>(null);
-  interface AuthState {
-    user: {
-      username?: string;
-      email?: string;
-      [key: string]: any;
-    } | null;
-    token: string | null;
-  }
-
-  const { user, token } = useSelector((state: AuthState) => state);
+  const profileDropdownRef = useRef(null);
+  const { user, token } = useSelector((state) => state.auth);
 
   useEffect(() => {
     if (token) {
@@ -41,10 +32,10 @@ const Navbar = () => {
   console.log("Token from Redux:", token);
   // Close dropdown when clicking outside
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
+    function handleClickOutside(event) {
       if (
         profileDropdownRef.current &&
-        !profileDropdownRef.current.contains(event.target as Node)
+        !profileDropdownRef.current.contains(event.target)
       ) {
         setIsProfileDropdownOpen(false);
       }
@@ -63,10 +54,10 @@ const Navbar = () => {
   //   }
   // }, [ready, authenticated, router]);
 
-  const isActive = (href: string) => pathname === href;
+  const isActive = (href) => pathname === href;
 
-  const desktopSearchInputRef = useRef<HTMLInputElement>(null);
-  const mobileSearchInputRef = useRef<HTMLInputElement>(null);
+  const desktopSearchInputRef = useRef < HTMLInputElement > null;
+  const mobileSearchInputRef = useRef < HTMLInputElement > null;
 
   useEffect(() => {
     if (isDesktopSearchOpen && desktopSearchInputRef.current) {
@@ -98,9 +89,7 @@ const Navbar = () => {
     setIsMobileSearchOpen(true);
   };
 
-  const handleSearchBlur = (
-    setter: React.Dispatch<React.SetStateAction<boolean>>
-  ) => {
+  const handleSearchBlur = (setter) => {
     setTimeout(() => {
       setter(false);
     }, 100);
