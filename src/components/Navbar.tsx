@@ -20,13 +20,23 @@ const Navbar = () => {
   // const router = useRouter();
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
-  const { user, token } = useSelector((state: any) => state.auth);
+  interface AuthState {
+    user: {
+      username?: string;
+      email?: string;
+      [key: string]: any;
+    } | null;
+    token: string | null;
+  }
+
+  const { user, token } = useSelector((state: AuthState) => state);
 
   useEffect(() => {
     if (token) {
       API.setAuthToken(token);
     }
   }, [token]);
+
   console.log("User from Redux:", user);
   console.log("Token from Redux:", token);
   // Close dropdown when clicking outside
