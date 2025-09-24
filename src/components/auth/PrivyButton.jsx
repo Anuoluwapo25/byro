@@ -1,3 +1,5 @@
+"use client";
+
 import { usePrivy, useIdentityToken, useLogin } from "@privy-io/react-auth";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -5,6 +7,8 @@ import API from "../../services/api";
 import SignupButton from "../SignupButton";
 import axiosInstance from "@/utils/axios";
 import { toast } from "sonner";
+import { useDispatch } from "react-redux";
+import { authSuccess, signOut } from "@/redux/auth/authSlice";
 
 export default function AuthButton() {
   const { ready, authenticated, user, getAccessToken, logout, getIdToken } =
@@ -12,6 +16,7 @@ export default function AuthButton() {
   // const { identityToken } = useIdentityToken();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const dispatch = useDispatch();
   const router = useRouter();
 
   const { login } = useLogin({
@@ -46,18 +51,19 @@ export default function AuthButton() {
         );
 
         if (response.status === 200 && response.data) {
-          console.log("User data saved successfully:", response.data);
-          localStorage.setItem(
-            "userDetails",
-            JSON.stringify(response.data.user)
+          console.log("User data saved successfully:", response);
+          dispatch(
+            authSuccess({
+              user: response.data.user,
+              token: response.data.tokens,
+            })
           );
           toast.success(response.data.message || "Successfully signed in!");
 
-          if (response.data.token) {
-            localStorage.setItem("token", response.data.token);
-            API.setAuthToken(response.data.token);
-          }
-
+          // router.push("/events");
+        } else {
+          toast.error("Failed to save user data");
+          console.error("Unexpected response:", response);
           return;
         }
       } catch (error) {
@@ -169,6 +175,7 @@ export default function AuthButton() {
       API.setAuthToken(null);
       // Call Privy logout
       await logout();
+      dispatch(signOut());
 
       router.push("/");
     } catch (err) {
@@ -180,13 +187,6 @@ export default function AuthButton() {
   };
 
   // Check if we already have a token
-  useEffect(() => {
-    const token = localStorage.getItem(user);
-    if (token) {
-      API.setAuthToken(token);
-      console.log("User set from localStorage");
-    }
-  }, []);
 
   if (authenticated) {
     return (
