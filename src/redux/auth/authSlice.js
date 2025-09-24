@@ -1,13 +1,11 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
-  token: localStorage.getItem("byro_token") || null,
-  user: localStorage.getItem("byro_user")
-    ? JSON.parse(localStorage.getItem("byro_user"))
-    : null,
+  token: null,
+  user: null,
   error: null,
   loading: false,
-  isLoggedIn: !!localStorage.getItem("byro_token"),
+  isLoggedIn: false,
 };
 
 const authSlice = createSlice({
@@ -38,10 +36,6 @@ const authSlice = createSlice({
 
       state.loading = false;
       state.error = null;
-
-      // Save to localStorage
-      localStorage.setItem("byro_token", state.token);
-      localStorage.setItem("byro_user", JSON.stringify(state.user));
     },
     authFailure: (state, action) => {
       state.error = action.payload;
