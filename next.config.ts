@@ -10,6 +10,7 @@ const nextConfig: NextConfig = {
   images: {
     domains: [
       'byro-32ux.onrender.com',
+      'byro.onrender.com',
       'localhost',
      'byro.africa'
     ],
