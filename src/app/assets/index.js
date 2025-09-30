@@ -27,5 +27,6 @@ export { default as notGoing } from "./images/not-going.png";
 export { default as schedule } from "./images/Schedule.png";
 export { default as wallet } from "./images/wallet.svg";
 export {default as Sparkle } from "./images/Sparkle.png";
-export {default as eventSetup} from "./images/event-setup.png"
-export {default as manageEvent} from "./images/manage-event.png"
+export {default as eventSetup} from "./images/event-setup.png";
+export {default as manageEvent} from "./images/manage-event.png";
+export {default as signupCard} from "./images/signup-card.png";

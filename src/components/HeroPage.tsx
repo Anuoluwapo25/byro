@@ -13,7 +13,7 @@ const HeroPage = () => {
 
           <div className="absolute inset-0 z-0 rounded-full rainbow-border"></div>
 
-          <div className="relative z-10 flex items-center space-x-2 bg-[#F2F8FF] rounded-full p-3">
+          <div className="relative z-10 flex items-center space-x-2 bg-[#F2F8FF] rounded-full p-3 max-lg:w-10">
             <Image
               src={Sparkle}
               alt="sparkle"
