@@ -554,7 +554,7 @@ export default function EventCreationForm() {
               Event Options
             </label>
             <p className="text-xs text-gray-500 mb-4">
-              *All transactions must be made using USDC on Stellar network*
+              *All transactions must be made using USDC on Base network*
             </p>
             <div className="space-y-4">
               <div className="flex items-center justify-between p-4 border  border-[#B3BBC3] rounded-lg">
