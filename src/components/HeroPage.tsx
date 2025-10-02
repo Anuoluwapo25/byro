@@ -13,7 +13,7 @@ const HeroPage = () => {
 
           <div className="absolute inset-0 z-0 rounded-full rainbow-border"></div>
 
-          <div className="relative z-10 flex items-center space-x-2 bg-[#F2F8FF] rounded-full p-3 max-lg:w-10">
+          <div className="relative z-10 flex items-center space-x-2 bg-[#F2F8FF] rounded-full p-3 max-lg:w-10 sm:w-auto ">
             <Image
               src={Sparkle}
               alt="sparkle"
@@ -27,7 +27,7 @@ const HeroPage = () => {
         </div>
 
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-7xl font-bold leading-[140%] text-[#1E1E1E]">Turn moments into events worth remembering.</h1>
+          <h1 className="text-7xl font-bold leading-[140%] text-[#1E1E1E] sm:text-5xl">Turn moments into events worth remembering.</h1>
         </div>
 
         <div className="max-w-3xl mx-auto">
