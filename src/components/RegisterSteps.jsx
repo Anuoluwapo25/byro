@@ -21,7 +21,7 @@ const RegisterSteps = () => {
               </p>
             </div>
 
-            <div className="absolute bottom-0 mx-auto">
+            <div className="absolute bottom-0">
               <Image
                 src={signupCard}
                 alt="Signup Card"
