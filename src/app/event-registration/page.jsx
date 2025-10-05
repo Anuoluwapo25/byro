@@ -1,11 +1,12 @@
 "use client";
 import React, { useState } from "react";
 import Image from "next/image";
-import { Ticket, Back, ArrowLeft } from "lucide-react";
+import { Undo2 } from "lucide-react";
 import EventMiniCard from "@/components/EventMiniCard";
 import Footer from "@/components/Footer";
 import {Tix} from "../assets/index";
 import PaymentMethod from "@/components/PaymentMethod"
+
 // import Navbar from "@/components/Navbar"
 
 export default function EventRegistration() {
@@ -243,7 +244,7 @@ export default function EventRegistration() {
             )}
 
             {currentStep === 3 && (
-              <div className="space-y-6">
+              <div className="space-y-6 bg-none">
               <PaymentMethod />
              
               </div>
@@ -256,7 +257,7 @@ export default function EventRegistration() {
                 onClick={handleBack}
                 className="flex-1 px-6 py-3 border-2 border-blue-500 text-blue-500 rounded-xl font-semibold hover:bg-blue-50 transition-colors flex items-center justify-center gap-2"
               >
-                <ArrowLeft size={20} />
+                <Undo2 size={20} />
                 Back to Events
               </button>
               <button
