@@ -30,6 +30,9 @@ PRIVY_VERIFICATION_KEY = os.environ.get('PRIVY_VERIFICATION_KEY')
 PRIVY_VERIFICATION_KEY_URL = f"https://auth.privy.io/api/v1/apps/{PRIVY_APP_ID}/verification_key"
 PRIVY_APP_SECRET = os.environ.get('PRIVY_APP_SECRET')
 FRONTEND_URL = os.environ.get('FRONTEND_URL')
+PAYSTACK_SECRET_KEY = os.environ.get('PAYSTACK_SECRET_KEY')
+PAYSTACK_PUBLIC_KEY = os.environ.get('PAYSTACK_PUBLIC_KEY')
+PAYSTACK_CALLBACK_URL = os.environ.get('PAYSTACK_CALLBACK_URL', 'http://localhost:3000/payment/callback')
 
 
 # Quick-start development settings - unsuitable for production
@@ -60,6 +63,7 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -144,48 +148,49 @@ WSGI_APPLICATION = 'api.wsgi.application'
 #         'PORT'={os.getenv('DB_PORT')},
 #     }
 # }
-import os
+# import os
 
-if os.environ.get('final-project-472521'):
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'bryo_db',
-            'USER': 'webapp_user',
-            'PASSWORD': 'Oluwarebecca100%',
-            'HOST': '10.143.0.3',  
-            'PORT': '5432',
-        }
-    }
-    
-    DEBUG = False
-    ALLOWED_HOSTS = ['*']
-    
-    # Static files
-    STATIC_ROOT = '/var/www/app/staticfiles'
-else:
-    # Keep your existing development settings
-    DEBUG = True
-    ALLOWED_HOSTS = ['localhost', '127.0.0.1']
-
-# Static files configuration
-STATIC_URL = '/static/'
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
-] if os.path.exists(os.path.join(BASE_DIR, 'static')) else []
-# DATABASES = {
-#     'default': {
-#         'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),  
-#         'NAME': os.getenv('DB_NAME'),                                     
-#         'USER': os.getenv('DB_USER'),                                     
-#         'PASSWORD': os.getenv('DB_PASSWORD'),                             
-#         'HOST': os.getenv('DB_HOST'),                                    
-#         'PORT': os.getenv('DB_PORT'),                                    
-#         'OPTIONS': {
-#             'sslmode': 'require', 
+# if os.environ.get('final-project-472521'):
+#     DATABASES = {
+#         'default': {
+#             'ENGINE': 'django.db.backends.postgresql',
+#             'NAME': 'bryo_db',
+#             'USER': 'webapp_user',
+#             'PASSWORD': 'Oluwarebecca100%',
+#             'HOST': '10.143.0.3',  
+#             'PORT': '5432',
 #         }
 #     }
-# }
+    
+#     DEBUG = False
+#     ALLOWED_HOSTS = ['*']
+    
+#     # Static files
+#     STATIC_ROOT = '/var/www/app/staticfiles'
+# else:
+#     # Keep your existing development settings
+#     DEBUG = True
+#     ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+
+# # Static files configuration
+# STATIC_URL = '/static/'
+# STATICFILES_DIRS = [
+#     os.path.join(BASE_DIR, 'static'),
+# ] if os.path.exists(os.path.join(BASE_DIR, 'static')) else []
+DATABASES = {
+    'default': {
+        'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),  
+        'NAME': os.getenv('DB_NAME'),                                     
+        'USER': os.getenv('DB_USER'),                                     
+        'PASSWORD': os.getenv('DB_PASSWORD'),                             
+        'HOST': os.getenv('DB_HOST'),                                    
+        'PORT': os.getenv('DB_PORT'),                                    
+        'OPTIONS': {
+            'sslmode': 'require', 
+        }
+    }
+}
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -221,7 +226,9 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles' 
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
