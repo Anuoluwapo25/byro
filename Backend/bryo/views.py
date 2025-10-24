@@ -18,10 +18,11 @@ from django.contrib.auth import authenticate, get_user_model, login
 from django.contrib.auth.decorators import login_required
 from rest_framework_simplejwt.tokens import RefreshToken
 from .services.privy_auth import PrivyAuthService
-from .models import PrivyUser, WaitList, Event, PaymentSettings, Ticket, TicketTransfer, EventCoHost
+from .models import PrivyUser, WaitList, Event, Payment, Ticket, TicketTransfer, EventCoHost
 from django.urls import reverse
-from django.db import transaction
+from .serializers import EventSerializer, TicketSerializer
 from .permissions import IsEventOwnerOrCoHost, IsEventOwner
+from django.db import transaction
 from django.db import models
 from django.db.models import Q
 from django.http import JsonResponse
@@ -52,7 +53,7 @@ class PaymentLinkViewSet(viewsets.ViewSet):
         
         data = serializer.validated_data
         
-        settings = PaymentSettings.load()
+        settings = Payment.load()
         
         payload = {
             "amount": data['amount'],
@@ -117,12 +118,12 @@ class PaymentLinkViewSet(viewsets.ViewSet):
 
 class PaymentSettingsViewSet(viewsets.ModelViewSet):
     """ViewSet for managing payment settings"""
-    queryset = PaymentSettings.objects.all()
+    queryset = Payment.objects.all()
     serializer_class = PaymentSettingsSerializer
     
     def get_object(self):
         """Always return the singleton settings object"""
-        return PaymentSettings.load()
+        return Payment.load()
 
 
 class WaitListViewSet(viewsets.ModelViewSet):
@@ -236,9 +237,18 @@ def privy_login(request):
 
 
 
+logger = logging.getLogger(__name__)
+
 
 class EventViewSet(viewsets.ModelViewSet):
-    """EventViewSet with simple ownership-based permissions"""
+    """
+    EventViewSet with role-based permissions and category filtering
+    
+    Filtering examples:
+    - /api/events/?category=web3_crypto
+    - /api/events/?search=bitcoin
+    - /api/events/?category=technology&search=AI
+    """
     queryset = Event.objects.all()
     serializer_class = EventSerializer
     parser_classes = (JSONParser, MultiPartParser, FormParser)
@@ -248,75 +258,151 @@ class EventViewSet(viewsets.ModelViewSet):
         """
         - List, retrieve, register: Public access
         - Create: Authenticated users only
-        - Update, delete: Owner/co-host only
+        - Update, delete: Owner/co-host only (both can edit)
         """
-        if self.action in ['list', 'retrieve', 'register']:
+        if self.action in ['list', 'retrieve', 'register', 'categories']:
             permission_classes = [AllowAny]
         elif self.action in ['create']:
             permission_classes = [IsAuthenticated]
-        elif self.action in ['update', 'partial_update', 'destroy', 'add_cohost', 'remove_cohost']:
+        elif self.action in ['update', 'partial_update', 'destroy']:
+            # Both owners and co-hosts can edit
             permission_classes = [IsAuthenticated, IsEventOwnerOrCoHost]
+        elif self.action in ['add_cohost', 'remove_cohost']:
+            # Only owners can manage co-hosts
+            permission_classes = [IsAuthenticated, IsEventOwner]
         else:
             permission_classes = [IsAuthenticated]
         
         return [permission() for permission in permission_classes]
     
-    
-
     def get_queryset(self):
-        """Show appropriate events based on user"""
+        """
+        Show appropriate events based on user with category filtering
+        """
+        queryset = Event.objects.all()
+        
+        # Category filtering
+        category = self.request.query_params.get('category', None)
+        if category:
+            queryset = queryset.filter(category=category)
+        
+        # Search filtering (search in name, description, location)
+        search = self.request.query_params.get('search', None)
+        if search:
+            queryset = queryset.filter(
+                Q(name__icontains=search) |
+                Q(description__icontains=search) |
+                Q(location__icontains=search) |
+                Q(hosted_by__icontains=search)
+            )
+        
+        # User-based filtering
         if not self.request.user.is_authenticated:
-            return Event.objects.filter(is_active=True).order_by('-created_at')
+            return queryset.filter(is_active=True).order_by('-created_at')
         
         if self.request.user.is_superuser:
-            return Event.objects.all().order_by('-created_at')
+            return queryset.order_by('-created_at')
         else:
-            return Event.objects.filter(
+            return queryset.filter(
                 Q(is_active=True) | 
                 Q(owner=self.request.user) |
                 Q(cohosts__user=self.request.user)
             ).distinct().order_by('-created_at')
     
-    
-
     @method_decorator(never_cache)
     def retrieve(self, request, *args, **kwargs):
+        """Get single event with role information"""
         return super().retrieve(request, *args, **kwargs)
     
-
-    # def create(self, request, *args, **kwargs):
-    #     serializer = self.get_serializer(data=request.data)
+    def create(self, request, *args, **kwargs):
+        """Create event - automatically sets owner"""
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
         
-    #     if serializer.is_valid():
-    #         if 'ticket_price' not in request.data:
-    #             serializer.validated_data['ticket_price'] = 100.00
-            
-    #         if 'capacity' not in request.data:
-    #             serializer.validated_data['capacity'] = None
-            
-    #         if not serializer.validated_data.get('slug'):
-    #             name = serializer.validated_data.get('name', 'event')
-    #             serializer.validated_data['slug'] = slugify(name) + '-' + str(uuid.uuid4())[:8]
-            
-    #         serializer.validated_data['transferable'] = True
-            
-    #         self.perform_create(serializer)
-            
-    #         event_url = request.build_absolute_uri(
-    #             reverse('event-detail', kwargs={'slug': serializer.data['slug']}))
-            
-    #         response_data = serializer.data
-    #         response_data['event_url'] = event_url
-
-    #         if serializer.instance.event_image:  
-    #             response_data['event_image'] = request.build_absolute_uri(serializer.instance.event_image.url)
-            
-    #         return Response(response_data, status=status.HTTP_201_CREATED)
+        # Set defaults if not provided
+        if 'ticket_price' not in request.data:
+            serializer.validated_data['ticket_price'] = 0.00
         
-    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if 'capacity' not in request.data:
+            serializer.validated_data['capacity'] = None
+        
+        if 'transferable' not in request.data:
+            serializer.validated_data['transferable'] = True
+        
+        self.perform_create(serializer)
+        
+        # Build response with event URL
+        event_url = request.build_absolute_uri(
+            reverse('event-detail', kwargs={'slug': serializer.data['slug']})
+        )
+        
+        response_data = serializer.data
+        response_data['event_url'] = event_url
+        
+        if serializer.instance.event_image:
+            response_data['event_image'] = request.build_absolute_uri(
+                serializer.instance.event_image.url
+            )
+        
+        return Response(response_data, status=status.HTTP_201_CREATED)
+    
+    def update(self, request, *args, **kwargs):
+        """Update event - both owner and co-hosts can edit"""
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        
+        # Check if user has permission to edit
+        user_role = instance.get_user_role(request.user)
+        if not user_role.get('can_edit', False):
+            return Response(
+                {"error": "You don't have permission to edit this event"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=['GET'], permission_classes=[AllowAny])
+    def categories(self, request):
+        """
+        Get all available event categories
+        GET /api/events/categories/
+        """
+        categories = [
+            {
+                'value': choice[0],
+                'label': choice[1],
+                'count': Event.objects.filter(category=choice[0], is_active=True).count()
+            }
+            for choice in Event.CATEGORY_CHOICES
+        ]
+        
+        return Response({
+            'categories': categories,
+            'total_events': Event.objects.filter(is_active=True).count()
+        })
+    
+    @action(detail=True, methods=['GET'], permission_classes=[IsAuthenticated])
+    def my_role(self, request, slug=None):
+        """
+        Get the current user's role for this event
+        GET /api/events/{slug}/my_role/
+        """
+        event = self.get_object()
+        role = event.get_user_role(request.user)
+        
+        return Response({
+            'event': event.slug,
+            'event_name': event.name,
+            'role': role
+        })
     
     @action(detail=True, methods=['POST'], permission_classes=[AllowAny])
     def register(self, request, slug=None):
+        """Register for an event"""
         try:
             event = self.get_object()
             
@@ -364,10 +450,14 @@ class EventViewSet(viewsets.ModelViewSet):
                 {"error": "An error occurred during registration"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-
-    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated, IsEventOwner])
+    
+    @action(detail=True, methods=['POST'], permission_classes=[IsAuthenticated, IsEventOwner])
     def add_cohost(self, request, slug=None):
-        """Add co-host to event - only event owner"""
+        """
+        Add co-host to event - only event owner can add co-hosts
+        POST /api/events/{slug}/add_cohost/
+        Body: {"email": "cohost@example.com"}
+        """
         event = self.get_object()
         email = request.data.get('email')
         
@@ -378,8 +468,18 @@ class EventViewSet(viewsets.ModelViewSet):
             )
         
         try:
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
             cohost_user = User.objects.get(email=email)
             
+            # Check if already owner
+            if event.owner == cohost_user:
+                return Response(
+                    {"error": "User is already the owner of this event"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Check if already co-host
             if EventCoHost.objects.filter(event=event, user=cohost_user).exists():
                 return Response(
                     {"error": "User is already a co-host for this event"},
@@ -394,7 +494,13 @@ class EventViewSet(viewsets.ModelViewSet):
             
             return Response({
                 "message": f"{cohost_user.email} added as co-host",
-                "cohost_id": cohost.id
+                "cohost_id": cohost.id,
+                "cohost": {
+                    "id": cohost.id,
+                    "email": cohost_user.email,
+                    "name": cohost_user.get_full_name() or cohost_user.email,
+                    "added_at": cohost.added_at
+                }
             }, status=status.HTTP_201_CREATED)
             
         except User.DoesNotExist:
@@ -403,9 +509,13 @@ class EventViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
     
-    @action(detail=True, methods=['delete'], permission_classes=[IsAuthenticated, IsEventOwner])
+    @action(detail=True, methods=['DELETE'], permission_classes=[IsAuthenticated, IsEventOwner])
     def remove_cohost(self, request, slug=None):
-        """Remove co-host from event - only event owner"""
+        """
+        Remove co-host from event - only event owner
+        DELETE /api/events/{slug}/remove_cohost/
+        Body: {"cohost_id": 123}
+        """
         event = self.get_object()
         cohost_id = request.data.get('cohost_id')
         
@@ -429,6 +539,199 @@ class EventViewSet(viewsets.ModelViewSet):
                 {"error": "Co-host not found"},
                 status=status.HTTP_404_NOT_FOUND
             )
+
+# class EventViewSet(viewsets.ModelViewSet):
+#     """EventViewSet with simple ownership-based permissions"""
+#     queryset = Event.objects.all()
+#     serializer_class = EventSerializer
+#     parser_classes = (JSONParser, MultiPartParser, FormParser)
+#     lookup_field = 'slug'
+    
+#     def get_permissions(self):
+#         """
+#         - List, retrieve, register: Public access
+#         - Create: Authenticated users only
+#         - Update, delete: Owner/co-host only
+#         """
+#         if self.action in ['list', 'retrieve', 'register']:
+#             permission_classes = [AllowAny]
+#         elif self.action in ['create']:
+#             permission_classes = [IsAuthenticated]
+#         elif self.action in ['update', 'partial_update', 'destroy', 'add_cohost', 'remove_cohost']:
+#             permission_classes = [IsAuthenticated, IsEventOwnerOrCoHost]
+#         else:
+#             permission_classes = [IsAuthenticated]
+        
+#         return [permission() for permission in permission_classes]
+    
+    
+
+#     def get_queryset(self):
+#         """Show appropriate events based on user"""
+#         if not self.request.user.is_authenticated:
+#             return Event.objects.filter(is_active=True).order_by('-created_at')
+        
+#         if self.request.user.is_superuser:
+#             return Event.objects.all().order_by('-created_at')
+#         else:
+#             return Event.objects.filter(
+#                 Q(is_active=True) | 
+#                 Q(owner=self.request.user) |
+#                 Q(cohosts__user=self.request.user)
+#             ).distinct().order_by('-created_at')
+    
+    
+
+#     @method_decorator(never_cache)
+#     def retrieve(self, request, *args, **kwargs):
+#         return super().retrieve(request, *args, **kwargs)
+    
+
+#     # def create(self, request, *args, **kwargs):
+#     #     serializer = self.get_serializer(data=request.data)
+        
+#     #     if serializer.is_valid():
+#     #         if 'ticket_price' not in request.data:
+#     #             serializer.validated_data['ticket_price'] = 100.00
+            
+#     #         if 'capacity' not in request.data:
+#     #             serializer.validated_data['capacity'] = None
+            
+#     #         if not serializer.validated_data.get('slug'):
+#     #             name = serializer.validated_data.get('name', 'event')
+#     #             serializer.validated_data['slug'] = slugify(name) + '-' + str(uuid.uuid4())[:8]
+            
+#     #         serializer.validated_data['transferable'] = True
+            
+#     #         self.perform_create(serializer)
+            
+#     #         event_url = request.build_absolute_uri(
+#     #             reverse('event-detail', kwargs={'slug': serializer.data['slug']}))
+            
+#     #         response_data = serializer.data
+#     #         response_data['event_url'] = event_url
+
+#     #         if serializer.instance.event_image:  
+#     #             response_data['event_image'] = request.build_absolute_uri(serializer.instance.event_image.url)
+            
+#     #         return Response(response_data, status=status.HTTP_201_CREATED)
+        
+#     #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+#     @action(detail=True, methods=['POST'], permission_classes=[AllowAny])
+#     def register(self, request, slug=None):
+#         try:
+#             event = self.get_object()
+            
+#             if event.capacity and event.tickets.count() >= event.capacity:
+#                 return Response(
+#                     {"error": "This event is at capacity"},
+#                     status=status.HTTP_400_BAD_REQUEST
+#                 )
+            
+#             required_fields = ['name', 'email']
+#             if not all(field in request.data for field in required_fields):
+#                 return Response(
+#                     {"error": "Missing required fields: name and email"},
+#                     status=status.HTTP_400_BAD_REQUEST
+#                 )
+            
+#             ticket_data = {
+#                 'event': event.id,
+#                 'original_owner_name': request.data['name'],
+#                 'original_owner_email': request.data['email'],
+#                 'current_owner_name': request.data['name'],
+#                 'current_owner_email': request.data['email'],
+#             }
+            
+#             serializer = TicketSerializer(data=ticket_data, context={'request': request})
+            
+#             if serializer.is_valid():
+#                 ticket = serializer.save()
+#                 ticket_url = request.build_absolute_uri(
+#                     reverse('ticket-detail', kwargs={'ticket_id': str(ticket.ticket_id)})
+#                 )
+                
+#                 return Response({
+#                     **serializer.data,
+#                     'ticket_url': ticket_url,
+#                     'event_slug': event.slug,
+#                     'message': 'Registration successful'
+#                 }, status=status.HTTP_201_CREATED)
+            
+#             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
+#         except Exception as e:
+#             logger.exception("Error in event registration")
+#             return Response(
+#                 {"error": "An error occurred during registration"},
+#                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
+#             )
+
+#     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated, IsEventOwner])
+#     def add_cohost(self, request, slug=None):
+#         """Add co-host to event - only event owner"""
+#         event = self.get_object()
+#         email = request.data.get('email')
+        
+#         if not email:
+#             return Response(
+#                 {"error": "Email is required"},
+#                 status=status.HTTP_400_BAD_REQUEST
+#             )
+        
+#         try:
+#             cohost_user = User.objects.get(email=email)
+            
+#             if EventCoHost.objects.filter(event=event, user=cohost_user).exists():
+#                 return Response(
+#                     {"error": "User is already a co-host for this event"},
+#                     status=status.HTTP_400_BAD_REQUEST
+#                 )
+            
+#             cohost = EventCoHost.objects.create(
+#                 event=event,
+#                 user=cohost_user,
+#                 added_by=request.user
+#             )
+            
+#             return Response({
+#                 "message": f"{cohost_user.email} added as co-host",
+#                 "cohost_id": cohost.id
+#             }, status=status.HTTP_201_CREATED)
+            
+#         except User.DoesNotExist:
+#             return Response(
+#                 {"error": "User with this email not found"},
+#                 status=status.HTTP_404_NOT_FOUND
+#             )
+    
+#     @action(detail=True, methods=['delete'], permission_classes=[IsAuthenticated, IsEventOwner])
+#     def remove_cohost(self, request, slug=None):
+#         """Remove co-host from event - only event owner"""
+#         event = self.get_object()
+#         cohost_id = request.data.get('cohost_id')
+        
+#         if not cohost_id:
+#             return Response(
+#                 {"error": "cohost_id is required"},
+#                 status=status.HTTP_400_BAD_REQUEST
+#             )
+        
+#         try:
+#             cohost = EventCoHost.objects.get(id=cohost_id, event=event)
+#             cohost_email = cohost.user.email
+#             cohost.delete()
+            
+#             return Response({
+#                 "message": f"{cohost_email} removed as co-host"
+#             }, status=status.HTTP_200_OK)
+            
+#         except EventCoHost.DoesNotExist:
+#             return Response(
+#                 {"error": "Co-host not found"},
+#                 status=status.HTTP_404_NOT_FOUND
+#             )
 
 class TicketViewSet(viewsets.ModelViewSet):
     """
