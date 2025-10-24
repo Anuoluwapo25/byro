@@ -1,39 +1,49 @@
 "use client";
 
 import { usePrivy, useIdentityToken, useLogin } from "@privy-io/react-auth";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import API from "../../services/api";
 import SignupButton from "../SignupButton";
 import axiosInstance from "@/utils/axios";
 import { toast } from "sonner";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { authSuccess, signOut } from "@/redux/auth/authSlice";
 
 export default function AuthButton() {
-  const { ready, authenticated, user, getAccessToken, logout, getIdToken } =
-    usePrivy();
-  // const { identityToken } = useIdentityToken();
+  const { user: reduxUser, token, isAuthenticated } = useSelector((state) => state.auth);
+  const { ready, authenticated, user, logout } = usePrivy();
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const dispatch = useDispatch();
   const router = useRouter();
 
-  const { login } = useLogin({
-    onComplete: async ({ user }) => {
+
+  const handleLoginComplete = useCallback(
+    async ({ user }) => {
+      // Check if already authenticated in Redux
+      if (isAuthenticated && token) {
+        console.log("Already authenticated in Redux, skipping backend call");
+        return;
+      }
+
       if (!user?.email?.address || !user?.id) {
         toast.error("Missing user data");
+        return;
+      }
+
+      // Check if already authenticated in Redux
+      const storedToken = localStorage.getItem('authToken');
+      if (storedToken) {
+        console.log("Already authenticated, skipping backend call");
         return;
       }
 
       try {
         setLoading(true);
 
-        console.log("Sending user data:", {
-          email: user.email.address,
-          id: user.id,
-        });
-
+     
         const response = await axiosInstance.post(
           "/auth/privy/",
           {
@@ -51,7 +61,7 @@ export default function AuthButton() {
         );
 
         if (response.status === 200 && response.data) {
-          console.log("User data saved successfully:", response);
+          
           dispatch(
             authSuccess({
               user: response.data.user,
@@ -87,65 +97,12 @@ export default function AuthButton() {
         setLoading(false);
       }
     },
+    [dispatch, isAuthenticated, token]
+  );
+
+  const { login } = useLogin({
+    onComplete: handleLoginComplete,
   });
-
-  // useEffect(() => {
-  //   const handleTokenExchange = async () => {
-  //     if (!authenticated || !user) return;
-
-  //     try {
-  //       console.log("Starting token exchange...");
-  //       setLoading(true);
-  //       setError(null);
-
-  //       // Get access token from Privy
-  //       console.log("Getting access token from Privy...");
-  //       const accessToken = await getAccessToken();
-
-  //       if (!accessToken) {
-  //         throw new Error("Failed to get access token from Privy");
-  //       }
-  //       if (!identityToken) {
-  //         throw new Error("Failed to get identity token from Privy");
-  //       }
-  //       console.log("Got access and identity tokens from Privy", { accessToken, identityToken });
-
-  //       // Send both tokens to backend
-  //       const accessTokenResponse = await API.getPrivyToken(accessToken);
-  //       const identityTokenResponse = await API.getIdToken(identityToken);
-
-  //       console.log("Backend access token response:", accessTokenResponse);
-  //       console.log("Backend identity token response:", identityTokenResponse);
-
-  //       // Use the identity token's backend response for auth
-  //       if (identityTokenResponse?.token) {
-  //         localStorage.setItem("accessToken", identityTokenResponse.token); // Use identity token's backend response as main token
-  //         API.setAuthToken(identityTokenResponse.token);
-  //         // Optionally, store the access token response separately if you want
-  //         localStorage.setItem("privyAccessToken", accessTokenResponse.token);
-  //         console.log("Token exchange successful, redirecting to events...");
-  //         router.push("/events");
-  //       } else {
-  //         throw new Error("Invalid token response from backend");
-  //       }
-  //     } catch (err) {
-  //       console.error("Authentication error:", err);
-  //       setError(err.message || "Authentication failed");
-  //       // Don't logout on token exchange failure
-  //       // Just clean up the local storage
-  //       localStorage.removeItem("accessToken");
-  //       localStorage.removeItem("identityToken");
-  //       API.setAuthToken(null);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-
-  //   // Only run token exchange if we have a user and are authenticated
-  //   if (authenticated && user) {
-  //     handleTokenExchange();
-  //   }
-  // }, [authenticated, user, getAccessToken, router]);
 
   const handleSignup = async () => {
     if (!ready) {
