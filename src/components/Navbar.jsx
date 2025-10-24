@@ -8,38 +8,34 @@ import PrivyButton from "./auth/PrivyButton";
 import { usePrivy } from "@privy-io/react-auth";
 import { FaRegUserCircle } from "react-icons/fa";
 import { usePathname } from "next/navigation";
+import { useSelector } from "react-redux";
+import API from "@/services/api";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDesktopSearchOpen, setIsDesktopSearchOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
-  const { ready, authenticated } = usePrivy();
+  const { authenticated } = usePrivy();
   const pathname = usePathname();
   // const router = useRouter();
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
-  const profileDropdownRef = useRef<HTMLDivElement>(null);
-
-  type UserDetails = {
-    username?: string;
-    email?: string;
-    // add other fields if needed
-  };
-
-  const [user, setUser] = useState<UserDetails | null>(null);
+  const profileDropdownRef = useRef(null);
+  const { user, token } = useSelector((state) => state.auth);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("userDetails");
-      setUser(stored ? JSON.parse(stored) : null);
+    if (token) {
+      API.setAuthToken(token);
     }
-  }, []);
+  }, [token]);
 
+  console.log("User from Redux:", user);
+  console.log("Token from Redux:", token);
   // Close dropdown when clicking outside
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
+    function handleClickOutside(event) {
       if (
         profileDropdownRef.current &&
-        !profileDropdownRef.current.contains(event.target as Node)
+        !profileDropdownRef.current.contains(event.target)
       ) {
         setIsProfileDropdownOpen(false);
       }
@@ -58,10 +54,10 @@ const Navbar = () => {
   //   }
   // }, [ready, authenticated, router]);
 
-  const isActive = (href: string) => pathname === href;
+  const isActive = (href) => pathname === href;
 
-  const desktopSearchInputRef = useRef<HTMLInputElement>(null);
-  const mobileSearchInputRef = useRef<HTMLInputElement>(null);
+  const desktopSearchInputRef = useRef < HTMLInputElement > null;
+  const mobileSearchInputRef = useRef < HTMLInputElement > null;
 
   useEffect(() => {
     if (isDesktopSearchOpen && desktopSearchInputRef.current) {
@@ -93,9 +89,7 @@ const Navbar = () => {
     setIsMobileSearchOpen(true);
   };
 
-  const handleSearchBlur = (
-    setter: React.Dispatch<React.SetStateAction<boolean>>
-  ) => {
+  const handleSearchBlur = (setter) => {
     setTimeout(() => {
       setter(false);
     }, 100);
@@ -215,8 +209,9 @@ const Navbar = () => {
 
               {/* Mobile Menu */}
               <div
-                className={`overflow-hidden transition-all duration-300 ease-in-out ${isMenuOpen ? "max-h-96 opacity-100 pb-4" : "max-h-0 opacity-0"
-                  }`}
+                className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                  isMenuOpen ? "max-h-96 opacity-100 pb-4" : "max-h-0 opacity-0"
+                }`}
               >
                 <div className="flex flex-col space-y-4 px-4">
                   {!isMobileSearchOpen ? (
@@ -293,10 +288,11 @@ const Navbar = () => {
                       />
                       <Link
                         href="/events"
-                        className={`${isActive("/events")
+                        className={`${
+                          isActive("/events")
                             ? "text-blue-600"
                             : "text-gray-400 hover:text-gray-600"
-                          }`}
+                        }`}
                       >
                         My Events
                       </Link>
@@ -305,10 +301,11 @@ const Navbar = () => {
                     <div className="flex items-center space-x-2 cursor-pointer rounded-full py-2 px-4 hover:text-gray-600 transition-colors">
                       <Link
                         href="/events/browse"
-                        className={`${isActive("/events/browse")
+                        className={`${
+                          isActive("/events/browse")
                             ? "text-blue-600"
                             : "text-gray-400 hover:text-gray-600"
-                          }`}
+                        }`}
                       >
                         Explore
                       </Link>
@@ -356,7 +353,6 @@ const Navbar = () => {
                     onClick={() => setIsProfileDropdownOpen((prev) => !prev)}
                   >
                     <FaRegUserCircle color="black" size={20} />
-
                   </button>
                   {isProfileDropdownOpen && (
                     <div className="absolute right-0 mt-2 w-64 bg-white border rounded-lg shadow-lg z-50">
@@ -437,8 +433,9 @@ const Navbar = () => {
 
               {/* Mobile Menu */}
               <div
-                className={`overflow-hidden transition-all duration-300 ease-in-out ${isMenuOpen ? "max-h-96 opacity-100 pb-4" : "max-h-0 opacity-0"
-                  }`}
+                className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                  isMenuOpen ? "max-h-96 opacity-100 pb-4" : "max-h-0 opacity-0"
+                }`}
               >
                 <div className="flex flex-col space-y-4 px-4">
                   {/* Events Link */}

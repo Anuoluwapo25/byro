@@ -107,7 +107,7 @@ const Footer = () => {
         {/* Divider and Copyright */}
         <hr className="border-t border-[#5C6C7E] w-full max-w-4xl mx-auto opacity-30" />
         <p className="text-gray-400 text-xs text-center py-4">
-          &#169; Byro Africa. All Rights Reserved.
+          &#169; {new Date().getFullYear()} Byro Africa. All Rights Reserved.
         </p>
       </div>
     </footer>

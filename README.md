@@ -18,7 +18,7 @@ Byro is a decentralised event ticketing platform revolutionising how events are 
 - Frontend: Next.js, React, TypeScript
 - Backend: Django, Django REST Framework
 - Authentication: Privy
-- Blockchain Integration: Stellar
+- Blockchain Integration: Base
 - Database: SQLite (Development)
 
 

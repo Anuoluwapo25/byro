@@ -216,7 +216,6 @@ class Event(models.Model):
     def save(self, *args, **kwargs):
         if not self.slug:  
             self.slug = get_random_string(6)  
-            # Ensure uniqueness
             while Event.objects.filter(slug=self.slug).exists():
                 self.slug = get_random_string(6)
         super().save(*args, **kwargs)

@@ -1,48 +1,46 @@
 import React from "react";
-import { BusinessManLaunch, ComingSoonTag } from "../app/assets/index";
 import Image from "next/image";
+import { Sparkle } from "../app/assets/index";
 
 
 const HeroPage = () => {
   return (
-    <main className="bg-[#4f8bff]  pt-12 position: relative">
-      <div className="container mx-auto p-4 space-y-24">
-        <h1 className=" text-3xl font-bold text-white text-transform: uppercase w-[100%] sm:text-5xl sm:w-[40%] md:h-0">
-          Next-gen ticketing with crypto
-        </h1>
-        <div className="flex-col items-center gap-32 md:flex md:flex-row">
-          <div className="w-full sm:w-[60%]">
-            <p className="text-lg pb-3">
-              Seamless, secure, and decentralized event ticketing
-            </p>
-            <form className="sm:flex sm:gap-3 sm:items-center">
-              <input
-                type="text"
-                placeholder="Please enter your e-mail address"
-                className="border border-black bg-transparent py-2 px-4 rounded-full placeholder:text-white w-full sm:w-[70%] h-12"
-              />
-              <button
-                type="submit"
-                className="bg-white text-black rounded-full px-4 h-12 flex items-center mt-3 justify-center w-full md:mt-0 sm:w-[20%]"
-              >
-                Join waitlist
-              </button>
-        </form>
+    <main className="bg-white  pt-12 position: relative">
+      <div className="container mx-auto p-10 text-center space-y-6">
 
 
-          </div>
-          <div>
+        <div className="relative w-fit mx-auto">
+
+          <div className="absolute inset-0 z-0 rounded-full rainbow-border"></div>
+
+          <div className="relative z-10 flex items-center space-x-2 bg-[#F2F8FF] rounded-full p-3 max-lg:w-10 sm:w-auto ">
             <Image
-              src={BusinessManLaunch}
-              alt="business man"
-              width={440}
-              height={440}
-              className="w-fit position: relative z-10"
+              src={Sparkle}
+              alt="sparkle"
+              className="w-[24px] h-[24px]"
+              priority
             />
+            <p className="text-[#444444] text-2xl font-medium leading-[140%]">
+              Trusted by event Vendors around the world.
+            </p>
           </div>
         </div>
+
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-7xl font-bold leading-[140%] text-[#1E1E1E] sm:text-5xl">Turn moments into events worth remembering.</h1>
+        </div>
+
+        <div className="max-w-3xl mx-auto">
+          <p className="font-medium text-2xl text-[#444444] leading-[140%]">
+            Set up your event page, customize ticket options, and keep track of
+            every guest, all in one place and in record time.
+          </p>
+        </div>
+
+        <div>
+          <button aria-label="Get Started" className="bg-[#1F6BFF] text-white py-2 px-4 rounded-full font-medium text-lg">Create an account</button>
+        </div>
       </div>
-      <Image src={ComingSoonTag} alt="coming soon" className="w-full position: absolute bottom-0 -z-1"/>
     </main>
   );
 };

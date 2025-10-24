@@ -18,7 +18,7 @@ const SignupButton: React.FC<SignupButtonProps> = ({
   type = "button",
 }) => {
   const baseClasses =
-    "bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-full transition duration-300 ease-in-out shadow-md hover:shadow-lg";
+    "bg-white border border-[#EDEDED] hover:bg-blue-700 hover:text-white text-black font-medium text-xs py-2 px-6 rounded-full transition duration-300 ease-in-out shadow-md hover:shadow-lg";
   const disabledClasses = "opacity-50 cursor-not-allowed";
 
   return (

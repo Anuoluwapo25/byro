@@ -23,6 +23,7 @@ import Attendees from "./Attendees";
 import Confirmation from "./Confirmation";
 import Reminder from "./Reminder";
 import Image from "next/image";
+import { Providers } from "@/redux/Providers";
 
 export default function EventDashboard() {
   const params = useParams();
@@ -70,50 +71,52 @@ export default function EventDashboard() {
   };
 
   return (
-    <div className="relative min-h-screen bg-white">
-      {/* Content wrapper with proper z-index */}
-      <div className="relative z-10">
-        <Navbar />
+    <Providers>
+      <div className="relative min-h-screen bg-white">
+        {/* Content wrapper with proper z-index */}
+        <div className="relative z-10">
+          <Navbar />
 
-        {/* Main container - centered with proper spacing */}
-        <div className="min-h-screen flex flex-col items-center pt-4 sm:pt-6 lg:pt-8 pb-8">
-          <main className="bg-white w-full sm:w-[90%] md:w-[85%] lg:w-[80%] xl:w-[75%] max-w-7xl rounded-lg p-3 sm:p-4 lg:p-6 shadow-lg">
-            {/* Header Section */}
-            <div className="w-full mb-4">
-              <div className="max-w-full mx-auto">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-4 gap-4 sm:gap-0">
-                  <div className="flex items-center space-x-4 w-full sm:w-auto">
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 sm:px-6 lg:px-10 py-3 sm:py-4 lg:py-5 w-full sm:w-auto">
-                      <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-[#007AFF] text-center sm:text-left">
-                        {event ? event.name : "BYRO LAUNCH"}
-                      </h1>
+          {/* Main container - centered with proper spacing */}
+          <div className="min-h-screen flex flex-col items-center pt-4 sm:pt-6 lg:pt-8 pb-8">
+            <main className="bg-white w-full sm:w-[90%] md:w-[85%] lg:w-[80%] xl:w-[75%] max-w-7xl rounded-lg p-3 sm:p-4 lg:p-6 shadow-lg">
+              {/* Header Section */}
+              <div className="w-full mb-4">
+                <div className="max-w-full mx-auto">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-4 gap-4 sm:gap-0">
+                    <div className="flex items-center space-x-4 w-full sm:w-auto">
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 sm:px-6 lg:px-10 py-3 sm:py-4 lg:py-5 w-full sm:w-auto">
+                        <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-[#007AFF] text-center sm:text-left">
+                          {event ? event.name : "BYRO LAUNCH"}
+                        </h1>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center space-x-3 w-full sm:w-auto justify-center sm:justify-end">
-                    <button className="bg-blue-50 text-[#007AFF] px-4 sm:px-6 py-3 sm:py-4 rounded-2xl border-none hover:bg-blue-100 transition-colors flex items-center space-x-3 text-sm sm:text-base lg:text-lg">
-                      <span>Edit Event</span>
-                    </button>
-                    <button
-                      onClick={handleViewEvent}
-                      className="bg-blue-50 text-[#007AFF] px-4 sm:px-6 py-3 sm:py-4 rounded-2xl border-none hover:bg-blue-100 transition-colors flex items-center space-x-3 text-sm sm:text-base lg:text-lg"
-                    >
-                      <span>Event Page</span>
-                    </button>
+                    <div className="flex items-center space-x-3 w-full sm:w-auto justify-center sm:justify-end">
+                      <button className="bg-blue-50 text-[#007AFF] px-4 sm:px-6 py-3 sm:py-4 rounded-2xl border-none hover:bg-blue-100 transition-colors flex items-center space-x-3 text-sm sm:text-base lg:text-lg">
+                        <span>Edit Event</span>
+                      </button>
+                      <button
+                        onClick={handleViewEvent}
+                        className="bg-blue-50 text-[#007AFF] px-4 sm:px-6 py-3 sm:py-4 rounded-2xl border-none hover:bg-blue-100 transition-colors flex items-center space-x-3 text-sm sm:text-base lg:text-lg"
+                      >
+                        <span>Event Page</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Dashboard Tabs */}
-            <div className="mb-6 w-full">
-              <DashboardTab onNavigate={setActivePage} active={activePage} />
-            </div>
+              {/* Dashboard Tabs */}
+              <div className="mb-6 w-full">
+                <DashboardTab onNavigate={setActivePage} active={activePage} />
+              </div>
 
-            {/* Event Details Section */}
-            <div>{content}</div>
-          </main>
+              {/* Event Details Section */}
+              <div>{content}</div>
+            </main>
+          </div>
         </div>
       </div>
-    </div>
+    </Providers>
   );
 }
