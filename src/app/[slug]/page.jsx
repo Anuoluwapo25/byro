@@ -38,14 +38,21 @@ const ViewEvent = () => {
       return event.event_image;
     }
 
-    // If it's a relative path from your API
     const baseURL =
-      process.env.NEXT_PUBLIC_API_URL || "https://byro.onrender.com";
+      process.env.NEXT_PUBLIC_API_URL;
     return `${baseURL}${event.event_image}`;
   };
 
-  // Memoize handlers
-  const handleOpen = useCallback(() => setShowRegisterModal(true), []);
+  const handleRegister = async () => {
+    router.push(`/event-registration/${slug}`);
+    // setLoading(true);
+
+    // await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    // setLoading(false);
+  };
+
+  // const handleOpen = useCallback(() => setShowRegisterModal(true), []);
 
   const handleClose = useCallback(() => {
     setShowRegisterModal(false);
@@ -88,9 +95,9 @@ const ViewEvent = () => {
     [ticketId, transferName, transferEmail]
   );
 
-  const handleRegister = useCallback(() => {
-    setShowRegisterModal(true);
-  }, []);
+  // const handleRegister = useCallback(() => {
+  //   setShowRegisterModal(true);
+  // }, []);
 
   const handleRegistrationSuccess = useCallback((ticketId) => {
     setShowRegisterModal(false);
@@ -341,23 +348,22 @@ const ViewEvent = () => {
                     </div>
 
                     <button
-                      onClick={handleOpen}
+                      onClick={handleRegister}
                       className="text-white px-8 py-3 rounded-full text-sm font-medium transition-colors bg-gradient-to-r"
                       style={{
                         background:
                           "linear-gradient(90deg, #63D0A5 0%, #16B979 100%)",
                       }}
                     >
-                      Register
+                      {loading ? "Loading..." : "Register"}
                     </button>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Right Column */}
             <div className="space-y-6">
-              {/* Event Image */}
+              \
               <div className="bg-white rounded-lg overflow-hidden">
                 {event.event_image ? (
                   <img
@@ -376,7 +382,6 @@ const ViewEvent = () => {
                   </div>
                 )}
               </div>
-
               {/* Event Info Card */}
               <div className="bg-white flex gap-6 rounded-lg p-6 space-y-4">
                 <div>
