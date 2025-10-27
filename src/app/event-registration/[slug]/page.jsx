@@ -151,7 +151,7 @@ export default function EventRegistration() {
                 </h1>
               </div>
               <p className="text-gray-600">
-                Complete your registration for {event.name}
+                Complete your registration for <strong>{event.name}</strong>
               </p>
             </div>
           )}
