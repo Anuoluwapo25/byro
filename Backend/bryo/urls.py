@@ -27,6 +27,7 @@ urlpatterns = [
          EventViewSet.as_view({'post': 'register'}), 
          name='event-register'),
     path('api/auth/privy/', views.privy_login, name='privy_login'),
+    path('api/events/categories/', EventViewSet.as_view({'get': 'categories'}), name='event-categories'),
     path('api/tickets/<uuid:ticket_id>/transfer/', 
          TicketViewSet.as_view({'post': 'transfer'}), 
          name='ticket-transfer'),

@@ -43,13 +43,16 @@ class EventCoHostSerializer(serializers.ModelSerializer):
 
 class EventSerializer(serializers.ModelSerializer):
     owner_email = serializers.EmailField(source='owner.email', read_only=True)
-    cohosts = EventCoHostSerializer(many=True, read_only=True)
+    cohosts = EventCoHostSerializer(many=True, read_only=True, source='eventcohost_set')
     
     # New: Role information for the current user
     role = serializers.SerializerMethodField()
     
     # Category display name
     category_display = serializers.CharField(source='get_category_display', read_only=True)
+    
+    # Event image URL
+    event_image_url = serializers.SerializerMethodField()
     
     class Meta:
         model = Event
@@ -58,37 +61,36 @@ class EventSerializer(serializers.ModelSerializer):
             'category', 'category_display',  # Category fields
             'day', 'time_from', 'time_to', 'location', 'description',
             'virtual_link', 'ticket_price', 'capacity', 'transferable',
-            'event_image', 'visibility', 'timezone', 'hosted_by',
+            'event_image', 'event_image_url', 'visibility', 'timezone', 'hosted_by',
             'is_active', 'created_at', 'updated_at',
             'cohosts', 'role'  # Include role information
         ]
         read_only_fields = ['id', 'slug', 'owner', 'created_at', 'updated_at']
     
     def get_role(self, obj):
-        """
-        Get the current user's role for this event.
-        Similar to Luma's role structure.
-        """
+        """Get the current user's role for this event."""
         request = self.context.get('request')
-        if not request or not request.user:
-            return {
-                'type': 'guest',
-                'is_host': False,
-                'is_cohost': False,
-                'is_owner': False,
-                'can_edit': False,
-                'can_manage': False
-            }
-        
-        return obj.get_user_role(request.user)
+        if request and request.user.is_authenticated:
+            return obj.get_user_role(request.user)
+        return obj.get_user_role(None)  # Return guest role
+    
+    def get_event_image_url(self, obj):
+        """Get full URL for event image"""
+        if obj.event_image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.event_image.url)
+        return None
     
     def create(self, validated_data):
         """Set the owner when creating an event"""
         request = self.context.get('request')
         if request and request.user.is_authenticated:
             validated_data['owner'] = request.user
+            # Set hosted_by if not provided
+            if 'hosted_by' not in validated_data:
+                validated_data['hosted_by'] = request.user.get_full_name() or request.user.email
         return super().create(validated_data)
-
 
 
 class TicketSerializer(serializers.ModelSerializer):

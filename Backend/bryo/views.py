@@ -473,14 +473,78 @@ def privy_login(request):
 logger = logging.getLogger(__name__)
 
 
+# class EventViewSet(viewsets.ModelViewSet):
+#     """
+#     EventViewSet with role-based permissions and category filtering
+    
+#     Filtering examples:
+#     - /api/events/?category=web3_crypto
+#     - /api/events/?search=bitcoin
+#     - /api/events/?category=technology&search=AI
+#     """
+#     queryset = Event.objects.all()
+#     serializer_class = EventSerializer
+#     parser_classes = (JSONParser, MultiPartParser, FormParser)
+#     lookup_field = 'slug'
+    
+#     def get_permissions(self):
+#         """
+#         - List, retrieve, register: Public access
+#         - Create: Authenticated users only
+#         - Update, delete: Owner/co-host only (both can edit)
+#         """
+#         if self.action in ['list', 'retrieve', 'register', 'categories']:
+#             permission_classes = [AllowAny]
+#         elif self.action in ['create']:
+#             permission_classes = [IsAuthenticated]
+#         elif self.action in ['update', 'partial_update', 'destroy']:
+#             permission_classes = [IsAuthenticated, IsEventOwnerOrCoHost]
+#         elif self.action in ['add_cohost', 'remove_cohost']:
+#             permission_classes = [IsAuthenticated, IsEventOwner]
+#         else:
+#             permission_classes = [IsAuthenticated]
+        
+#         return [permission() for permission in permission_classes]
+    
+#     def get_queryset(self):
+#         """
+#         Show appropriate events based on user with category filtering
+#         """
+#         queryset = Event.objects.all()
+        
+#         category = self.request.query_params.get('category', None)
+#         if category:
+#             queryset = queryset.filter(category=category)
+        
+#         search = self.request.query_params.get('search', None)
+#         if search:
+#             queryset = queryset.filter(
+#                 Q(name__icontains=search) |
+#                 Q(description__icontains=search) |
+#                 Q(location__icontains=search) |
+#                 Q(hosted_by__icontains=search)
+#             )
+        
+#         # User-based filtering
+#         if not self.request.user.is_authenticated:
+#             return queryset.filter(is_active=True).order_by('-created_at')
+        
+#         if self.request.user.is_superuser:
+#             return queryset.order_by('-created_at')
+#         else:
+#             return queryset.filter(
+#                 Q(is_active=True) | 
+#                 Q(owner=self.request.user) |
+#                 Q(cohosts__user=self.request.user)
+#             ).distinct().order_by('-created_at')
+
 class EventViewSet(viewsets.ModelViewSet):
     """
     EventViewSet with role-based permissions and category filtering
-    
     Filtering examples:
-    - /api/events/?category=web3_crypto
-    - /api/events/?search=bitcoin
-    - /api/events/?category=technology&search=AI
+     - /api/events/?category=web3_crypto
+     - /api/events/?search=bitcoin
+     - /api/events/?category=technology&search=AI
     """
     queryset = Event.objects.all()
     serializer_class = EventSerializer
@@ -510,12 +574,14 @@ class EventViewSet(viewsets.ModelViewSet):
         """
         Show appropriate events based on user with category filtering
         """
-        queryset = Event.objects.all()
+        queryset = Event.objects.select_related('owner').prefetch_related('cohosts__user')
         
+        # Category filtering
         category = self.request.query_params.get('category', None)
         if category:
             queryset = queryset.filter(category=category)
         
+        # Search filtering
         search = self.request.query_params.get('search', None)
         if search:
             queryset = queryset.filter(
@@ -527,16 +593,51 @@ class EventViewSet(viewsets.ModelViewSet):
         
         # User-based filtering
         if not self.request.user.is_authenticated:
-            return queryset.filter(is_active=True).order_by('-created_at')
+            return queryset.filter(is_active=True, visibility='public').order_by('-created_at')
         
         if self.request.user.is_superuser:
             return queryset.order_by('-created_at')
         else:
             return queryset.filter(
-                Q(is_active=True) | 
+                Q(is_active=True, visibility='public') | 
                 Q(owner=self.request.user) |
                 Q(cohosts__user=self.request.user)
             ).distinct().order_by('-created_at')
+    
+    @action(detail=False, methods=['GET'], permission_classes=[AllowAny])
+    def categories(self, request):
+        """
+        Get all available event categories
+        GET /api/events/categories/
+        """
+        try:
+            categories = []
+            for choice_value, choice_label in Event.CATEGORY_CHOICES:
+                count = Event.objects.filter(
+                    category=choice_value, 
+                    is_active=True,
+                    visibility='public'
+                ).count()
+                
+                categories.append({
+                    'value': choice_value,
+                    'label': choice_label,
+                    'count': count
+                })
+            
+            total_events = Event.objects.filter(is_active=True, visibility='public').count()
+            
+            return Response({
+                'categories': categories,
+                'total_events': total_events
+            })
+            
+        except Exception as e:
+            logger.error(f"Error in categories endpoint: {e}")
+            return Response(
+                {"error": "Unable to fetch categories"}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
     
     @method_decorator(never_cache)
     def retrieve(self, request, *args, **kwargs):
