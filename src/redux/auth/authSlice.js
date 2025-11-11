@@ -1,50 +1,40 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
-  token: null,
-  user: null,
-  error: null,
-  loading: false,
-  isLoggedIn: false,
+  user: typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user') || 'null') : null,
+  token: typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('token') || 'null') : null,
+  isAuthenticated: typeof window !== 'undefined' ? !!localStorage.getItem('token') : false,
 };
 
 const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
+    authSuccess: (state, action) => {
+      state.user = action.payload.user;
+      state.token = action.payload.token;
+      state.isAuthenticated = true;
+      
+      // Persist to localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('user', JSON.stringify(action.payload.user));
+        localStorage.setItem('token', JSON.stringify(action.payload.token));
+      }
+    },
     signOut: (state) => {
-      state.loading = false;
+      state.user = null;
       state.token = null;
-      state.isLoggedIn = false;
-      state.error = null;
-      localStorage.removeItem("redux-root");
-      localStorage.removeItem("persist:user");
-      localStorage.removeItem("persist:auth");
-      localStorage.removeItem("persist:message");
-      window.location.href = "/";
-    },
-
-    authStart: (state) => {
-      state.loading = true;
-    },
-    authSuccess: (state, { payload }) => {
-      console.log("payload", payload);
-      state.isLoggedIn = true;
-
-      state.token = payload?.token?.access;
-      state.user = payload?.user;
-
-      state.loading = false;
-      state.error = null;
-    },
-    authFailure: (state, action) => {
-      state.error = action.payload;
-      state.loading = false;
+      state.isAuthenticated = false;
+      
+      // Clear localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+        localStorage.removeItem('authToken');
+      }
     },
   },
 });
 
-export const { signOut, authStart, authSuccess, authFailure } =
-  authSlice.actions;
-
+export const { authSuccess, signOut } = authSlice.actions;
 export default authSlice.reducer;

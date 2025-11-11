@@ -28,8 +28,7 @@ const Navbar = () => {
     }
   }, [token]);
 
-  console.log("User from Redux:", user);
-  console.log("Token from Redux:", token);
+
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
@@ -100,7 +99,7 @@ const Navbar = () => {
       <div className="container mx-auto px-4">
         {!authenticated && (
           <>
-            {/* Desktop View */}
+            
             <div className="hidden lg:flex items-center justify-between py-4">
               <div>
                 <Link href="/">
@@ -158,7 +157,7 @@ const Navbar = () => {
               <PrivyButton />
             </div>
 
-            {/* Mobile View */}
+            
             <div className="lg:hidden">
               <div className="flex items-center justify-between py-4">
                 <div>
@@ -207,7 +206,7 @@ const Navbar = () => {
                 </div>
               </div>
 
-              {/* Mobile Menu */}
+          
               <div
                 className={`overflow-hidden transition-all duration-300 ease-in-out ${
                   isMenuOpen ? "max-h-96 opacity-100 pb-4" : "max-h-0 opacity-0"
@@ -259,8 +258,7 @@ const Navbar = () => {
           </>
         )}
 
-        {/* AUTHENTICATED STATE */}
-        {authenticated && (
+        { authenticated && (
           <>
             {/* Desktop View */}
             <div className="hidden lg:flex items-center justify-between py-4 bg-[#FFFFFF]">

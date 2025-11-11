@@ -19,6 +19,7 @@ const EventMiniCard = () => {
             </div>
 
             <div className="space-y-4 mb-6">
+              <div className="flex justify-between">
               <div className="flex items-start gap-3">
                 <div className="bg-red-100 p-2 rounded-lg">
                   <Calendar className="text-red-600" size={20} />
@@ -33,10 +34,11 @@ const EventMiniCard = () => {
                 <div className="bg-blue-100 p-2 rounded-lg">
                   <MapPin className="text-blue-600" size={20} />
                 </div>
-                <div>
+                <div >
                   <div className="font-semibold text-gray-900">Byro Headquarters</div>
                   <div className="text-gray-600 text-sm">Lagos, Nigeria</div>
                 </div>
+              </div>
               </div>
             </div>
 
