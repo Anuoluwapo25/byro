@@ -1,11 +1,10 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
-from .serializers import PaymentLinkCreateSerializer, PaymentSettingsSerializer, WaitListSerializer, EventSerializer, TicketSerializer, TicketTransferSerializer
-from rest_framework.permissions import IsAuthenticated
+from .serializers import WaitListSerializer, EventSerializer, TicketSerializer, TicketTransferSerializer, PaymentInitializeSerializer, PaymentVerifySerializer, PaymentSerializer
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
@@ -18,15 +17,22 @@ from django.contrib.auth import authenticate, get_user_model, login
 from django.contrib.auth.decorators import login_required
 from rest_framework_simplejwt.tokens import RefreshToken
 from .services.privy_auth import PrivyAuthService
-from .models import PrivyUser, WaitList, Event, Payment, Ticket, TicketTransfer, EventCoHost
+from .models import PrivyUser, WaitList, Event, Ticket, TicketTransfer, EventCoHost, Payment
 from django.urls import reverse
-from .serializers import EventSerializer, TicketSerializer
+from .serializers import EventSerializer, TicketSerializer, PaymentSerializer
 from .permissions import IsEventOwnerOrCoHost, IsEventOwner
 from django.db import transaction
 from django.db import models
 from django.db.models import Q
 from django.http import JsonResponse
-from django.conf import settings    
+from django.conf import settings
+from decouple import config
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
+import requests
+import hmac
+import hashlib
+from decimal import Decimal
 import os
 import jwt
 import uuid
@@ -39,92 +45,319 @@ User = get_user_model()
 
 logger = logging.getLogger(__name__)
 
-class PaymentLinkViewSet(viewsets.ViewSet):
-    """ViewSet for creating and managing payment links"""
-    parser_classes = [JSONParser, MultiPartParser, FormParser]
+
+
+class PaystackPaymentViewSet(viewsets.ViewSet):
+    """
+    ViewSet for handling Paystack payment operations for event tickets
+    """
     
-    @action(detail=False, methods=['post'], url_path='create')
-    def create_payment_link(self, request):
-        """Create a new payment link"""
-        serializer = PaymentLinkCreateSerializer(data=request.data)
+    
+    def get_permissions(self):
+        if self.action in ['webhook', 'verify_payment']:
+            return [AllowAny()]
+        return [IsAuthenticated()]
+    
+    @action(detail=False, methods=['post'], url_path='initialize')
+    def initialize_payment(self, request):
+        """
+        Initialize a Paystack payment for an event ticket
         
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
-        data = serializer.validated_data
-        
-        settings = Payment.load()
-        
-        payload = {
-            "amount": data['amount'],
-            "description": data['description'],
-            "name": data['name']
+        Expected payload:
+        {
+            "event_slug": "abc123",
+            "customer_email": "user@example.com",
+            "customer_name": "John Doe",
+            "quantity": 1
         }
+        """
+        event_slug = request.data.get('event_slug')
+        customer_email = request.data.get('customer_email')
+        customer_name = request.data.get('customer_name')
+        quantity = int(request.data.get('quantity', 1))
         
-        if 'slug' in data and data['slug']:
-            payload["slug"] = data['slug']
-        if 'metadata' in data and data['metadata']:
-            payload["metadata"] = data['metadata']
+        if not all([event_slug, customer_email, customer_name]):
+            return Response(
+                {'error': 'event_slug, customer_email, and customer_name are required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
-        if settings.success_message:
-            payload["successMessage"] = settings.success_message
-        if settings.inactive_message:
-            payload["inactiveMessage"] = settings.inactive_message
-        if settings.redirect_url:
-            payload["redirectUrl"] = settings.redirect_url
-        if settings.payment_limit:
-            payload["paymentLimit"] = str(settings.payment_limit)
+        # Get event
+        event = get_object_or_404(Event, slug=event_slug, is_active=True)
         
-        url = "https://api.blockradar.co/v1/payment_links"
-        headers = {
-            "x-api-key": os.environ.get("BLOCKRADAR_API_KEY")
-        }
-        
-        files = {}
-        if settings.branding_image:
-            files = {
-                "file": (
-                    os.path.basename(settings.branding_image.name),
-                    settings.branding_image.open(),
-                    'image/jpeg'
+        # Check if event has capacity
+        if event.capacity:
+            registered_count = event.tickets.filter(
+                payment_status__in=['paid', 'free']
+            ).count()
+            
+            if registered_count + quantity > event.capacity:
+                return Response(
+                    {'error': 'Not enough tickets available'},
+                    status=status.HTTP_400_BAD_REQUEST
                 )
-            }
+        
+        # Calculate amount
+        amount = event.ticket_price * quantity
+        
+        # For free events, create ticket directly
+        if amount == 0:
+            tickets = []
+            for _ in range(quantity):
+                ticket = Ticket.objects.create(
+                    event=event,
+                    original_owner_name=customer_name,
+                    original_owner_email=customer_email,
+                    current_owner_name=customer_name,
+                    current_owner_email=customer_email,
+                    payment_status='free'
+                )
+                tickets.append(ticket)
+            
+            return Response({
+                'status': 'success',
+                'message': 'Free ticket(s) created successfully',
+                'tickets': TicketSerializer(tickets, many=True).data
+            }, status=status.HTTP_201_CREATED)
+        
+        # Initialize Paystack payment
+        paystack_secret_key = settings.PAYSTACK_SECRET_KEY
+        paystack_url = 'https://api.paystack.co/transaction/initialize'
+        
+        # Generate unique reference
+        reference = f"EVT-{event.slug}-{timezone.now().strftime('%Y%m%d%H%M%S')}"
+        
+        # Prepare payment data
+        payment_data = {
+            'email': customer_email,
+            'amount': int(amount * 100),  # Paystack amount is in kobo (multiply by 100)
+            'reference': reference,
+            'currency': 'NGN',
+            'metadata': {
+                'event_id': str(event.id),
+                'event_slug': event.slug,
+                'event_name': event.name,
+                'customer_name': customer_name,
+                'quantity': quantity,
+            },
+            'callback_url': f"{settings.FRONTEND_URL}/payment/callback"
+        }
+        
+        headers = {
+            'Authorization': f'Bearer {paystack_secret_key}',
+            'Content-Type': 'application/json'
+        }
         
         try:
-            response = requests.post(url, data=payload, files=files or None, headers=headers)
-            response.raise_for_status()
+            response = requests.post(
+                paystack_url, 
+                json=payment_data, 
+                headers=headers,
+                timeout=30
+            )
+            response_data = response.json()
             
-            result = response.json()
-            
-            return Response({
-                'success': True,
-                'paymentUrl': result['data']['url'],
-                'paymentId': result['data']['id'],
-                'message': result['message']
-            }, status=status.HTTP_201_CREATED)
-            
-        except requests.exceptions.RequestException as e:
-            error_message = str(e)
-            try:
-                if e.response and e.response.json():
-                    error_message = e.response.json().get('message', str(e))
-            except:
-                pass
+            if response.status_code == 200 and response_data.get('status'):
+                # Create Payment record
+                payment = Payment.objects.create(
+                    event=event,
+                    customer_email=customer_email,
+                    customer_name=customer_name,
+                    amount=amount,
+                    currency='NGN',
+                    paystack_reference=reference,
+                    paystack_access_code=response_data['data'].get('access_code'),
+                    paystack_authorization_url=response_data['data'].get('authorization_url'),
+                    status='pending',
+                    ip_address=self.get_client_ip(request),
+                    metadata={'quantity': quantity}
+                )
                 
+                return Response({
+                    'status': 'success',
+                    'message': 'Payment initialized successfully',
+                    'data': {
+                        'authorization_url': response_data['data']['authorization_url'],
+                        'access_code': response_data['data']['access_code'],
+                        'reference': reference,
+                        'amount': float(amount),
+                        'currency': 'NGN'
+                    }
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    'error': 'Failed to initialize payment',
+                    'details': response_data.get('message', 'Unknown error')
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+        except requests.exceptions.RequestException as e:
             return Response({
-                'success': False,
-                'error': error_message
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-class PaymentSettingsViewSet(viewsets.ModelViewSet):
-    """ViewSet for managing payment settings"""
-    queryset = Payment.objects.all()
-    serializer_class = PaymentSettingsSerializer
+                'error': 'Payment gateway error',
+                'details': str(e)
+            }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
     
-    def get_object(self):
-        """Always return the singleton settings object"""
-        return Payment.load()
-
+    @action(detail=False, methods=['get'], url_path='verify/(?P<reference>[^/.]+)')
+    def verify_payment(self, request, reference=None):
+        """
+        Verify a Paystack payment and create ticket(s) if successful
+        """
+        paystack_secret_key = config("PAYSTACK_SECRET_KEY")
+        paystack_url = f'https://api.paystack.co/transaction/verify/{reference}'
+        
+        headers = {
+            'Authorization': f'Bearer {paystack_secret_key}',
+        }
+        
+        try:
+            response = requests.get(paystack_url, headers=headers, timeout=30)
+            response_data = response.json()
+            
+            if response.status_code == 200 and response_data.get('status'):
+                transaction_data = response_data['data']
+                
+                payment = get_object_or_404(Payment, paystack_reference=reference)
+                
+                if payment.status == 'successful':
+                    return Response({
+                        'status': 'success',
+                        'message': 'Payment already verified',
+                        'ticket': TicketSerializer(payment.ticket).data if payment.ticket else None
+                    }, status=status.HTTP_200_OK)
+                
+                if transaction_data['status'] == 'success':
+                    # Update payment record
+                    payment.status = 'successful'
+                    payment.channel = transaction_data.get('channel')
+                    payment.paid_at = timezone.now()
+                    payment.save()
+                    
+                    # Create ticket(s)
+                    quantity = payment.metadata.get('quantity', 1)
+                    tickets = []
+                    
+                    for i in range(quantity):
+                        ticket = Ticket.objects.create(
+                            event=payment.event,
+                            original_owner_name=payment.customer_name,
+                            original_owner_email=payment.customer_email,
+                            current_owner_name=payment.customer_name,
+                            current_owner_email=payment.customer_email,
+                            payment_status='paid',
+                            payment=payment if i == 0 else None  # Link first ticket to payment
+                        )
+                        tickets.append(ticket)
+                    
+                    if tickets:
+                        payment.ticket = tickets[0]
+                        payment.save()
+                    
+                    return Response({
+                        'status': 'success',
+                        'message': 'Payment verified successfully',
+                        'tickets': TicketSerializer(tickets, many=True).data,
+                        'payment': PaymentSerializer(payment).data
+                    }, status=status.HTTP_200_OK)
+                else:
+                    payment.status = 'failed'
+                    payment.save()
+                    
+                    return Response({
+                        'status': 'failed',
+                        'message': 'Payment was not successful'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                return Response({
+                    'error': 'Failed to verify payment',
+                    'details': response_data.get('message', 'Unknown error')
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+        except Payment.DoesNotExist:
+            return Response({
+                'error': 'Payment record not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except requests.exceptions.RequestException as e:
+            return Response({
+                'error': 'Payment gateway error',
+                'details': str(e)
+            }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+    
+    @action(detail=False, methods=['post'], permission_classes=[AllowAny])
+    def webhook(self, request):
+        """
+        Handle Paystack webhook events
+        Verifies webhook signature and processes payment events
+        """
+        paystack_secret_key = settings.PAYSTACK_SECRET_KEY
+        
+        signature = request.headers.get('X-Paystack-Signature')
+        
+        if not signature:
+            return Response({
+                'error': 'No signature provided'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        hash_value = hmac.new(
+            paystack_secret_key.encode('utf-8'),
+            request.body,
+            hashlib.sha512
+        ).hexdigest()
+        
+        if hash_value != signature:
+            return Response({
+                'error': 'Invalid signature'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Process webhook event
+        event_type = request.data.get('event')
+        data = request.data.get('data', {})
+        
+        if event_type == 'charge.success':
+            reference = data.get('reference')
+            
+            try:
+                payment = Payment.objects.get(paystack_reference=reference)
+                
+                if payment.status != 'successful':
+                    payment.status = 'successful'
+                    payment.channel = data.get('channel')
+                    payment.paid_at = timezone.now()
+                    payment.save()
+                    
+                    if not hasattr(payment, 'ticket') or payment.ticket is None:
+                        quantity = payment.metadata.get('quantity', 1)
+                        tickets = []
+                        
+                        for i in range(quantity):
+                            ticket = Ticket.objects.create(
+                                event=payment.event,
+                                original_owner_name=payment.customer_name,
+                                original_owner_email=payment.customer_email,
+                                current_owner_name=payment.customer_name,
+                                current_owner_email=payment.customer_email,
+                                payment_status='paid',
+                                payment=payment if i == 0 else None
+                            )
+                            tickets.append(ticket)
+                        
+                        if tickets:
+                            payment.ticket = tickets[0]
+                            payment.save()
+                    
+                    # TODO: Send ticket email to customer
+                    
+            except Payment.DoesNotExist:
+                pass  # Ignore if payment doesn't exist
+        
+        return Response({'status': 'success'}, status=status.HTTP_200_OK)
+    
+    def get_client_ip(self, request):
+        """Extract client IP address from request"""
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = request.META.get('REMOTE_ADDR')
+        return ip
 
 class WaitListViewSet(viewsets.ModelViewSet):
     queryset = WaitList.objects.all()
@@ -265,10 +498,8 @@ class EventViewSet(viewsets.ModelViewSet):
         elif self.action in ['create']:
             permission_classes = [IsAuthenticated]
         elif self.action in ['update', 'partial_update', 'destroy']:
-            # Both owners and co-hosts can edit
             permission_classes = [IsAuthenticated, IsEventOwnerOrCoHost]
         elif self.action in ['add_cohost', 'remove_cohost']:
-            # Only owners can manage co-hosts
             permission_classes = [IsAuthenticated, IsEventOwner]
         else:
             permission_classes = [IsAuthenticated]
@@ -281,12 +512,10 @@ class EventViewSet(viewsets.ModelViewSet):
         """
         queryset = Event.objects.all()
         
-        # Category filtering
         category = self.request.query_params.get('category', None)
         if category:
             queryset = queryset.filter(category=category)
         
-        # Search filtering (search in name, description, location)
         search = self.request.query_params.get('search', None)
         if search:
             queryset = queryset.filter(
@@ -472,14 +701,12 @@ class EventViewSet(viewsets.ModelViewSet):
             User = get_user_model()
             cohost_user = User.objects.get(email=email)
             
-            # Check if already owner
             if event.owner == cohost_user:
                 return Response(
                     {"error": "User is already the owner of this event"},
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            # Check if already co-host
             if EventCoHost.objects.filter(event=event, user=cohost_user).exists():
                 return Response(
                     {"error": "User is already a co-host for this event"},
@@ -540,198 +767,6 @@ class EventViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-# class EventViewSet(viewsets.ModelViewSet):
-#     """EventViewSet with simple ownership-based permissions"""
-#     queryset = Event.objects.all()
-#     serializer_class = EventSerializer
-#     parser_classes = (JSONParser, MultiPartParser, FormParser)
-#     lookup_field = 'slug'
-    
-#     def get_permissions(self):
-#         """
-#         - List, retrieve, register: Public access
-#         - Create: Authenticated users only
-#         - Update, delete: Owner/co-host only
-#         """
-#         if self.action in ['list', 'retrieve', 'register']:
-#             permission_classes = [AllowAny]
-#         elif self.action in ['create']:
-#             permission_classes = [IsAuthenticated]
-#         elif self.action in ['update', 'partial_update', 'destroy', 'add_cohost', 'remove_cohost']:
-#             permission_classes = [IsAuthenticated, IsEventOwnerOrCoHost]
-#         else:
-#             permission_classes = [IsAuthenticated]
-        
-#         return [permission() for permission in permission_classes]
-    
-    
-
-#     def get_queryset(self):
-#         """Show appropriate events based on user"""
-#         if not self.request.user.is_authenticated:
-#             return Event.objects.filter(is_active=True).order_by('-created_at')
-        
-#         if self.request.user.is_superuser:
-#             return Event.objects.all().order_by('-created_at')
-#         else:
-#             return Event.objects.filter(
-#                 Q(is_active=True) | 
-#                 Q(owner=self.request.user) |
-#                 Q(cohosts__user=self.request.user)
-#             ).distinct().order_by('-created_at')
-    
-    
-
-#     @method_decorator(never_cache)
-#     def retrieve(self, request, *args, **kwargs):
-#         return super().retrieve(request, *args, **kwargs)
-    
-
-#     # def create(self, request, *args, **kwargs):
-#     #     serializer = self.get_serializer(data=request.data)
-        
-#     #     if serializer.is_valid():
-#     #         if 'ticket_price' not in request.data:
-#     #             serializer.validated_data['ticket_price'] = 100.00
-            
-#     #         if 'capacity' not in request.data:
-#     #             serializer.validated_data['capacity'] = None
-            
-#     #         if not serializer.validated_data.get('slug'):
-#     #             name = serializer.validated_data.get('name', 'event')
-#     #             serializer.validated_data['slug'] = slugify(name) + '-' + str(uuid.uuid4())[:8]
-            
-#     #         serializer.validated_data['transferable'] = True
-            
-#     #         self.perform_create(serializer)
-            
-#     #         event_url = request.build_absolute_uri(
-#     #             reverse('event-detail', kwargs={'slug': serializer.data['slug']}))
-            
-#     #         response_data = serializer.data
-#     #         response_data['event_url'] = event_url
-
-#     #         if serializer.instance.event_image:  
-#     #             response_data['event_image'] = request.build_absolute_uri(serializer.instance.event_image.url)
-            
-#     #         return Response(response_data, status=status.HTTP_201_CREATED)
-        
-#     #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-#     @action(detail=True, methods=['POST'], permission_classes=[AllowAny])
-#     def register(self, request, slug=None):
-#         try:
-#             event = self.get_object()
-            
-#             if event.capacity and event.tickets.count() >= event.capacity:
-#                 return Response(
-#                     {"error": "This event is at capacity"},
-#                     status=status.HTTP_400_BAD_REQUEST
-#                 )
-            
-#             required_fields = ['name', 'email']
-#             if not all(field in request.data for field in required_fields):
-#                 return Response(
-#                     {"error": "Missing required fields: name and email"},
-#                     status=status.HTTP_400_BAD_REQUEST
-#                 )
-            
-#             ticket_data = {
-#                 'event': event.id,
-#                 'original_owner_name': request.data['name'],
-#                 'original_owner_email': request.data['email'],
-#                 'current_owner_name': request.data['name'],
-#                 'current_owner_email': request.data['email'],
-#             }
-            
-#             serializer = TicketSerializer(data=ticket_data, context={'request': request})
-            
-#             if serializer.is_valid():
-#                 ticket = serializer.save()
-#                 ticket_url = request.build_absolute_uri(
-#                     reverse('ticket-detail', kwargs={'ticket_id': str(ticket.ticket_id)})
-#                 )
-                
-#                 return Response({
-#                     **serializer.data,
-#                     'ticket_url': ticket_url,
-#                     'event_slug': event.slug,
-#                     'message': 'Registration successful'
-#                 }, status=status.HTTP_201_CREATED)
-            
-#             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            
-#         except Exception as e:
-#             logger.exception("Error in event registration")
-#             return Response(
-#                 {"error": "An error occurred during registration"},
-#                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
-#             )
-
-#     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated, IsEventOwner])
-#     def add_cohost(self, request, slug=None):
-#         """Add co-host to event - only event owner"""
-#         event = self.get_object()
-#         email = request.data.get('email')
-        
-#         if not email:
-#             return Response(
-#                 {"error": "Email is required"},
-#                 status=status.HTTP_400_BAD_REQUEST
-#             )
-        
-#         try:
-#             cohost_user = User.objects.get(email=email)
-            
-#             if EventCoHost.objects.filter(event=event, user=cohost_user).exists():
-#                 return Response(
-#                     {"error": "User is already a co-host for this event"},
-#                     status=status.HTTP_400_BAD_REQUEST
-#                 )
-            
-#             cohost = EventCoHost.objects.create(
-#                 event=event,
-#                 user=cohost_user,
-#                 added_by=request.user
-#             )
-            
-#             return Response({
-#                 "message": f"{cohost_user.email} added as co-host",
-#                 "cohost_id": cohost.id
-#             }, status=status.HTTP_201_CREATED)
-            
-#         except User.DoesNotExist:
-#             return Response(
-#                 {"error": "User with this email not found"},
-#                 status=status.HTTP_404_NOT_FOUND
-#             )
-    
-#     @action(detail=True, methods=['delete'], permission_classes=[IsAuthenticated, IsEventOwner])
-#     def remove_cohost(self, request, slug=None):
-#         """Remove co-host from event - only event owner"""
-#         event = self.get_object()
-#         cohost_id = request.data.get('cohost_id')
-        
-#         if not cohost_id:
-#             return Response(
-#                 {"error": "cohost_id is required"},
-#                 status=status.HTTP_400_BAD_REQUEST
-#             )
-        
-#         try:
-#             cohost = EventCoHost.objects.get(id=cohost_id, event=event)
-#             cohost_email = cohost.user.email
-#             cohost.delete()
-            
-#             return Response({
-#                 "message": f"{cohost_email} removed as co-host"
-#             }, status=status.HTTP_200_OK)
-            
-#         except EventCoHost.DoesNotExist:
-#             return Response(
-#                 {"error": "Co-host not found"},
-#                 status=status.HTTP_404_NOT_FOUND
-#             )
 
 class TicketViewSet(viewsets.ModelViewSet):
     """

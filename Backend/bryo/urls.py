@@ -2,22 +2,21 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
 from .views import (
-    PaymentLinkViewSet, PaymentSettingsViewSet,
     WaitListViewSet,
     EventViewSet,
     TicketViewSet,
-    TicketTransferViewSet
+    TicketTransferViewSet,
+    PaystackPaymentViewSet
 )
 
 
 router = DefaultRouter()
-router.register(r'payment-settings', PaymentSettingsViewSet, basename='payment-settings')
-router.register(r'payment-links', PaymentLinkViewSet, basename='payment-links')
+
 router.register(r'waitlist', WaitListViewSet, basename='waitlist')
 router.register(r'events', EventViewSet)
 router.register(r'tickets', TicketViewSet)
 router.register(r'transfers', TicketTransferViewSet, basename='transfer')
-
+router.register(r'payments', PaystackPaymentViewSet, basename='payment') 
 
 
 
