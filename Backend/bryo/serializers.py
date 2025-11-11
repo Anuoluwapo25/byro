@@ -1,23 +1,10 @@
 from rest_framework import serializers
 from django.utils import timezone
-from .models import Payment, WaitList, PrivyUser, Ticket, Event, EventCoHost, TicketTransfer
+from .models import Payment, WaitList, PrivyUser, Ticket, Event, EventCoHost, TicketTransfer, Payment
 from django.core.mail import send_mail
 from django.urls import reverse
 from django.conf import settings
 
-class PaymentLinkCreateSerializer(serializers.Serializer):
-    """Serializer for creating payment links"""
-    amount = serializers.CharField(required=True)
-    description = serializers.CharField(required=True)
-    name = serializers.CharField(required=True)
-    slug = serializers.CharField(required=False, allow_blank=True)
-    metadata = serializers.CharField(required=False, allow_blank=True)
-
-class PaymentSettingsSerializer(serializers.ModelSerializer):
-    """Serializer for payment settings"""
-    class Meta:
-        model = Payment
-        fields = ['success_message', 'inactive_message', 'redirect_url', 'payment_limit', 'branding_image']
 
 
 class WaitListSerializer(serializers.Serializer):
@@ -102,46 +89,6 @@ class EventSerializer(serializers.ModelSerializer):
             validated_data['owner'] = request.user
         return super().create(validated_data)
 
-# class EventSerializer(serializers.ModelSerializer):
-#     # is_transferable = serializers.BooleanField(source='transferable')
-#     event_image_url = serializers.SerializerMethodField()
-
-#     class Meta:
-#         model = Event
-#         fields = [
-#             'slug', 'name', 'day', 'time_from', 'time_to', 
-#             'location', 'virtual_link', 'description', 
-#             'ticket_price', 'transferable', 'capacity', 
-#             'visibility', 'timezone', 'event_image', 'event_image_url'
-#         ]
-#         extra_kwargs = {
-#             'ticket_price': {'required': False},
-#             'transferable': {'required': False},
-#             'capacity': {'required': False},
-#             'virtual_link': {'required': False},
-#             'description': {'required': False},
-           
-#             'event_image': {'required': False},
-#         }
-
-#     def get_event_image_url(self, obj):
-#         request = self.context.get('request')
-#         if obj.event_image and request:
-#             return request.build_absolute_uri(obj.event_image.url)
-#         return None
-    
-#     def validate(self, data):
-#         if data.get('time_from') and data.get('time_to'):
-#             if data['time_from'] >= data['time_to']:
-#                 raise serializers.ValidationError("End time must be after start time.")
-        
-#         if data.get('date'):
-#             if data['date'] < timezone.now().date():
-#                 raise serializers.ValidationError("Event date cannot be in the past.")
-        
-#         return data
-    
-
 
 
 class TicketSerializer(serializers.ModelSerializer):
@@ -205,3 +152,71 @@ class TicketTransferSerializer(serializers.ModelSerializer):
         
         return transfer
 
+
+
+class PaymentSerializer(serializers.ModelSerializer):
+    """Serializer for Payment model"""
+    event = EventSerializer(read_only=True)
+    event_slug = serializers.CharField(write_only=True, required=False)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    channel_display = serializers.CharField(source='get_channel_display', read_only=True)
+    
+    class Meta:
+        model = Payment
+        fields = [
+            'id',
+            'event',
+            'event_slug',
+            'customer_email',
+            'customer_name',
+            'amount',
+            'currency',
+            'paystack_reference',
+            'paystack_access_code',
+            'paystack_authorization_url',
+            'status',
+            'status_display',
+            'channel',
+            'channel_display',
+            'paid_at',
+            'metadata',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = [
+            'id',
+            'paystack_reference',
+            'paystack_access_code',
+            'paystack_authorization_url',
+            'status',
+            'channel',
+            'paid_at',
+            'created_at',
+            'updated_at',
+        ]
+
+
+
+
+class PaymentInitializeSerializer(serializers.Serializer):
+    """Serializer for payment initialization request"""
+    event_slug = serializers.CharField(max_length=50)
+    customer_email = serializers.EmailField()
+    customer_name = serializers.CharField(max_length=255)
+    quantity = serializers.IntegerField(min_value=1, default=1)
+    
+    def validate_event_slug(self, value):
+        """Validate that event exists and is active"""
+        try:
+            event = Event.objects.get(slug=value, is_active=True)
+            return value
+        except Event.DoesNotExist:
+            raise serializers.ValidationError("Event not found or is not active")
+
+
+class PaymentVerifySerializer(serializers.Serializer):
+    """Serializer for payment verification response"""
+    status = serializers.CharField()
+    message = serializers.CharField()
+    tickets = TicketSerializer(many=True, required=False)
+    payment = PaymentSerializer(required=False)
