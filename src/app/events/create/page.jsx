@@ -9,7 +9,7 @@ import API from "@/services/api";
 import { toast } from "react-toastify";
 
 export default function CreateEventPage() {
-  const { ready, authenticated, login } = usePrivy();
+  const { ready, authenticated, login, getAccessToken } = usePrivy();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
 
@@ -25,7 +25,8 @@ export default function CreateEventPage() {
 
   const handleEventCreated = async (eventData) => {
     try {
-      const response = await API.createEvent(eventData);
+      const accessToken = await getAccessToken();
+      const response = await API.createEvent(eventData, accessToken);
 
       console.log("Event created:", response);
       toast.success("Event created successfully!");

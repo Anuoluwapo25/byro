@@ -23,11 +23,23 @@ axiosInstance.createEvent = (eventData) =>
 // Request interceptor for auth token and common headers
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("accessToken");
+    // Try multiple keys because different parts of the app may store the token differently
+    let token = null;
+    try {
+      const persistedToken = localStorage.getItem("token"); // redux-persist may store JSON string
+      if (persistedToken) {
+        token = JSON.parse(persistedToken);
+      }
+    } catch (_) {}
+
+    if (!token) {
+      token = localStorage.getItem("authToken") || localStorage.getItem("accessToken");
+    }
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    // Ensure Content-Type is set for all requests
+    // Ensure Content-Type is set for all requests if not provided
     if (!config.headers["Content-Type"]) {
       config.headers["Content-Type"] = "application/json";
     }

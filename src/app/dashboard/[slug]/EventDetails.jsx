@@ -58,18 +58,36 @@ export default function EventDetails() {
     },
   ]);
 
-  const handleAddHost = () => {
-    if (newHostName && newHostEmail) {
-      const newHost = {
-        id: hosts.length + 1,
-        name: newHostName,
-        email: newHostEmail,
-        role: "Host",
-      };
-      setHosts([...hosts, newHost]);
+  const handleAddHost = async () => {
+    if (!newHostName || !newHostEmail) return;
+
+    try {
+      const response = await fetch(`/api/events/${slug}/add_cohost`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: newHostName,
+          email: newHostEmail,
+          role: "Host",
+        }),
+      });
+  
+      if (!response.ok) {
+        throw new Error("Failed to add host");
+      }
+  
+      const data = await response.json();
+  
+      // Assuming your API returns the newly added host
+      setHosts((prev) => [...prev, data]);
       setNewHostName("");
       setNewHostEmail("");
       setShowAddHost(false);
+    } catch (error) {
+      console.error(error);
+      alert("Error adding host, please try again.");
     }
   };
 
@@ -77,17 +95,7 @@ export default function EventDetails() {
     setHosts(hosts.filter((host) => host.id !== hostId));
   };
 
-  // // Mock event data for display
-  // const eventData = {
-  //   name: "BYRO LAUNCH",
-  //   day: "Tuesday, 28th April 2025,",
-  //   time_from: "2:00 PM",
-  //   time_to: "4:00 PM",
-  //   location: "Byro Headquarters",
-  //   address: "Lagos, Nigeria",
-  //   event_image:
-  //     "https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80",
-  // };
+
   const eventData = event;
 
   return (

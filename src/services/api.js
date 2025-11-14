@@ -33,12 +33,13 @@ const API = {
   setAuthToken,
 
   // ===== EVENTS =====
-  createEvent: async (formData) => {
+  createEvent: async (formData, accessToken) => {
     try {
       console.log("Sending form data to API:", formData); 
       const response = await axiosInstance.post("/events/", formData, {
         headers: {
           "Accept": "application/json",
+          "Authorization": `Bearer ${accessToken}`,
           "Content-Type": "multipart/form-data",
         },
         transformRequest: (data) => data, 
