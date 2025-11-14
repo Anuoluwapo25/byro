@@ -538,6 +538,8 @@ logger = logging.getLogger(__name__)
 #                 Q(cohosts__user=self.request.user)
 #             ).distinct().order_by('-created_at')
 
+
+
 class EventViewSet(viewsets.ModelViewSet):
     """
     EventViewSet with role-based permissions and category filtering
@@ -551,9 +553,12 @@ class EventViewSet(viewsets.ModelViewSet):
     parser_classes = (JSONParser, MultiPartParser, FormParser)
     lookup_field = 'slug'
     
+    # IMPORTANT: Override authentication for this viewset if needed
+    authentication_classes = []  # This allows unauthenticated access
+    
     def get_permissions(self):
         """
-        - List, retrieve, register: Public access
+        - List, retrieve, register, categories: Public access (AllowAny)
         - Create: Authenticated users only
         - Update, delete: Owner/co-host only (both can edit)
         """
@@ -591,7 +596,7 @@ class EventViewSet(viewsets.ModelViewSet):
                 Q(hosted_by__icontains=search)
             )
         
-        # User-based filtering
+        # Permission-based filtering
         if not self.request.user.is_authenticated:
             return queryset.filter(is_active=True, visibility='public').order_by('-created_at')
         
@@ -607,8 +612,10 @@ class EventViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['GET'], permission_classes=[AllowAny])
     def categories(self, request):
         """
-        Get all available event categories
+        Get all available event categories with counts
         GET /api/events/categories/
+        
+        Returns all category choices with their active event counts
         """
         try:
             categories = []
@@ -625,19 +632,30 @@ class EventViewSet(viewsets.ModelViewSet):
                     'count': count
                 })
             
-            total_events = Event.objects.filter(is_active=True, visibility='public').count()
+            total_events = Event.objects.filter(
+                is_active=True, 
+                visibility='public'
+            ).count()
             
             return Response({
                 'categories': categories,
                 'total_events': total_events
-            })
+            }, status=status.HTTP_200_OK)
             
         except Exception as e:
-            logger.error(f"Error in categories endpoint: {e}")
+            logger.error(f"Error in categories endpoint: {str(e)}", exc_info=True)
             return Response(
                 {"error": "Unable to fetch categories"}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+    
+    @method_decorator(never_cache)
+    def list(self, request, *args, **kwargs):
+        """
+        List all events (public access)
+        Supports filtering by category and search
+        """
+        return super().list(request, *args, **kwargs)
     
     @method_decorator(never_cache)
     def retrieve(self, request, *args, **kwargs):
@@ -649,7 +667,7 @@ class EventViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         
-        # Set defaults if not provided
+        # Set default values if not provided
         if 'ticket_price' not in request.data:
             serializer.validated_data['ticket_price'] = 0.00
         
@@ -661,7 +679,7 @@ class EventViewSet(viewsets.ModelViewSet):
         
         self.perform_create(serializer)
         
-        # Build response with event URL
+        # Build response with full URLs
         event_url = request.build_absolute_uri(
             reverse('event-detail', kwargs={'slug': serializer.data['slug']})
         )
@@ -681,7 +699,7 @@ class EventViewSet(viewsets.ModelViewSet):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         
-        # Check if user has permission to edit
+        # Check if user has edit permissions
         user_role = instance.get_user_role(request.user)
         if not user_role.get('can_edit', False):
             return Response(
@@ -695,25 +713,176 @@ class EventViewSet(viewsets.ModelViewSet):
         
         return Response(serializer.data)
     
-    @action(detail=False, methods=['GET'], permission_classes=[AllowAny])
-    def categories(self, request):
-        """
-        Get all available event categories
-        GET /api/events/categories/
-        """
-        categories = [
-            {
-                'value': choice[0],
-                'label': choice[1],
-                'count': Event.objects.filter(category=choice[0], is_active=True).count()
-            }
-            for choice in Event.CATEGORY_CHOICES
-        ]
+# class EventViewSet(viewsets.ModelViewSet):
+#     """
+#     EventViewSet with role-based permissions and category filtering
+#     Filtering examples:
+#      - /api/events/?category=web3_crypto
+#      - /api/events/?search=bitcoin
+#      - /api/events/?category=technology&search=AI
+#     """
+#     queryset = Event.objects.all()
+#     serializer_class = EventSerializer
+#     parser_classes = (JSONParser, MultiPartParser, FormParser)
+#     lookup_field = 'slug'
+    
+#     def get_permissions(self):
+#         """
+#         - List, retrieve, register: Public access
+#         - Create: Authenticated users only
+#         - Update, delete: Owner/co-host only (both can edit)
+#         """
+#         if self.action in ['list', 'retrieve', 'register', 'categories']:
+#             permission_classes = [AllowAny]
+#         elif self.action in ['create']:
+#             permission_classes = [IsAuthenticated]
+#         elif self.action in ['update', 'partial_update', 'destroy']:
+#             permission_classes = [IsAuthenticated, IsEventOwnerOrCoHost]
+#         elif self.action in ['add_cohost', 'remove_cohost']:
+#             permission_classes = [IsAuthenticated, IsEventOwner]
+#         else:
+#             permission_classes = [IsAuthenticated]
         
-        return Response({
-            'categories': categories,
-            'total_events': Event.objects.filter(is_active=True).count()
-        })
+#         return [permission() for permission in permission_classes]
+    
+#     def get_queryset(self):
+#         """
+#         Show appropriate events based on user with category filtering
+#         """
+#         queryset = Event.objects.select_related('owner').prefetch_related('cohosts__user')
+        
+#         category = self.request.query_params.get('category', None)
+#         if category:
+#             queryset = queryset.filter(category=category)
+        
+#         search = self.request.query_params.get('search', None)
+#         if search:
+#             queryset = queryset.filter(
+#                 Q(name__icontains=search) |
+#                 Q(description__icontains=search) |
+#                 Q(location__icontains=search) |
+#                 Q(hosted_by__icontains=search)
+#             )
+        
+#         if not self.request.user.is_authenticated:
+#             return queryset.filter(is_active=True, visibility='public').order_by('-created_at')
+        
+#         if self.request.user.is_superuser:
+#             return queryset.order_by('-created_at')
+#         else:
+#             return queryset.filter(
+#                 Q(is_active=True, visibility='public') | 
+#                 Q(owner=self.request.user) |
+#                 Q(cohosts__user=self.request.user)
+#             ).distinct().order_by('-created_at')
+    
+#     @action(detail=False, methods=['GET'], permission_classes=[AllowAny])
+#     def categories(self, request):
+#         """
+#         Get all available event categories
+#         GET /api/events/categories/
+#         """
+#         try:
+#             categories = []
+#             for choice_value, choice_label in Event.CATEGORY_CHOICES:
+#                 count = Event.objects.filter(
+#                     category=choice_value, 
+#                     is_active=True,
+#                     visibility='public'
+#                 ).count()
+                
+#                 categories.append({
+#                     'value': choice_value,
+#                     'label': choice_label,
+#                     'count': count
+#                 })
+            
+#             total_events = Event.objects.filter(is_active=True, visibility='public').count()
+            
+#             return Response({
+#                 'categories': categories,
+#                 'total_events': total_events
+#             })
+            
+#         except Exception as e:
+#             logger.error(f"Error in categories endpoint: {e}")
+#             return Response(
+#                 {"error": "Unable to fetch categories"}, 
+#                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
+#             )
+    
+#     @method_decorator(never_cache)
+#     def retrieve(self, request, *args, **kwargs):
+#         """Get single event with role information"""
+#         return super().retrieve(request, *args, **kwargs)
+    
+#     def create(self, request, *args, **kwargs):
+#         """Create event - automatically sets owner"""
+#         serializer = self.get_serializer(data=request.data)
+#         serializer.is_valid(raise_exception=True)
+        
+#         if 'ticket_price' not in request.data:
+#             serializer.validated_data['ticket_price'] = 0.00
+        
+#         if 'capacity' not in request.data:
+#             serializer.validated_data['capacity'] = None
+        
+#         if 'transferable' not in request.data:
+#             serializer.validated_data['transferable'] = True
+        
+#         self.perform_create(serializer)
+        
+#         event_url = request.build_absolute_uri(
+#             reverse('event-detail', kwargs={'slug': serializer.data['slug']})
+#         )
+        
+#         response_data = serializer.data
+#         response_data['event_url'] = event_url
+        
+#         if serializer.instance.event_image:
+#             response_data['event_image'] = request.build_absolute_uri(
+#                 serializer.instance.event_image.url
+#             )
+        
+#         return Response(response_data, status=status.HTTP_201_CREATED)
+    
+#     def update(self, request, *args, **kwargs):
+#         """Update event - both owner and co-hosts can edit"""
+#         partial = kwargs.pop('partial', False)
+#         instance = self.get_object()
+        
+#         user_role = instance.get_user_role(request.user)
+#         if not user_role.get('can_edit', False):
+#             return Response(
+#                 {"error": "You don't have permission to edit this event"},
+#                 status=status.HTTP_403_FORBIDDEN
+#             )
+        
+#         serializer = self.get_serializer(instance, data=request.data, partial=partial)
+#         serializer.is_valid(raise_exception=True)
+#         self.perform_update(serializer)
+        
+#         return Response(serializer.data)
+    
+#     @action(detail=False, methods=['GET'], permission_classes=[AllowAny])
+#     def categories(self, request):
+#         """
+#         Get all available event categories
+#         GET /api/events/categories/
+#         """
+#         categories = [
+#             {
+#                 'value': choice[0],
+#                 'label': choice[1],
+#                 'count': Event.objects.filter(category=choice[0], is_active=True).count()
+#             }
+#             for choice in Event.CATEGORY_CHOICES
+#         ]
+        
+#         return Response({
+#             'categories': categories,
+#             'total_events': Event.objects.filter(is_active=True).count()
+#         })
     
     @action(detail=True, methods=['GET'], permission_classes=[IsAuthenticated])
     def my_role(self, request, slug=None):

@@ -228,63 +228,118 @@ class Event(models.Model):
             return True
         return self.cohosts.filter(user=user).exists()
     
+    # def get_user_role(self, user):
+    #     """
+    #     Get the user's role for this event.
+    #     Returns a dict similar to Luma's API response.
+    #     """
+    #     if not user.is_authenticated:
+    #         return {
+    #             'type': 'guest',
+    #             'is_host': False,
+    #             'is_cohost': False,
+    #             'is_owner': False,
+    #             'can_edit': False,
+    #             'can_manage': False
+    #         }
+        
+    #     # Check if user is the owner
+    #     if self.owner == user:
+    #         return {
+    #             'type': 'host',
+    #             'is_host': True,
+    #             'is_cohost': False,
+    #             'is_owner': True,
+    #             'can_edit': True,
+    #             'can_manage': True,
+    #             'access_level': 'owner'
+    #         }
+        
+    #     # Check if user is a co-host
+    #     cohost = self.cohosts.filter(user=user).first()
+    #     if cohost:
+    #         return {
+    #             'type': 'host',
+    #             'is_host': True,
+    #             'is_cohost': True,
+    #             'is_owner': False,
+    #             'can_edit': True,
+    #             'can_manage': True,
+    #             'access_level': 'cohost',
+    #             'cohost_id': cohost.id
+    #         }
+        
+    #     # Default: guest
+    #     return {
+    #         'type': 'guest',
+    #         'is_host': False,
+    #         'is_cohost': False,
+    #         'is_owner': False,
+    #         'can_edit': False,
+    #         'can_manage': False
+    #     }
     def get_user_role(self, user):
         """
-        Get the user's role for this event.
-        Returns a dict similar to Luma's API response.
+        Determine user's role for this event
+        Returns dict with role info and permissions
+        
+        Handles:
+        - Anonymous users (None or not authenticated)
+        - Event owner
+        - Co-hosts
+        - Regular authenticated users
         """
-        if not user.is_authenticated:
+        # Handle anonymous/unauthenticated users
+        if user is None or not user.is_authenticated:
             return {
-                'type': 'guest',
-                'is_host': False,
-                'is_cohost': False,
+                'role': 'guest',
                 'is_owner': False,
+                'is_cohost': False,
                 'can_edit': False,
-                'can_manage': False
+                'can_delete': False,
+                'can_manage_cohosts': False,
+                'can_register': True,
             }
         
         # Check if user is the owner
         if self.owner == user:
             return {
-                'type': 'host',
-                'is_host': True,
-                'is_cohost': False,
+                'role': 'owner',
                 'is_owner': True,
+                'is_cohost': False,
                 'can_edit': True,
-                'can_manage': True,
-                'access_level': 'owner'
+                'can_delete': True,
+                'can_manage_cohosts': True,
+                'can_register': True,
             }
         
         # Check if user is a co-host
-        cohost = self.cohosts.filter(user=user).first()
-        if cohost:
+        if self.cohosts.filter(user=user).exists():
             return {
-                'type': 'host',
-                'is_host': True,
-                'is_cohost': True,
+                'role': 'cohost',
                 'is_owner': False,
+                'is_cohost': True,
                 'can_edit': True,
-                'can_manage': True,
-                'access_level': 'cohost',
-                'cohost_id': cohost.id
+                'can_delete': False,
+                'can_manage_cohosts': False,
+                'can_register': True,
             }
         
-        # Default: guest
         return {
-            'type': 'guest',
-            'is_host': False,
-            'is_cohost': False,
+            'role': 'user',
             'is_owner': False,
+            'is_cohost': False,
             'can_edit': False,
-            'can_manage': False
+            'can_delete': False,
+            'can_manage_cohosts': False,
+            'can_register': True,
         }
-    
     class Meta:
         db_table = 'bryo_event'
         ordering = ['-created_at']
         indexes = [
-            models.Index(fields=['category', '-created_at']),  # For category filtering
-            models.Index(fields=['is_active', '-created_at']),  # For active events
+            models.Index(fields=['category', '-created_at']),  
+            models.Index(fields=['is_active', '-created_at']), 
         ]
 
     def __str__(self):
