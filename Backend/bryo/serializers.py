@@ -2,8 +2,12 @@ from rest_framework import serializers
 from django.utils import timezone
 from .models import Payment, WaitList, PrivyUser, Ticket, Event, EventCoHost, TicketTransfer, Payment
 from django.core.mail import send_mail
+from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.conf import settings
+
+User = get_user_model()
+
 
 
 
@@ -58,21 +62,28 @@ class EventSerializer(serializers.ModelSerializer):
         model = Event
         fields = [
             'id', 'slug', 'name', 'owner', 'owner_email',
-            'category', 'category_display',  # Category fields
+            'category', 'category_display', 
             'day', 'time_from', 'time_to', 'location', 'description',
             'virtual_link', 'ticket_price', 'capacity', 'transferable',
             'event_image', 'event_image_url', 'visibility', 'timezone', 'hosted_by',
             'is_active', 'created_at', 'updated_at',
-            'cohosts', 'role'  # Include role information
+            'cohosts', 'role' 
         ]
         read_only_fields = ['id', 'slug', 'owner', 'created_at', 'updated_at']
     
     def get_role(self, obj):
-        """Get the current user's role for this event."""
+        """
+        Get user's role for this event
+        Safely handles both authenticated and anonymous users
+        """
         request = self.context.get('request')
-        if request and request.user.is_authenticated:
-            return obj.get_user_role(request.user)
-        return obj.get_user_role(None)  # Return guest role
+        
+        if request is None:
+            user = None
+        else:
+            user = request.user if hasattr(request, 'user') else None
+        
+        return obj.get_user_role(user)
     
     def get_event_image_url(self, obj):
         """Get full URL for event image"""
