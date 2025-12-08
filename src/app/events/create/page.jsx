@@ -1,8 +1,8 @@
 "use client";
 
+import React, { useState, useCallback, useEffect } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 import EventCreationForm from "../../../components/events/EventCreationForm";
 import AppLayout from "@/layout/app";
 import API from "@/services/api";
@@ -23,19 +23,42 @@ export default function CreateEventPage() {
     }
   }, [ready, authenticated, router]);
 
-  const handleEventCreated = async (eventData) => {
-    try {
-      const accessToken = await getAccessToken();
-      const response = await API.createEvent(eventData, accessToken);
+  const handleEventCreated = useCallback(
+    async (eventData) => {
+      try {
+        setIsLoading(true);
 
-      console.log("Event created:", response);
-      toast.success("Event created successfully!");
-      // router.push(`/events/${response.slug}`);
-    } catch (error) {
-      console.error("Error creating event:", error);
-      toast.error("Failed to create event");
-    }
-  };
+        // get token from Privy
+        const raw = await getAccessToken();
+        console.log('[CreateEvent] raw token:', raw ? '[REDACTED]' : raw);
+
+        if (!raw) {
+          await login();
+          const retry = await getAccessToken();
+          if (!retry) throw new Error('Unable to obtain access token');
+          API.setAuthToken(retry);
+        } else {
+          API.setAuthToken(raw);
+        }
+
+        // optional: verify axios header
+        console.log('[CreateEvent] axios auth header:', axios.defaults.headers?.common?.Authorization);
+
+        // now create event (createEvent will use axios defaults)
+        const created = await API.createEvent(eventData);
+        console.log('Event created', created);
+        toast.success("Event created successfully!");
+        router.push("/events");
+      } catch (error) {
+        console.error("Create event failed:", error);
+        toast.error("Failed to create event");
+        // handle error display
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [getAccessToken, login, router]
+  );
 
   return (
     <AppLayout>

@@ -24,6 +24,8 @@ const Navbar = () => {
 
   useEffect(() => {
     if (token) {
+      // Token might be stored as object { access: "...", refresh: "..." }
+      // API.setAuthToken will normalize it properly
       API.setAuthToken(token);
     }
   }, [token]);

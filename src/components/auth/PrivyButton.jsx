@@ -9,6 +9,7 @@ import axiosInstance from "@/utils/axios";
 import { toast } from "sonner";
 import { useDispatch, useSelector } from "react-redux";
 import { authSuccess, signOut } from "@/redux/auth/authSlice";
+import { clearSupabaseSession } from "@/utils/supabaseAuth";
 
 export default function AuthButton() {
   const { user: reduxUser, token, isAuthenticated } = useSelector((state) => state.auth);
@@ -61,11 +62,17 @@ export default function AuthButton() {
         );
 
         if (response.status === 200 && response.data) {
+          // Extract access token from tokens object
+          const tokens = response.data.tokens;
+          const accessToken = tokens?.access || tokens?.access_token || tokens;
+          
+          // Set token in API immediately
+          API.setAuthToken(accessToken);
           
           dispatch(
             authSuccess({
               user: response.data.user,
-              token: response.data.tokens,
+              token: tokens, // Store full tokens object for refresh token if needed
             })
           );
           toast.success(response.data.message || "Successfully signed in!");
@@ -127,11 +134,20 @@ export default function AuthButton() {
     try {
       setLoading(true);
       setError(null);
+      
+      // Clear Supabase session
+      await clearSupabaseSession();
+      
       // Clear local storage and API token
-      localStorage.removeItem(user);
+      if (user?.id) {
+        localStorage.removeItem(user.id);
+      }
       API.setAuthToken(null);
+      
       // Call Privy logout
       await logout();
+      
+      // Clear Redux state (this will also clear Supabase user ID via signOut)
       dispatch(signOut());
 
       router.push("/");

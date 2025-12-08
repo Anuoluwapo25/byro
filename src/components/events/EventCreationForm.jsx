@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useSelector } from "react-redux";
 import API from "../../services/api";
 
 export default function EventCreationForm() {
@@ -26,8 +27,19 @@ export default function EventCreationForm() {
 
   const [eventCreated, setEventCreated] = useState(false);
   const [eventVisibility, setEventVisibility] = useState(true);
+  const [category, setCategory] = useState("other"); // Default to 'other' as per backend
   const router = useRouter();
   const fileInputRef = useRef(null);
+  
+  // Get token from Redux state
+  const { token } = useSelector((state) => state.auth);
+  
+  // Ensure token is set in API before making requests
+  useEffect(() => {
+    if (token) {
+      API.setAuthToken(token);
+    }
+  }, [token]);
 
   // Memoize handlers to prevent unnecessary re-renders
   const handleImageClick = useCallback(() => {
@@ -114,6 +126,20 @@ export default function EventCreationForm() {
       e.preventDefault();
       if (!validateForm()) return;
 
+      // Ensure token is set before making the API call
+      if (token) {
+        API.setAuthToken(token);
+      } else {
+        // Try to get token from localStorage as fallback
+        const storedToken = localStorage.getItem("authToken") || localStorage.getItem("token");
+        if (storedToken) {
+          API.setAuthToken(storedToken);
+        } else {
+          toast.error("Please log in to create an event");
+          return;
+        }
+      }
+
       try {
         setIsSubmitting(true);
         const formData = new FormData();
@@ -129,6 +155,7 @@ export default function EventCreationForm() {
           transferable: ticketsTransferable.toString(),
           ticket_price: ticketPrice === "Free" ? "0.00" : ticketPrice,
           visibility: eventVisibility ? "public" : "private",
+          category: category || "other", // Required field - default to 'other'
           timezone:
             Intl.DateTimeFormat().resolvedOptions().timeZone || "GMT+01:00",
         };
@@ -138,16 +165,20 @@ export default function EventCreationForm() {
         if (virtualLink) formFields.virtual_link = virtualLink;
         if (description) formFields.description = description;
         if (capacity !== "Unlimited") formFields.capacity = capacity;
-        if (eventImage) {
-          console.log("Adding image to form data:", eventImage); // Debug log
-          formFields.event_image = eventImage;
-        }
 
         // Append all fields to FormData
         Object.entries(formFields).forEach(([key, value]) => {
           console.log(`Appending ${key} to FormData:`, value); // Debug log
           formData.append(key, value);
         });
+
+        // Append file separately to ensure it's a File object
+        if (eventImage && eventImage instanceof File) {
+          console.log("Appending file to FormData:", eventImage.name, eventImage.type, eventImage.size);
+          formData.append("event_image", eventImage);
+        } else if (eventImage) {
+          console.warn("eventImage is not a File object:", typeof eventImage, eventImage);
+        }
 
         console.log("FormData contents:", Object.fromEntries(formData)); // Debug log
 
@@ -187,7 +218,9 @@ export default function EventCreationForm() {
       ticketPrice,
       capacity,
       eventImage,
+      category,
       validateForm,
+      token,
     ]
   );
 
@@ -263,6 +296,7 @@ export default function EventCreationForm() {
     setCapacity("Unlimited");
     setEventImage(null);
     setImagePreview(null);
+    setCategory("other");
     // setEventId(null);
     // setEventCreated(true);
   };
@@ -557,6 +591,51 @@ export default function EventCreationForm() {
               *All transactions must be made using USDC on Base network*
             </p>
             <div className="space-y-4">
+              {/* Category Selection */}
+              <div className="flex items-center justify-between p-4 border border-[#B3BBC3] rounded-lg">
+                <div className="flex items-center">
+                  <div className="text-gray-400 mr-3">
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M7 8H17M7 12H17M7 16H17"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                      />
+                      <rect
+                        x="3"
+                        y="4"
+                        width="18"
+                        height="16"
+                        rx="2"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      />
+                    </svg>
+                  </div>
+                  <span className="text-gray-600">Category</span>
+                </div>
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="p-2 border border-[#B3BBC3] rounded text-black min-w-[180px]"
+                  aria-label="Event category"
+                >
+                  <option value="web3_crypto">Web3 & Crypto</option>
+                  <option value="entertainment">Entertainment</option>
+                  <option value="art_culture">Art & Culture</option>
+                  <option value="fitness">Fitness</option>
+                  <option value="conference">Conference</option>
+                  <option value="technology">Technology</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
               <div className="flex items-center justify-between p-4 border  border-[#B3BBC3] rounded-lg">
                 <div className="flex items-center">
                   <div className="text-gray-400 mr-3">

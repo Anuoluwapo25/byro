@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import AuthProvider from "./privy/AuthProvider";
+import { Providers } from "@/redux/Providers";
 import { Toaster } from 'sonner';
 
 const geistSans = Geist({
@@ -126,9 +127,11 @@ export default function RootLayout({
         />
 
         <AuthProvider>
-          <div className="flex flex-col min-h-screen">
-            <main className="flex-1">{children}</main>
-          </div>
+          <Providers>
+            <div className="flex flex-col min-h-screen">
+              <main className="flex-1">{children}</main>
+            </div>
+          </Providers>
         </AuthProvider>
       </body>
     </html>
