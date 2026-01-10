@@ -1,10 +1,8 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
 import { searchIcon, eventIcon } from "../app/assets/index";
-// import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import PrivyButton from "./auth/PrivyButton";
 import { usePrivy } from "@privy-io/react-auth";
 import { FaRegUserCircle } from "react-icons/fa";
 import { usePathname } from "next/navigation";
@@ -15,23 +13,18 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDesktopSearchOpen, setIsDesktopSearchOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
-  const { authenticated } = usePrivy();
+  const { authenticated, logout } = usePrivy();
   const pathname = usePathname();
-  // const router = useRouter();
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const profileDropdownRef = useRef(null);
   const { user, token } = useSelector((state) => state.auth);
 
   useEffect(() => {
     if (token) {
-      // Token might be stored as object { access: "...", refresh: "..." }
-      // API.setAuthToken will normalize it properly
       API.setAuthToken(token);
     }
   }, [token]);
 
-
-  // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
       if (
@@ -49,16 +42,10 @@ const Navbar = () => {
     };
   }, [isProfileDropdownOpen]);
 
-  // useEffect(() => {
-  //   if (ready && authenticated) {
-  //     router.push("/events");
-  //   }
-  // }, [ready, authenticated, router]);
-
   const isActive = (href) => pathname === href;
 
-  const desktopSearchInputRef = useRef < HTMLInputElement > null;
-  const mobileSearchInputRef = useRef < HTMLInputElement > null;
+  const desktopSearchInputRef = useRef(null);
+  const mobileSearchInputRef = useRef(null);
 
   useEffect(() => {
     if (isDesktopSearchOpen && desktopSearchInputRef.current) {
@@ -72,7 +59,6 @@ const Navbar = () => {
     }
   }, [isMobileSearchOpen]);
 
-  // Function to toggle the mobile menu
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
     if (isMenuOpen) {
@@ -80,12 +66,10 @@ const Navbar = () => {
     }
   };
 
-  // Function to handle desktop search click
   const handleDesktopSearchClick = () => {
     setIsDesktopSearchOpen(true);
   };
 
-  // Function to handle mobile search click
   const handleMobileSearchClick = () => {
     setIsMobileSearchOpen(true);
   };
@@ -96,12 +80,17 @@ const Navbar = () => {
     }, 100);
   };
 
+  const handleLogout = async () => {
+    await logout();
+    setIsProfileDropdownOpen(false);
+  };
+
   return (
     <nav className="bg-white shadow-md top-0 left-0 w-full z-50 border border-b">
       <div className="container mx-auto px-4">
         {!authenticated && (
           <>
-            
+            {/* Desktop View */}
             <div className="hidden lg:flex items-center justify-between py-4">
               <div>
                 <Link href="/">
@@ -156,10 +145,15 @@ const Navbar = () => {
                 )}
               </div>
 
-              <PrivyButton />
+              <Link
+                href="/login"
+                className="bg-white border border-[#EDEDED] hover:bg-blue-700 hover:text-white text-black font-medium text-xs py-2 px-6 rounded-full transition duration-300 ease-in-out shadow-md hover:shadow-lg"
+              >
+                Sign In
+              </Link>
             </div>
 
-            
+            {/* Mobile View */}
             <div className="lg:hidden">
               <div className="flex items-center justify-between py-4">
                 <div>
@@ -174,7 +168,12 @@ const Navbar = () => {
                 </div>
 
                 <div className="flex items-center space-x-3">
-                  <PrivyButton />
+                  <Link
+                    href="/login"
+                    className="bg-white border border-[#EDEDED] hover:bg-blue-700 hover:text-white text-black font-medium text-xs py-2 px-6 rounded-full transition duration-300 ease-in-out shadow-md hover:shadow-lg"
+                  >
+                    Sign In
+                  </Link>
 
                   <button
                     aria-label="hamburger-menu"
@@ -208,7 +207,7 @@ const Navbar = () => {
                 </div>
               </div>
 
-          
+              {/* Mobile Menu */}
               <div
                 className={`overflow-hidden transition-all duration-300 ease-in-out ${
                   isMenuOpen ? "max-h-96 opacity-100 pb-4" : "max-h-0 opacity-0"
@@ -260,7 +259,7 @@ const Navbar = () => {
           </>
         )}
 
-        { authenticated && (
+        {authenticated && (
           <>
             {/* Desktop View */}
             <div className="hidden lg:flex items-center justify-between py-4 bg-[#FFFFFF]">
@@ -365,9 +364,14 @@ const Navbar = () => {
                             {user?.email || "No Email"}
                           </div>
                         </div>
-                      </Link>{" "}
+                      </Link>
                       <div className="p-4">
-                        <PrivyButton />
+                        <button
+                          onClick={handleLogout}
+                          className="w-full bg-[#1F6BFF] text-white rounded-[20px] py-[12px] px-[16px] hover:bg-blue-700 transition"
+                        >
+                          Log Out
+                        </button>
                       </div>
                     </div>
                   )}
@@ -378,7 +382,6 @@ const Navbar = () => {
                 >
                   Create Event
                 </Link>
-                {/* <PrivyButton /> */}
               </div>
             </div>
 
@@ -397,7 +400,12 @@ const Navbar = () => {
                 </div>
 
                 <div className="flex items-center space-x-3">
-                  <PrivyButton />
+                  <button
+                    onClick={handleLogout}
+                    className="bg-[#1F6BFF] text-white rounded-[20px] py-[12px] px-[16px] hover:bg-blue-700 transition"
+                  >
+                    Log Out
+                  </button>
 
                   <button
                     aria-label="hamburger-menu"

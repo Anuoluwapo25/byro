@@ -77,12 +77,12 @@ export default function Categories() {
   ];
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      <div className=" mb-10">
-        <h1 className="font-bold text-[28px] text-[#1E1E1E] mb-3">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      <div className="mb-6 sm:mb-10">
+        <h1 className="font-bold text-xl sm:text-2xl lg:text-[28px] text-[#1E1E1E] mb-2 sm:mb-3">
           Browse Events
         </h1>
-        <p className="font-medium text-[#707070] text-[20px]">
+        <p className="font-medium text-[#707070] text-sm sm:text-base lg:text-[20px] leading-relaxed">
           Discover popular events near you, browse by category and explore for
           more options
         </p>
@@ -118,8 +118,8 @@ export default function Categories() {
           </button>
         </div>
       )}
-      <div className="flex flex-col py-3 gap-y-1">
-        <p className="text-black font-extrabold text-[36px]">Feature Events</p>
+      <div className="flex flex-col py-4 sm:py-6 gap-y-2 sm:gap-y-1">
+        <p className="text-black font-extrabold text-2xl sm:text-3xl lg:text-[36px]">Feature Events</p>
         <div>
           <EventsContainer />
         </div>

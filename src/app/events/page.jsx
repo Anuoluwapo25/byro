@@ -58,11 +58,10 @@ export default function EventsPage() {
   if (loading) {
     return (
       <AppLayout>
-        {" "}
-        <div className=" min-h-screen">
-          <div className="max-w-6xl mx-auto p-6">
-            <div className="flex items-center gap-4 mb-6">
-              <h1 className="text-4xl font-extrabold">Events</h1>
+        <div className="min-h-screen">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 mb-6">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold">Events</h1>
               <EventsTabs activeTab={activeTab} onTabChange={handleTabChange} />
             </div>
             <div className="flex justify-center items-center h-64">
@@ -76,22 +75,20 @@ export default function EventsPage() {
 
   return (
     <AppLayout>
-      {" "}
-      <div className="relative  h-fit min-h-screen">
+      <div className="relative h-fit min-h-screen">
         {/* Soft overlay */}
         <div className="absolute inset-0 bg-white z-0" />
 
         {/* Content goes here */}
-        <div className="relative z-10 max-w-6xl mx-auto p-6">
+        <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
           {!showEmptyState && (
-            <div className="pb-3">
-              {" "}
+            <div className="pb-3 sm:pb-4">
               <EventSearch />
             </div>
           )}
 
-          <div className="flex items-center justify-between gap-4 mb-5">
-            <h1 className="text-[28px] text-[#1A1A1A] font-bold ">My Events</h1>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-5">
+            <h1 className="text-xl sm:text-2xl lg:text-[28px] text-[#1A1A1A] font-bold">My Events</h1>
 
             <EventsTabs activeTab={activeTab} onTabChange={handleTabChange} />
           </div>

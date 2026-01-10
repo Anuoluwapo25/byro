@@ -1,3 +1,3 @@
-import LoginForm from "../../components/auth/LoginForm"
+import Login from "../../components/auth/Login"
 
-export default LoginForm
+export default Login

@@ -74,9 +74,9 @@ const EventCard = ({ event }) => {
 
   return (
     <Link href={`/${eventSlug}`} className="block group">
-      <div className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 p-3">
+      <div className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 p-2 sm:p-3">
         {/* Event Image */}
-        <div className="relative h-48 w-full overflow-hidden rounded-lg">
+        <div className="relative h-40 sm:h-48 w-full overflow-hidden rounded-lg">
           <Image
             src={getImageUrl()}
             alt={eventTitle || "Event"}
@@ -97,7 +97,7 @@ const EventCard = ({ event }) => {
                   isFree
                     ? "bg-[#007AFF] text-white"
                     : "bg-[#D9EBFF] text-[#007AFF]"
-                } backdrop-blur-sm px-3 py-1 rounded-[5px] text-[10px] font-semibold`}
+                } backdrop-blur-sm px-2 sm:px-3 py-1 rounded-[5px] text-[9px] sm:text-[10px] font-semibold`}
               >
                 {isFree ? "Going" : `Manage`}
               </span>
@@ -106,14 +106,14 @@ const EventCard = ({ event }) => {
         </div>
 
         {/* Event Content */}
-        <div className="p-2">
+        <div className="p-2 sm:p-3">
           {/* Event Title */}
-          <h3 className="font-semibold text-gray-900 mb-3 line-clamp-2 group-hover:text-blue-600 transition-colors">
+          <h3 className="font-semibold text-sm sm:text-base text-gray-900 mb-2 sm:mb-3 line-clamp-2 group-hover:text-blue-600 transition-colors">
             {eventTitle}
           </h3>
 
           {/* Event Date */}
-          <p className="text-blue-600 text-sm font-medium mb-4">
+          <p className="text-blue-600 text-xs sm:text-sm font-medium mb-3 sm:mb-4">
             {formatDate(eventDate)}
           </p>
 
@@ -151,10 +151,10 @@ const EventCard = ({ event }) => {
             </div>
           </div> */}
           <div className="flex items-center gap-1">
-            <div>
-              <IoLocationSharp size={15} color="#007AFF" />
+            <div className="shrink-0">
+              <IoLocationSharp size={14} className="sm:w-[15px] sm:h-[15px] text-[#007AFF]" />
             </div>
-            <p className="text-[#7E7E7E] text-[12px]">
+            <p className="text-[#7E7E7E] text-[11px] sm:text-[12px] truncate">
               {isFree ? eventLocation : "Event hosted by you"}
             </p>
           </div>

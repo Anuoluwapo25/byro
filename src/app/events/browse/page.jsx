@@ -8,10 +8,9 @@ import EventSearch from "@/components/events/EventSearch";
 export default function BrowseEventPage() {
   return (
     <AppLayout>
-      {" "}
       <div className="bg-white">
-        <div className="py-3 mx-12">
-          <EventSearch />{" "}
+        <div className="py-3 px-4 sm:px-6 lg:px-12">
+          <EventSearch />
         </div>
 
         <div className="">

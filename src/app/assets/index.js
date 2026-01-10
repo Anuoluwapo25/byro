@@ -30,3 +30,5 @@ export { default as manageEvent } from "./images/manage-event.png";
 export { default as signupCard } from "./images/signup-card.png";
 export { default as Tix } from "./images/Tix.png";
 export { default as SignIcon} from "./images/signin-person.png";
+export { default as Checkmark} from "./images/checkmark.png";
+

@@ -55,7 +55,7 @@ export const ImageCollage = () => {
   ];
 
   return (
-    <div className="bg-white">
+    <div className="bg-white hidden md:block">
       <div className="container mx-auto px-4">
         <div className="flex space-x-5 items-center justify-start py-10 md:justify-center flex-nowrap">
           <div

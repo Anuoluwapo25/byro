@@ -8,12 +8,9 @@ import AppLayout from "@/layout/app";
 export default function Home() {
   return (
     <AppLayout>
-      {" "}
-      <>
-        <HeroPage />
-        <ImageCollage />
-        <RegisterSteps />
-      </>
+      <HeroPage />
+      <ImageCollage />
+      <RegisterSteps />
     </AppLayout>
   );
 }
