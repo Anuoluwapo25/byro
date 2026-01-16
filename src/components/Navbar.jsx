@@ -8,6 +8,7 @@ import { FaRegUserCircle } from "react-icons/fa";
 import { usePathname } from "next/navigation";
 import { useSelector } from "react-redux";
 import API from "@/services/api";
+import SignupButton from "./SignupButton";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -366,12 +367,11 @@ const Navbar = () => {
                         </div>
                       </Link>
                       <div className="p-4">
-                        <button
+                        <SignupButton
                           onClick={handleLogout}
-                          className="w-full bg-[#1F6BFF] text-white rounded-[20px] py-[12px] px-[16px] hover:bg-blue-700 transition"
-                        >
-                          Log Out
-                        </button>
+                          text="Log Out"
+                          className="w-full !bg-[#1F6BFF] !text-white !border-0 rounded-[20px] py-[12px] px-[16px] hover:!bg-blue-700"
+                        />
                       </div>
                     </div>
                   )}
@@ -400,12 +400,11 @@ const Navbar = () => {
                 </div>
 
                 <div className="flex items-center space-x-3">
-                  <button
+                  <SignupButton
                     onClick={handleLogout}
-                    className="bg-[#1F6BFF] text-white rounded-[20px] py-[12px] px-[16px] hover:bg-blue-700 transition"
-                  >
-                    Log Out
-                  </button>
+                    text="Log Out"
+                    className="!bg-[#1F6BFF] !text-white !border-0 rounded-[20px] py-[12px] px-[16px] hover:!bg-blue-700"
+                  />
 
                   <button
                     aria-label="hamburger-menu"

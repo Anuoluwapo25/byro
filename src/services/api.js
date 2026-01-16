@@ -233,6 +233,33 @@ const API = {
 
 
   // Privy
+  authenticateWithPrivy: async ({ privy_id, email, privyAccessToken }) => {
+    try {
+      const response = await axiosInstance.post(
+        "/auth/privy/",
+        {
+          email,
+          privy_id,
+          
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            "Authorization": `Bearer ${privyAccessToken}`,
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      if (error.response?.status === 400) {
+        const errorMessage = error.response.data?.message || "Invalid authentication data";
+        throw new Error(errorMessage);
+      }
+      throw handleApiError(error);
+    }
+  },
+
   getPrivyToken: async (accessToken) => { 
     try {
       const t = normalizeToken(accessToken);

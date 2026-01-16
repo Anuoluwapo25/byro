@@ -8,15 +8,16 @@ import { useLoginWithEmail, usePrivy } from "@privy-io/react-auth";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import API from "@/services/api";
 
 const CODE_LENGTH = 6;
 const RESEND_COOLDOWN = 45; // seconds
 
 export default function Login() {
-  const { ready, authenticated, logout } = usePrivy();
+  const { ready, authenticated, logout, getAccessToken } = usePrivy();
   const router = useRouter();
 
-  const [step, setStep] = useState("email"); // email | verify
+  const [step, setStep] = useState("email"); 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [emailState, setEmailState] = useState("initial");
@@ -38,13 +39,48 @@ export default function Login() {
     loginWithCode: loginWithCodeEmail,
     state: stateEmail,
   } = useLoginWithEmail({
-    onComplete: ({ user, isNewUser, wasAlreadyAuthenticated, loginMethod }) => {
-      console.log("🔑 ✅ User successfully logged in with email", {
+    onComplete: async ({ user, isNewUser, wasAlreadyAuthenticated, loginMethod }) => {
+      console.log("User successfully logged in with email", {
         user,
         isNewUser,
         wasAlreadyAuthenticated,
         loginMethod,
       });
+
+      // Get Privy access token and send to backend
+      try {
+        const privyAccessToken = await getAccessToken();
+        const privy_id = user?.id;
+        const userEmail = user?.email?.address || email; // Use user email or fallback to form email state
+
+        if (!privy_id || !privyAccessToken || !userEmail) {
+          console.error("Missing authentication data:", {
+            privy_id,
+            privyAccessToken: !!privyAccessToken,
+            userEmail,
+          });
+          toast.error("Authentication data incomplete. Please try again.", {
+            duration: 4000,
+          });
+          return;
+        }
+
+        // Send authentication details to backend
+        await API.authenticateWithPrivy({
+          privy_id,
+          privyAccessToken,
+          email: userEmail,
+        });
+
+        console.log("Successfully authenticated with backend");
+      } catch (error) {
+        console.error("Backend authentication error:", error);
+        toast.error(
+          error?.message || "Failed to complete authentication. Please try again.",
+          { duration: 4000 }
+        );
+        return;
+      }
 
       if (isNewUser) {
         toast.success("Welcome! Your account has been created successfully.", {
