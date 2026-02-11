@@ -18,7 +18,7 @@ const ProfileSettings = () => {
     firstName: "Alex",
     lastName: "Young",
     email: "Alex@byronafrica.com",
-    phone: "+234 802 7393 xx49",
+    phone: "+234 802 7393 0049",
   });
 
   const [notifications, setNotifications] = useState({
@@ -28,7 +28,7 @@ const ProfileSettings = () => {
   });
 
   const embeddedWallet = wallets.find(
-    (wallet) => wallet.walletClientType === "privy"
+    (wallet) => wallet.walletClientType === "privy",
   );
 
   useEffect(() => {
@@ -83,7 +83,7 @@ const ProfileSettings = () => {
                 </div>
                 <div className="text-center sm:text-left">
                   <h3 className="text-[24px] font-semibold text-[#007AFF] mb-1">
-                    Alex Young
+                    {formData.firstName} {formData.lastName}
                   </h3>
                   <div className="flex items-center gap-1 text-xs text-gray-600 justify-center sm:justify-start">
                     <Image

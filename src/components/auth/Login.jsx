@@ -51,7 +51,7 @@ export default function Login() {
       try {
         const privyAccessToken = await getAccessToken();
         const privy_id = user?.id;
-        const userEmail = user?.email?.address || email; // Use user email or fallback to form email state
+        const userEmail = user?.email?.address || email; 
 
         if (!privy_id || !privyAccessToken || !userEmail) {
           console.error("Missing authentication data:", {

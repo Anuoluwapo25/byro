@@ -87,12 +87,12 @@ const EventMiniCard = ({ event }) => {
         </div>
         <div className="flex justify-between mb-4">
           <span className="text-gray-600">Processing Fees</span>
-          <span className="font-semibold text-gray-900">$1.5</span>
+          <span className="font-semibold text-gray-900">{event.ticket_price}</span>
         </div>
         <div className="border-t pt-4 flex justify-between">
           <span className="font-bold text-blue-600">Total</span>
           <span className="font-bold text-blue-600 text-xl">
-            ${event?.price ? (parseFloat(event.price) + 1.5).toFixed(2) : "1.5"}
+            ${event.ticket_price ? (parseFloat(event.price) + 1.5).toFixed(2) : "1.5"}
           </span>
         </div>
       </div>

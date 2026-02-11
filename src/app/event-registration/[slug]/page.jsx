@@ -1,14 +1,14 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { Undo2 } from "lucide-react";
 import EventMiniCard from "@/components/EventMiniCard";
 import Footer from "@/components/Footer";
 import { Tix } from "../../assets/index";
 import PaymentMethod from "@/components/PaymentMethod";
 import { useParams, useRouter } from "next/navigation";
-import API from "../../../services/api"; // Import the API object
+import API from "../../../services/api";
 import { toast } from "sonner";
+import { Undo2, BadgeCheck } from "lucide-react";
 
 export default function EventRegistration() {
   const { slug } = useParams();
@@ -26,7 +26,7 @@ export default function EventRegistration() {
     source: "",
   });
 
-  console.log(`regEventSlug: `, slug)
+  console.log(`regEventSlug: `, slug);
 
   // Fetch event data when component mounts
   useEffect(() => {
@@ -37,10 +37,10 @@ export default function EventRegistration() {
         setLoading(true);
         setError(null);
 
-           const token = localStorage.getItem('authToken');
-      if (token) {
-        API.setAuthToken(token);
-      }
+        const token = localStorage.getItem("authToken");
+        if (token) {
+          API.setAuthToken(token);
+        }
 
         // Use API.getEvent instead of getEvent
         const response = await API.getEvent(slug);
@@ -49,7 +49,9 @@ export default function EventRegistration() {
       } catch (err) {
         console.error("Error fetching event:", err);
         setError(err.message || "Failed to load event");
-        toast.error(err.response?.data?.message || "Failed to load event details");
+        toast.error(
+          err.response?.data?.message || "Failed to load event details"
+        );
 
         // Optionally redirect back to events page after a delay
         // setTimeout(() => {
@@ -91,13 +93,11 @@ export default function EventRegistration() {
     { number: 3, title: "Make Payment", subtitle: "" },
   ];
 
-  // Loading state
   if (loading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading event details...</p>
         </div>
       </div>
     );
@@ -134,12 +134,15 @@ export default function EventRegistration() {
               <div className="flex items-center gap-3 mb-2">
                 <Image src={Tix} alt="ticket-icon" />
                 <h1 className="text-3xl font-bold text-gray-900">
-                  Choose Payment Method
+                  {parseFloat(event.ticket_price) === 0
+                    ? "Complete Registration"
+                    : "Choose Payment Method"}
                 </h1>
               </div>
               <p className="text-gray-600">
-                Select your preferred payment method to complete your ticket
-                purchase
+                {parseFloat(event.ticket_price) === 0
+                  ? "Review and confirm your free event registration"
+                  : "Select your preferred payment method to complete your ticket purchase"}
               </p>
             </div>
           ) : (
@@ -329,7 +332,23 @@ export default function EventRegistration() {
 
             {currentStep === 3 && (
               <div className="space-y-6 bg-none">
-                <PaymentMethod />
+                {parseFloat(event.ticket_price) === 0 ? (
+                  // Free event confirmation
+                  <div className="text-center py-8">
+                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <BadgeCheck className="w-8 h-8 text-green-500" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">
+                      Free Event Registration
+                    </h3>
+                    <p className="text-gray-600">
+                      No payment required. Click Complete Registration to
+                      finish.
+                    </p>
+                  </div>
+                ) : (
+                  <PaymentMethod />
+                )}
               </div>
             )}
 
@@ -353,7 +372,11 @@ export default function EventRegistration() {
                     !formData.phone)
                 }
               >
-                {currentStep === 3 ? "Complete Payment" : "Continue"}
+                {currentStep === 3
+                  ? parseFloat(event.ticket_price) === 0
+                    ? "Complete Registration"
+                    : "Complete Payment"
+                  : "Continue"}
               </button>
             </div>
           </div>
