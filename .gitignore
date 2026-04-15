@@ -43,3 +43,9 @@ next-env.d.ts
 
 EMAIL_USER=hello@byro.africa
 EMAIL_PASS=ztbu dqyn islk kbmo
+
+#frontend
+frontend/.env.local
+frontend/.env
+frontend/.next
+frontend/node_modules
