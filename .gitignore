@@ -61,4 +61,3 @@ frontend/.env.local
 frontend/.env
 frontend/.next/
 frontend/node_modules
-
