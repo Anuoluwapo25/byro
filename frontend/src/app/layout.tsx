@@ -33,6 +33,8 @@ export const metadata: Metadata = {
     "event platform",
     "event ticketing",
     "event experience",
+    "discover communities",
+    "create memories",
   ],
   authors: [{ name: "Byro" }],
   creator: "Byro",
