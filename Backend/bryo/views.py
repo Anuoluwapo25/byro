@@ -4,7 +4,12 @@ from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
-from .serializers import WaitListSerializer, EventSerializer, TicketSerializer, TicketTransferSerializer, PaymentInitializeSerializer, PaymentVerifySerializer, PaymentSerializer
+from .serializers import (
+    WaitListSerializer, EventSerializer, TicketSerializer,
+    TicketTransferSerializer, PaymentInitializeSerializer,
+    PaymentVerifySerializer, PaymentSerializer,
+    UserProfileSerializer, EventFormQuestionSerializer,
+)
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
@@ -17,7 +22,11 @@ from django.contrib.auth import authenticate, get_user_model, login
 from django.contrib.auth.decorators import login_required
 from rest_framework_simplejwt.tokens import RefreshToken
 from .services.privy_auth import PrivyAuthService
-from .models import PrivyUser, WaitList, Event, Ticket, TicketTransfer, EventCoHost, Payment
+from .services.auth_factory import get_auth_service, SUPPORTED_PROVIDERS
+from .models import (
+    PrivyUser, WaitList, Event, Ticket, TicketTransfer,
+    EventCoHost, Payment, UserProfile, EventFormQuestion, EventFormAnswer,
+)
 from django.urls import reverse
 from .serializers import EventSerializer, TicketSerializer, PaymentSerializer
 from .permissions import IsEventOwnerOrCoHost, IsEventOwner
@@ -456,47 +465,51 @@ def privy_login(request):
                 logger.info(f"No email found, creating user with Privy ID only: {clean_privy_id}")
                 email = f"{clean_privy_id}@privy.user"
             
-            # Create or update user in database
+            # Resolve or create the user — must be idempotent.
+            # privy_id is the canonical identity; email is a fallback for
+            # users who existed before Privy was introduced.
             try:
+                from django.db import IntegrityError
+
                 with transaction.atomic():
-                    try:
-                        # Try to find user by privy_id
-                        user = User.objects.get(privy_id=clean_privy_id)
-                        # Update email if changed
-                        if user.email != email:
-                            logger.info(f"Updating email for user {clean_privy_id}")
-                            user.email = email
-                            user.save()
-                            
-                    except User.DoesNotExist:
+                    # 1. Fastest path: user already has this privy_id
+                    user = User.objects.filter(privy_id=clean_privy_id).first()
+
+                    if not user and email:
+                        # 2. Existing account matched by email (pre-Privy user)
+                        user = User.objects.filter(email=email).first()
+                        if user:
+                            if not user.privy_id:
+                                User.objects.filter(pk=user.pk).update(privy_id=clean_privy_id)
+                                user.refresh_from_db()
+                            # else: user has a DIFFERENT privy_id — still allow login
+                            # (same person, different Privy account edge case)
+
+                    if not user:
+                        # 3. New user — guard against race conditions from
+                        #    simultaneous requests (e.g. two onComplete handlers)
                         try:
-                            # Try to find user by email
-                            user = User.objects.get(email=email)
-                            # Link privy_id to existing user
-                            logger.info(f"Linking Privy ID to existing user: {email}")
-                            user.privy_id = clean_privy_id
-                            user.save()
-                            
-                        except User.DoesNotExist:
-                            # Create new user
-                            logger.info(f"Creating new user: {email}")
                             user = User.objects.create_user(
                                 email=email,
                                 privy_id=clean_privy_id
                             )
+                            logger.info(f"Created new user: {email}")
+                        except IntegrityError:
+                            # A parallel request just created this user — look them up
+                            user = (
+                                User.objects.filter(privy_id=clean_privy_id).first()
+                                or User.objects.filter(email=email).first()
+                            )
+                            if not user:
+                                raise
 
-                    # Set backend for authentication
-                    user.backend = 'bryo.backends.EmailBackend'
-                    
-                    # Login the user
-                    login(request, user)
-
-                    # Generate JWT tokens
+                    # Issue Django JWT — this is what the frontend uses for all
+                    # subsequent authenticated API calls (not the Privy token)
                     refresh = RefreshToken.for_user(user)
-                    access_token = str(refresh.access_token)
-                    
-                    logger.info(f"Successfully authenticated user: {email}")
-                    
+                    profile, _ = UserProfile.objects.get_or_create(user=user)
+
+                    logger.info(f"Authenticated: {user.email} (privy_id={user.privy_id})")
+
                     return JsonResponse({
                         'success': True,
                         'user': {
@@ -504,18 +517,22 @@ def privy_login(request):
                             'email': user.email,
                             'username': user.username,
                             'privy_id': user.privy_id,
+                            'display_name': profile.display_name,
+                            'handle': profile.handle,
+                            'avatar_url': profile.avatar.url if profile.avatar else None,
+                            'is_profile_complete': profile.is_complete,
                         },
                         'tokens': {
-                            'access': access_token,
+                            'access': str(refresh.access_token),
                             'refresh': str(refresh),
                         },
                         'message': 'Login successful'
                     })
-                    
+
             except Exception as e:
                 logger.error(f"User creation/login error: {e}")
                 return JsonResponse({
-                    'error': 'Failed to create/login user',
+                    'error': 'An unexpected error occurred',
                     'debug': str(e)
                 }, status=500)
                 
@@ -531,6 +548,161 @@ def privy_login(request):
     return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 
+@csrf_exempt
+def social_login(request):
+    """
+    Provider-agnostic login endpoint.
+
+    POST body:
+    {
+        "provider": "privy" | "web3auth",   // required
+        "token": "<JWT from the provider>",  // required
+        "email": "user@example.com"          // optional — used if token lacks email
+    }
+
+    Returns Django JWT (access + refresh) on success.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    provider = data.get('provider', '').strip().lower()
+    token = (
+        data.get('token') or
+        data.get('identity_token') or
+        data.get('privy_access_token') or
+        data.get('accessToken')
+    )
+
+    if not provider:
+        return JsonResponse(
+            {'error': 'provider is required', 'supported': SUPPORTED_PROVIDERS},
+            status=400,
+        )
+    if not token:
+        return JsonResponse({'error': 'token is required'}, status=400)
+
+    try:
+        auth_service = get_auth_service(provider)
+    except ValueError as e:
+        return JsonResponse(
+            {'error': str(e), 'supported': SUPPORTED_PROVIDERS},
+            status=400,
+        )
+
+    # --- Verify the token -------------------------------------------------
+    logger.info(f"[social_login] Verifying {provider} token…")
+    decoded = auth_service.verify_token(token)
+    if not decoded:
+        return JsonResponse(
+            {'error': f'Invalid or expired {provider} token'},
+            status=401,
+        )
+
+    # --- Normalise user info ----------------------------------------------
+    info = auth_service.extract_user_info(decoded)
+    external_id = info.get('external_id') or ''
+    email = info.get('email') or data.get('email') or ''
+    name = info.get('name') or ''
+
+    if not external_id:
+        return JsonResponse(
+            {'error': 'Token payload missing user identifier (sub)'},
+            status=400,
+        )
+
+    # Fall back to placeholder email so the DB constraint is satisfied.
+    # Users can set their real email later via the profile endpoint.
+    if not email:
+        email = f"{external_id}@{provider}.user"
+
+    # --- Resolve or create user -------------------------------------------
+    try:
+        from django.db import IntegrityError
+
+        with transaction.atomic():
+            # 1. Match by (external_id, provider) — canonical path
+            user = User.objects.filter(
+                external_id=external_id, auth_provider=provider
+            ).first()
+
+            # 2. Legacy Privy users whose external_id column is still NULL
+            if not user and provider == 'privy':
+                user = User.objects.filter(privy_id=external_id).first()
+                if user and not user.external_id:
+                    User.objects.filter(pk=user.pk).update(
+                        external_id=external_id,
+                        auth_provider='privy',
+                    )
+                    user.refresh_from_db()
+
+            # 3. Existing account matched by email (pre-provider signup)
+            if not user and email and not email.endswith(f'@{provider}.user'):
+                user = User.objects.filter(email=email).first()
+                if user and not user.external_id:
+                    User.objects.filter(pk=user.pk).update(
+                        external_id=external_id,
+                        auth_provider=provider,
+                    )
+                    user.refresh_from_db()
+
+            # 4. Brand-new user
+            if not user:
+                try:
+                    user = User.objects.create_user(
+                        email=email,
+                        external_id=external_id,
+                        auth_provider=provider,
+                        # Keep privy_id populated for Privy users so existing
+                        # code that reads privy_id still works during migration.
+                        **({"privy_id": external_id} if provider == "privy" else {}),
+                    )
+                    logger.info(f"[social_login] Created new user: {email} ({provider})")
+                except IntegrityError:
+                    user = (
+                        User.objects.filter(external_id=external_id, auth_provider=provider).first()
+                        or User.objects.filter(email=email).first()
+                    )
+                    if not user:
+                        raise
+
+            # Issue Django JWT
+            refresh = RefreshToken.for_user(user)
+            logger.info(f"[social_login] Authenticated: {user.email} via {provider}")
+
+            profile, _ = UserProfile.objects.get_or_create(user=user)
+
+            return JsonResponse({
+                'success': True,
+                'provider': provider,
+                'user': {
+                    'id': user.id,
+                    'email': user.email,
+                    'username': user.username,
+                    'auth_provider': user.auth_provider,
+                    'external_id': user.external_id,
+                    'display_name': profile.display_name,
+                    'handle': profile.handle,
+                    'avatar_url': profile.avatar.url if profile.avatar else None,
+                    'is_profile_complete': profile.is_complete,
+                },
+                'tokens': {
+                    'access': str(refresh.access_token),
+                    'refresh': str(refresh),
+                },
+                'message': 'Login successful',
+            })
+
+    except Exception as e:
+        logger.error(f"[social_login] Unexpected error: {e}")
+        return JsonResponse(
+            {'error': 'An unexpected error occurred', 'debug': str(e)},
+            status=500,
+        )
 
 
 logger = logging.getLogger(__name__)
@@ -603,6 +775,166 @@ logger = logging.getLogger(__name__)
 
 
 
+# ---------------------------------------------------------------------------
+# Profile
+# ---------------------------------------------------------------------------
+
+class ProfileViewSet(viewsets.GenericViewSet):
+    """
+    /api/profile/me/          — GET (own profile), PATCH (update)
+    /api/profile/me/avatar/   — POST (upload avatar)
+    /api/profile/<handle>/    — GET (public profile)
+    """
+    serializer_class = UserProfileSerializer
+    parser_classes = (JSONParser, MultiPartParser, FormParser)
+
+    def get_permissions(self):
+        if self.action == 'public':
+            return [AllowAny()]
+        return [IsAuthenticated()]
+
+    def _get_or_create_profile(self, user):
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+        return profile
+
+    @action(detail=False, methods=['GET', 'PATCH'], url_path='me')
+    def me(self, request):
+        profile = self._get_or_create_profile(request.user)
+
+        if request.method == 'GET':
+            serializer = self.get_serializer(profile, context={'request': request})
+            return Response(serializer.data)
+
+        # PATCH
+        serializer = self.get_serializer(
+            profile, data=request.data, partial=True, context={'request': request}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['POST'], url_path='me/avatar',
+            parser_classes=[MultiPartParser, FormParser])
+    def upload_avatar(self, request):
+        profile = self._get_or_create_profile(request.user)
+        if 'avatar' not in request.FILES:
+            return Response({'error': 'No avatar file provided'}, status=status.HTTP_400_BAD_REQUEST)
+        profile.avatar = request.FILES['avatar']
+        profile.save(update_fields=['avatar'])
+        serializer = self.get_serializer(profile, context={'request': request})
+        return Response({'avatar_url': serializer.data['avatar_url']})
+
+    @action(detail=False, methods=['GET'], url_path=r'(?P<handle>[^/.]+)')
+    def public(self, request, handle=None):
+        try:
+            profile = UserProfile.objects.select_related('user').get(handle=handle)
+        except UserProfile.DoesNotExist:
+            return Response({'error': 'Profile not found'}, status=status.HTTP_404_NOT_FOUND)
+        serializer = self.get_serializer(profile, context={'request': request})
+        # Public view: strip private fields
+        data = serializer.data
+        data.pop('auth_provider', None)
+        return Response(data)
+
+
+# ---------------------------------------------------------------------------
+# Dashboard
+# ---------------------------------------------------------------------------
+
+class DashboardView(APIView):
+    """
+    GET /api/dashboard/
+
+    Returns everything the logged-in user's dashboard needs in a single call:
+      - profile                (with is_complete flag)
+      - stats                  (counts)
+      - hosting                (events I own or co-host — upcoming first)
+      - attending              (upcoming events I registered for)
+      - past_events            (events I already attended)
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        now = timezone.now().date()
+
+        # Profile
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+        profile_data = UserProfileSerializer(profile, context={'request': request}).data
+
+        # Events I host (owner or co-host)
+        hosting_qs = Event.objects.filter(
+            Q(owner=user) | Q(cohosts__user=user),
+            is_active=True,
+        ).distinct().order_by('day')
+
+        # Split into upcoming / past
+        hosting_upcoming = hosting_qs.filter(day__gte=now)
+        hosting_past = hosting_qs.filter(day__lt=now)
+
+        # Tickets I hold (attending)
+        my_tickets = (
+            Ticket.objects
+            .filter(user=user)
+            .select_related('event')
+            .order_by('event__day')
+        )
+        attending_upcoming = [t for t in my_tickets if t.event.day >= now]
+        attending_past = [t for t in my_tickets if t.event.day < now]
+
+        # Stats
+        stats = {
+            'events_created': Event.objects.filter(owner=user).count(),
+            'events_cohosting': Event.objects.filter(cohosts__user=user).count(),
+            'tickets_held': my_tickets.count(),
+            'events_attended_past': len(attending_past),
+            'upcoming_as_host': hosting_upcoming.count(),
+            'upcoming_as_attendee': len(attending_upcoming),
+        }
+
+        def event_summary(event):
+            return {
+                'id': event.id,
+                'slug': event.slug,
+                'name': event.name,
+                'day': str(event.day),
+                'time_from': str(event.time_from),
+                'location': event.location,
+                'category': event.category,
+                'ticket_price': str(event.ticket_price),
+                'is_owner': event.owner_id == user.id,
+                'attendee_count': event.tickets.filter(
+                    payment_status__in=['paid', 'free']
+                ).count(),
+                'event_image_url': (
+                    request.build_absolute_uri(event.event_image.url)
+                    if event.event_image else None
+                ),
+            }
+
+        def ticket_summary(ticket):
+            return {
+                'ticket_id': str(ticket.ticket_id),
+                'qr_token': str(ticket.qr_token),
+                'checked_in': ticket.checked_in,
+                'payment_status': ticket.payment_status,
+                'event': event_summary(ticket.event),
+            }
+
+        return Response({
+            'profile': profile_data,
+            'stats': stats,
+            'hosting': {
+                'upcoming': [event_summary(e) for e in hosting_upcoming[:10]],
+                'past': [event_summary(e) for e in hosting_past[:10]],
+            },
+            'attending': {
+                'upcoming': [ticket_summary(t) for t in attending_upcoming[:10]],
+                'past': [ticket_summary(t) for t in attending_past[:10]],
+            },
+        })
+
+
 class EventViewSet(viewsets.ModelViewSet):
     """
     EventViewSet with role-based permissions and category filtering
@@ -615,10 +947,7 @@ class EventViewSet(viewsets.ModelViewSet):
     serializer_class = EventSerializer
     parser_classes = (JSONParser, MultiPartParser, FormParser)
     lookup_field = 'slug'
-    
-    # IMPORTANT: Override authentication for this viewset if needed
-    authentication_classes = []  # This allows unauthenticated access
-    
+
     def get_permissions(self):
         """
         - List, retrieve, register, categories: Public access (AllowAny)
@@ -964,54 +1293,283 @@ class EventViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['POST'], permission_classes=[AllowAny])
     def register(self, request, slug=None):
-        """Register for an event"""
+        """
+        Register for an event.
+        POST /api/events/<slug>/register/
+
+        Body:
+          name          (str, required)
+          email         (str, required)
+          form_answers  (list, optional) — [{question_id: <id>, answer: <value>}, ...]
+        """
         try:
             event = self.get_object()
-            
-            if event.capacity and event.tickets.count() >= event.capacity:
+
+            # Capacity check (only count confirmed tickets)
+            if event.capacity:
+                confirmed = event.tickets.filter(
+                    payment_status__in=['paid', 'free']
+                ).count()
+                if confirmed >= event.capacity:
+                    return Response(
+                        {"error": "This event is at full capacity"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+            name = request.data.get('name', '').strip()
+            email = request.data.get('email', '').strip()
+            if not name or not email:
                 return Response(
-                    {"error": "This event is at capacity"},
-                    status=status.HTTP_400_BAD_REQUEST
+                    {"error": "name and email are required"},
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
-            
-            required_fields = ['name', 'email']
-            if not all(field in request.data for field in required_fields):
+
+            # Prevent double-registration for the same email
+            if event.tickets.filter(current_owner_email=email).exists():
+                existing = event.tickets.filter(current_owner_email=email).first()
+                serializer = TicketSerializer(existing, context={'request': request})
                 return Response(
-                    {"error": "Missing required fields: name and email"},
-                    status=status.HTTP_400_BAD_REQUEST
+                    {**serializer.data, 'message': 'Already registered'},
+                    status=status.HTTP_200_OK,
                 )
-            
-            ticket_data = {
-                'event': event.id,
-                'original_owner_name': request.data['name'],
-                'original_owner_email': request.data['email'],
-                'current_owner_name': request.data['name'],
-                'current_owner_email': request.data['email'],
-            }
-            
-            serializer = TicketSerializer(data=ticket_data, context={'request': request})
-            
-            if serializer.is_valid():
-                ticket = serializer.save()
-                ticket_url = request.build_absolute_uri(
-                    reverse('ticket-detail', kwargs={'ticket_id': str(ticket.ticket_id)})
+
+            # Validate required form questions
+            questions = list(event.form_questions.all())
+            required_ids = {q.id for q in questions if q.required}
+            answers_input = request.data.get('form_answers', [])
+            answered_ids = {a['question_id'] for a in answers_input if 'question_id' in a}
+            missing = required_ids - answered_ids
+            if missing:
+                return Response(
+                    {"error": "Missing answers for required questions", "question_ids": list(missing)},
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
-                
-                return Response({
-                    **serializer.data,
-                    'ticket_url': ticket_url,
-                    'event_slug': event.slug,
-                    'message': 'Registration successful'
-                }, status=status.HTTP_201_CREATED)
-            
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            
+
+            with transaction.atomic():
+                # Link to logged-in account if available
+                linked_user = request.user if request.user.is_authenticated else None
+
+                ticket = Ticket.objects.create(
+                    event=event,
+                    user=linked_user,
+                    original_owner_name=name,
+                    original_owner_email=email,
+                    current_owner_name=name,
+                    current_owner_email=email,
+                    payment_status='free' if event.ticket_price == 0 else 'pending',
+                )
+
+                # Save form answers
+                question_map = {q.id: q for q in questions}
+                for item in answers_input:
+                    q_id = item.get('question_id')
+                    answer = item.get('answer')
+                    if q_id in question_map and answer is not None:
+                        EventFormAnswer.objects.create(
+                            ticket=ticket,
+                            question=question_map[q_id],
+                            answer=answer,
+                        )
+
+            serializer = TicketSerializer(ticket, context={'request': request})
+            ticket_url = request.build_absolute_uri(
+                reverse('ticket-detail', kwargs={'ticket_id': str(ticket.ticket_id)})
+            )
+            return Response(
+                {**serializer.data, 'ticket_url': ticket_url, 'message': 'Registration successful'},
+                status=status.HTTP_201_CREATED,
+            )
+
         except Exception as e:
             logger.exception("Error in event registration")
             return Response(
                 {"error": "An error occurred during registration"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+    @action(detail=True, methods=['GET'], permission_classes=[IsAuthenticated])
+    def my_ticket(self, request, slug=None):
+        """
+        Get the current user's ticket for this event.
+        GET /api/events/<slug>/my_ticket/
+        """
+        event = self.get_object()
+        ticket = (
+            Ticket.objects
+            .filter(event=event, user=request.user)
+            .select_related('event')
+            .first()
+        )
+        if not ticket:
+            # Fall back to email match for tickets registered before login existed
+            ticket = (
+                Ticket.objects
+                .filter(event=event, current_owner_email=request.user.email)
+                .first()
+            )
+        if not ticket:
+            return Response({'registered': False}, status=status.HTTP_200_OK)
+        serializer = TicketSerializer(ticket, context={'request': request})
+        return Response({'registered': True, **serializer.data})
+
+    @action(detail=True, methods=['GET'], permission_classes=[IsAuthenticated])
+    def attendees(self, request, slug=None):
+        """
+        Full attendee list — owner and co-hosts only.
+        GET /api/events/<slug>/attendees/
+        Query params: ?checked_in=true|false
+        """
+        event = self.get_object()
+        role = event.get_user_role(request.user)
+        if not (role['is_owner'] or role['is_cohost']):
+            return Response(
+                {'error': 'Only the event owner or co-hosts can view attendees'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        tickets = event.tickets.select_related('user').prefetch_related('form_answers__question')
+
+        checked_in_filter = request.query_params.get('checked_in')
+        if checked_in_filter == 'true':
+            tickets = tickets.filter(checked_in=True)
+        elif checked_in_filter == 'false':
+            tickets = tickets.filter(checked_in=False)
+
+        # Only show confirmed tickets by default
+        status_filter = request.query_params.get('payment_status', 'confirmed')
+        if status_filter == 'confirmed':
+            tickets = tickets.filter(payment_status__in=['paid', 'free'])
+        elif status_filter != 'all':
+            tickets = tickets.filter(payment_status=status_filter)
+
+        serializer = TicketSerializer(tickets, many=True, context={'request': request})
+        return Response({
+            'count': tickets.count(),
+            'checked_in_count': tickets.filter(checked_in=True).count(),
+            'attendees': serializer.data,
+        })
+
+    @action(detail=True, methods=['POST'], permission_classes=[IsAuthenticated])
+    def checkin(self, request, slug=None):
+        """
+        Check in an attendee — owner and co-hosts only.
+        POST /api/events/<slug>/checkin/
+
+        Body (one of):
+          { "qr_token": "<uuid>" }      — scanned from QR code
+          { "email": "user@email.com" } — manual override
+        """
+        event = self.get_object()
+        role = event.get_user_role(request.user)
+        if not (role['is_owner'] or role['is_cohost']):
+            return Response(
+                {'error': 'Only the event owner or co-hosts can check in attendees'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        qr_token = request.data.get('qr_token')
+        email = request.data.get('email', '').strip()
+
+        ticket = None
+        if qr_token:
+            ticket = Ticket.objects.filter(event=event, qr_token=qr_token).first()
+        elif email:
+            ticket = Ticket.objects.filter(
+                event=event, current_owner_email=email
+            ).order_by('-created_at').first()
+
+        if not ticket:
+            return Response(
+                {'error': 'Ticket not found. Check the QR code or email and try again.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if ticket.checked_in:
+            return Response({
+                'already_checked_in': True,
+                'checked_in_at': ticket.checked_in_at,
+                'attendee': {
+                    'name': ticket.current_owner_name,
+                    'email': ticket.current_owner_email,
+                },
+            }, status=status.HTTP_200_OK)
+
+        ticket.checked_in = True
+        ticket.checked_in_at = timezone.now()
+        ticket.save(update_fields=['checked_in', 'checked_in_at'])
+
+        return Response({
+            'success': True,
+            'attendee': {
+                'name': ticket.current_owner_name,
+                'email': ticket.current_owner_email,
+                'ticket_id': str(ticket.ticket_id),
+                'checked_in_at': ticket.checked_in_at,
+            },
+        }, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['GET'], permission_classes=[IsAuthenticated])
+    def stats(self, request, slug=None):
+        """
+        Event stats — owner and co-hosts only.
+        GET /api/events/<slug>/stats/
+        """
+        event = self.get_object()
+        role = event.get_user_role(request.user)
+        if not (role['is_owner'] or role['is_cohost']):
+            return Response(
+                {'error': 'Only the event owner or co-hosts can view stats'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        tickets = event.tickets.all()
+        confirmed = tickets.filter(payment_status__in=['paid', 'free'])
+        return Response({
+            'total_registrations': confirmed.count(),
+            'checked_in': confirmed.filter(checked_in=True).count(),
+            'not_checked_in': confirmed.filter(checked_in=False).count(),
+            'paid': tickets.filter(payment_status='paid').count(),
+            'free': tickets.filter(payment_status='free').count(),
+            'pending_payment': tickets.filter(payment_status='pending').count(),
+            'capacity': event.capacity,
+            'spots_left': (
+                (event.capacity - confirmed.count())
+                if event.capacity else None
+            ),
+        })
+
+    @action(
+        detail=True,
+        methods=['GET', 'POST'],
+        url_path='form-questions',
+        permission_classes=[IsAuthenticated],
+    )
+    def form_questions(self, request, slug=None):
+        """
+        Manage custom registration questions for an event.
+        GET  /api/events/<slug>/form-questions/  — list questions (public on event detail)
+        POST /api/events/<slug>/form-questions/  — add a question (owner/cohost only)
+
+        POST body:
+          { "question": "...", "question_type": "text", "required": true, "order": 1 }
+        """
+        event = self.get_object()
+
+        if request.method == 'GET':
+            qs = event.form_questions.all()
+            return Response(EventFormQuestionSerializer(qs, many=True).data)
+
+        # POST — only owner/cohost can add questions
+        role = event.get_user_role(request.user)
+        if not (role['is_owner'] or role['is_cohost']):
+            return Response(
+                {'error': 'Only the event owner or co-hosts can manage form questions'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        serializer = EventFormQuestionSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(event=event)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
     
     @action(detail=True, methods=['POST'], permission_classes=[IsAuthenticated, IsEventOwner])
     def add_cohost(self, request, slug=None):

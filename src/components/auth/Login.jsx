@@ -4,23 +4,19 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import Navbar from "../Navbar";
 import { FaGoogle } from "react-icons/fa";
 import { SignIcon, Checkmark } from "../../app/assets/index";
-import { useLoginWithEmail, usePrivy } from "@privy-io/react-auth";
+import { useLoginWithEmail } from "@privy-io/react-auth";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import API from "@/services/api";
 
 const CODE_LENGTH = 6;
 const RESEND_COOLDOWN = 45; // seconds
 
 export default function Login() {
-  const { ready, authenticated, logout, getAccessToken } = usePrivy();
   const router = useRouter();
-
-  const [step, setStep] = useState("email"); 
+  const [step, setStep] = useState("email");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [emailState, setEmailState] = useState("initial");
 
   const [code, setCode] = useState(Array(CODE_LENGTH).fill(""));
   const [secondsLeft, setSecondsLeft] = useState(RESEND_COOLDOWN);
@@ -39,66 +35,18 @@ export default function Login() {
     loginWithCode: loginWithCodeEmail,
     state: stateEmail,
   } = useLoginWithEmail({
-    onComplete: async ({ user, isNewUser, wasAlreadyAuthenticated, loginMethod }) => {
-      console.log("User successfully logged in with email", {
-        user,
-        isNewUser,
-        wasAlreadyAuthenticated,
-        loginMethod,
-      });
-
-      // Get Privy access token and send to backend
-      try {
-        const privyAccessToken = await getAccessToken();
-        const privy_id = user?.id;
-        const userEmail = user?.email?.address || email; // Use user email or fallback to form email state
-
-        if (!privy_id || !privyAccessToken || !userEmail) {
-          console.error("Missing authentication data:", {
-            privy_id,
-            privyAccessToken: !!privyAccessToken,
-            userEmail,
-          });
-          toast.error("Authentication data incomplete. Please try again.", {
-            duration: 4000,
-          });
-          return;
-        }
-
-        // Send authentication details to backend
-        await API.authenticateWithPrivy({
-          privy_id,
-          privyAccessToken,
-          email: userEmail,
-        });
-
-        console.log("Successfully authenticated with backend");
-      } catch (error) {
-        console.error("Backend authentication error:", error);
-        toast.error(
-          error?.message || "Failed to complete authentication. Please try again.",
-          { duration: 4000 }
-        );
-        return;
-      }
-
+    onComplete: ({ isNewUser }) => {
       if (isNewUser) {
-        toast.success("Welcome! Your account has been created successfully.", {
-          duration: 4000,
-        });
-        setTimeout(() => router.push("/profile"), 1000);
+        toast.success("Welcome! Your account has been created.", { duration: 4000 });
+        setTimeout(() => router.push("/profile"), 500);
       } else {
-        toast.success("Welcome back! You've successfully logged in.", {
-          duration: 3000,
-        });
-        setTimeout(() => router.push("/events"), 1000);
+        toast.success("Welcome back!", { duration: 3000 });
+        setTimeout(() => router.push("/events"), 500);
       }
     },
     onError: (error) => {
       console.error("Login error:", error);
-      toast.error(error?.message || "Login failed. Please try again.", {
-        duration: 4000,
-      });
+      toast.error(error?.message || "Login failed. Please try again.", { duration: 4000 });
     },
   });
 
@@ -232,11 +180,6 @@ export default function Login() {
     await verifyCode(token);
   };
 
-  useEffect(() => {
-    if (ready && authenticated) {
-      router.push("/events");
-    }
-  }, [ready, authenticated, router]);
 
   return (
     <div className="bg-white">

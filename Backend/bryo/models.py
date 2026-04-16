@@ -1,11 +1,9 @@
 from django.db import models
-from django.contrib.auth.models import User
-from django.utils import timezone
 from django.contrib.auth.models import AbstractUser, UserManager
-from django.core.exceptions import ValidationError
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from django.conf import settings
-from django.db import models
-from django.utils.crypto import get_random_string  
+from django.utils.crypto import get_random_string
 import uuid
 
 
@@ -41,12 +39,28 @@ class CustomUserManager(UserManager):
 
 
 class CustomUser(AbstractUser):
-    username = models.CharField(max_length=150, unique=False, blank=True, null=True)  
+    username = models.CharField(max_length=150, unique=False, blank=True, null=True)
     email = models.EmailField(unique=True)
+
+    # Legacy Privy-specific field — kept for existing users.
+    # New code should use external_id + auth_provider instead.
     privy_id = models.CharField(max_length=255, unique=True, null=True, blank=True)
 
+    # Provider-agnostic identity fields.
+    AUTH_PROVIDER_CHOICES = [
+        ("privy", "Privy"),
+        ("web3auth", "Web3Auth"),
+    ]
+    auth_provider = models.CharField(
+        max_length=50,
+        choices=AUTH_PROVIDER_CHOICES,
+        default="privy",
+        blank=True,
+    )
+    external_id = models.CharField(max_length=255, unique=True, null=True, blank=True)
+
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = []  
+    REQUIRED_FIELDS = []
 
     objects = CustomUserManager()
 
@@ -57,6 +71,42 @@ class CustomUser(AbstractUser):
 
     def __str__(self):
         return self.email
+
+
+class UserProfile(models.Model):
+    """
+    Extended profile for every user. Auto-created via post_save signal.
+    Keeps identity (CustomUser) separate from display/social data.
+    """
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='profile',
+        primary_key=True,
+    )
+    # Public identity
+    display_name = models.CharField(max_length=100, blank=True)
+    # Unique handle used in public URLs: /u/<handle>
+    handle = models.SlugField(max_length=50, unique=True, null=True, blank=True)
+    bio = models.TextField(max_length=500, blank=True)
+    avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
+    location = models.CharField(max_length=100, blank=True)
+    website = models.URLField(blank=True)
+
+    # Social links (store handles/usernames, not full URLs, for flexibility)
+    twitter = models.CharField(max_length=100, blank=True)
+    instagram = models.CharField(max_length=100, blank=True)
+    linkedin = models.CharField(max_length=100, blank=True)
+    telegram = models.CharField(max_length=100, blank=True)
+
+    # Flag used by frontend to redirect new users to profile setup
+    is_complete = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Profile({self.user.email})"
 
 
 class PrivyUser(models.Model):
@@ -370,9 +420,47 @@ class EventCoHost(models.Model):
 
 
 
+class EventFormQuestion(models.Model):
+    """
+    Custom registration questions that an organiser adds to their event.
+    e.g. "What is your shirt size?", "Which session will you attend?"
+    """
+    QUESTION_TYPES = [
+        ('text', 'Short Text'),
+        ('textarea', 'Long Text'),
+        ('select', 'Dropdown'),
+        ('checkbox', 'Checkbox (multiple)'),
+        ('radio', 'Radio (single)'),
+    ]
+
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='form_questions')
+    question = models.CharField(max_length=255)
+    question_type = models.CharField(max_length=20, choices=QUESTION_TYPES, default='text')
+    # For select/checkbox/radio — store list of option strings as JSON
+    options = models.JSONField(default=list, blank=True)
+    required = models.BooleanField(default=False)
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['order']
+
+    def __str__(self):
+        return f"{self.event.name} — {self.question}"
+
+
 class Ticket(models.Model):
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='tickets')
     ticket_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+
+    # Link to authenticated user account (null = guest registration)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='tickets',
+    )
+
     original_owner_name = models.CharField(max_length=255)
     original_owner_email = models.EmailField()
     current_owner_name = models.CharField(max_length=255)
@@ -388,16 +476,35 @@ class Ticket(models.Model):
             ('paid', 'Paid'),
             ('failed', 'Payment Failed'),
         ],
-        default='free'
+        default='free',
     )
-    
 
-    
+    # Check-in
+    checked_in = models.BooleanField(default=False)
+    checked_in_at = models.DateTimeField(null=True, blank=True)
+    # UUID embedded in QR code; scanned at the door to trigger check-in.
+    # null=True only exists to satisfy the migration for existing rows;
+    # new rows always get a uuid4 via the pre-save signal in apps.py.
+    qr_token = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, null=True)
+
     class Meta:
         ordering = ['-created_at']
 
     def __str__(self):
         return f"Ticket {self.ticket_id} - {self.payment_status}"
+
+
+class EventFormAnswer(models.Model):
+    """Stores an attendee's answer to one EventFormQuestion."""
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='form_answers')
+    question = models.ForeignKey(EventFormQuestion, on_delete=models.CASCADE)
+    answer = models.JSONField()  # string for text/textarea, list for checkbox, etc.
+
+    class Meta:
+        unique_together = ('ticket', 'question')
+
+    def __str__(self):
+        return f"Answer by {self.ticket.current_owner_email} — {self.question.question}"
 
 
 
@@ -418,3 +525,14 @@ class TicketTransfer(models.Model):
 
     def __str__(self):
         return f"Transfer {self.transfer_key} - {self.ticket.event.name}"
+
+
+# ---------------------------------------------------------------------------
+# Signals
+# ---------------------------------------------------------------------------
+
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+def create_user_profile(sender, instance, created, **kwargs):
+    """Auto-create a UserProfile the first time a user record is saved."""
+    if created:
+        UserProfile.objects.get_or_create(user=instance)

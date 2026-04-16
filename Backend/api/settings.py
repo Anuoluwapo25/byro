@@ -33,8 +33,8 @@ load_dotenv()
 
 
 
-# BlockRadar  and Privy Settings
-JWKS_URL = "https://auth.privy.io/.well-known/jwks.json" 
+# BlockRadar and Privy Settings
+JWKS_URL = "https://auth.privy.io/.well-known/jwks.json"
 BLOCKRADAR_API_KEY = os.environ.get('BLOCKRADAR_API_KEY')
 PRIVY_APP_ID = os.environ.get('PRIVY_APP_ID')
 PRIVY_VERIFICATION_KEY = os.environ.get('PRIVY_VERIFICATION_KEY')
@@ -44,6 +44,13 @@ FRONTEND_URL = os.environ.get('FRONTEND_URL')
 PAYSTACK_SECRET_KEY = config('PAYSTACK_SECRET_KEY')
 PAYSTACK_PUBLIC_KEY = config('PAYSTACK_PUBLIC_KEY')
 PAYSTACK_CALLBACK_URL = config('PAYSTACK_CALLBACK_URL', 'http://localhost:3000/payment/callback')
+
+# Web3Auth Settings
+# WEB3AUTH_CLIENT_ID: Your Web3Auth project's Client ID from the Web3Auth dashboard.
+# WEB3AUTH_JWKS_URL: Override if you use a custom network / self-hosted node.
+#   Default: https://api-auth.web3auth.io/jwks  (Core Kit SFA SDK)
+WEB3AUTH_CLIENT_ID = os.environ.get('WEB3AUTH_CLIENT_ID', '')
+WEB3AUTH_JWKS_URL = os.environ.get('WEB3AUTH_JWKS_URL', 'https://api-auth.web3auth.io/jwks')
 
 
 # Quick-start development settings - unsuitable for production
@@ -82,7 +89,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'bryo.middleware.PrivyAuthMiddleware',
 
 ]
 

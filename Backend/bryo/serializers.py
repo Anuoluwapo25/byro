@@ -1,10 +1,15 @@
 from rest_framework import serializers
 from django.utils import timezone
-from .models import Payment, WaitList, PrivyUser, Ticket, Event, EventCoHost, TicketTransfer, Payment
+from django.utils.text import slugify
+from .models import (
+    Payment, WaitList, PrivyUser, Ticket, Event, EventCoHost,
+    TicketTransfer, Payment, UserProfile, EventFormQuestion, EventFormAnswer,
+)
 from django.core.mail import send_mail
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.conf import settings
+import re
 
 User = get_user_model()
 
@@ -30,6 +35,79 @@ class PrivyUserSerializer(serializers.ModelSerializer):
         model = PrivyUser
         fields = ['privy_id', 'email', 'wallet_address', 'created_at']
         read_only_fields = ['privy_id', 'created_at']
+
+
+# ---------------------------------------------------------------------------
+# User Profile
+# ---------------------------------------------------------------------------
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(source='user.email', read_only=True)
+    auth_provider = serializers.CharField(source='user.auth_provider', read_only=True)
+    avatar_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserProfile
+        fields = [
+            'email', 'auth_provider',
+            'display_name', 'handle', 'bio',
+            'avatar', 'avatar_url',
+            'location', 'website',
+            'twitter', 'instagram', 'linkedin', 'telegram',
+            'is_complete',
+            'created_at', 'updated_at',
+        ]
+        read_only_fields = ['email', 'auth_provider', 'avatar_url', 'created_at', 'updated_at']
+        extra_kwargs = {'avatar': {'write_only': True, 'required': False}}
+
+    def get_avatar_url(self, obj):
+        if obj.avatar:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.avatar.url)
+        return None
+
+    def validate_handle(self, value):
+        if not value:
+            return value
+        # Allow letters, numbers, underscores, hyphens
+        if not re.match(r'^[a-zA-Z0-9_-]+$', value):
+            raise serializers.ValidationError(
+                "Handle can only contain letters, numbers, underscores and hyphens."
+            )
+        # Uniqueness (exclude current user)
+        qs = UserProfile.objects.filter(handle=value)
+        if self.instance:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise serializers.ValidationError("This handle is already taken.")
+        return value
+
+    def update(self, instance, validated_data):
+        # Auto-mark profile complete when display_name is set
+        if validated_data.get('display_name') and not instance.is_complete:
+            validated_data['is_complete'] = True
+        return super().update(instance, validated_data)
+
+
+# ---------------------------------------------------------------------------
+# Event Form Questions
+# ---------------------------------------------------------------------------
+
+class EventFormQuestionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EventFormQuestion
+        fields = ['id', 'question', 'question_type', 'options', 'required', 'order']
+        read_only_fields = ['id']
+
+
+class EventFormAnswerSerializer(serializers.ModelSerializer):
+    question_text = serializers.CharField(source='question.question', read_only=True)
+
+    class Meta:
+        model = EventFormAnswer
+        fields = ['id', 'question', 'question_text', 'answer']
+        read_only_fields = ['id', 'question_text']
 
 
 
@@ -106,18 +184,39 @@ class EventSerializer(serializers.ModelSerializer):
 
 class TicketSerializer(serializers.ModelSerializer):
     event_name = serializers.CharField(source='event.name', read_only=True)
+    event_slug = serializers.CharField(source='event.slug', read_only=True)
     event_date = serializers.DateField(source='event.day', read_only=True)
+    event_time = serializers.TimeField(source='event.time_from', read_only=True)
+    event_location = serializers.CharField(source='event.location', read_only=True)
+    event_image_url = serializers.SerializerMethodField()
     transferable = serializers.BooleanField(source='event.transferable', read_only=True)
-    
+    form_answers = EventFormAnswerSerializer(many=True, read_only=True)
+
     class Meta:
         model = Ticket
         fields = [
-            'ticket_id', 'event', 'event_name', 'event_date', 
+            'ticket_id', 'event', 'event_name', 'event_slug',
+            'event_date', 'event_time', 'event_location', 'event_image_url',
             'original_owner_name', 'original_owner_email',
             'current_owner_name', 'current_owner_email',
-            'is_transferred', 'created_at', 'transferable'
+            'is_transferred', 'payment_status',
+            'checked_in', 'checked_in_at', 'qr_token',
+            'created_at', 'transferable',
+            'form_answers',
         ]
-        read_only_fields = ['ticket_id', 'is_transferred', 'created_at']
+        read_only_fields = [
+            'ticket_id', 'is_transferred', 'created_at',
+            'checked_in', 'checked_in_at', 'qr_token',
+            'event_name', 'event_slug', 'event_date', 'event_time',
+            'event_location', 'event_image_url',
+        ]
+
+    def get_event_image_url(self, obj):
+        if obj.event.event_image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.event.event_image.url)
+        return None
 
 class TicketTransferSerializer(serializers.ModelSerializer):
     ticket_details = TicketSerializer(source='ticket', read_only=True)
