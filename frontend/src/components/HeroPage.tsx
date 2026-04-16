@@ -1,9 +1,11 @@
+"use client";
+
 import React from "react";
 import Image from "next/image";
 import { Sparkle } from "../app/assets/index";
 
-
 const HeroPage = () => {
+
   return (
     <main className="bg-white pt-8 sm:pt-12 position: relative">
       <div className="container mx-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-10 text-center space-y-4 sm:space-y-6">
@@ -36,11 +38,7 @@ const HeroPage = () => {
           </p>
         </div>
 
-        <div className="pt-2 sm:pt-4">
-          <button aria-label="Get Started" className="bg-[#1F6BFF] text-white py-2.5 sm:py-3 px-6 sm:px-8 rounded-full font-medium text-base sm:text-lg hover:bg-blue-700 transition-colors">
-            Create an account
-          </button>
-        </div>
+      
       </div>
     </main>
   );

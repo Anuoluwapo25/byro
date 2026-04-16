@@ -1,9 +1,12 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import AuthProvider from "./privy/AuthProvider";
+import Provider from "./web3auth/provider";
+// IMP START - SSR
+import { cookieToWeb3AuthState } from "@web3auth/modal";
 import { Providers } from "@/redux/Providers";
 import { Toaster } from 'sonner';
+import { headers } from "next/headers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -108,11 +111,13 @@ export const metadata: Metadata = {
   manifest: "/favicon_io/site.webmanifest",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const headersList = await headers();
+  const web3authInitialState = cookieToWeb3AuthState(headersList.get('cookie'));
   return (
     <html lang="en">
       <body
@@ -122,16 +127,15 @@ export default function RootLayout({
           position="top-right"
           richColors
           duration={3000}
-         
         />
 
-        <AuthProvider>
+        <Provider web3authInitialState={web3authInitialState}>
           <Providers>
             <div className="flex flex-col min-h-screen">
               <main className="flex-1">{children}</main>
             </div>
           </Providers>
-        </AuthProvider>
+        </Provider>
       </body>
     </html>
   );
