@@ -1,6 +1,6 @@
 "use client";
 
-import { usePrivy } from "@privy-io/react-auth";
+// Privy import removed - using Web3Auth instead
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import EventCreationForm from "../../../components/events/EventCreationForm";
