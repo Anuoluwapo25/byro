@@ -13,7 +13,7 @@ export default function CreateEventPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
 
-  // Handle authentication
+  // Handle auth
   useEffect(() => {
     if (ready) {
       if (!authenticated) {
