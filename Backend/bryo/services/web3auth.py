@@ -60,7 +60,7 @@ class Web3AuthService(AuthProviderService):
 
             decode_options = {"verify_aud": bool(client_id)}
             decode_kwargs = {
-                "algorithms": ["RS256"],
+                "algorithms": ["ES256"],
                 "options": decode_options,
             }
             if client_id:

@@ -35,7 +35,6 @@ from django.db import models
 from django.db.models import Q
 from django.http import JsonResponse
 from django.conf import settings
-from decouple import config
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 import requests
@@ -210,7 +209,7 @@ class PaystackPaymentViewSet(viewsets.ViewSet):
         """
         Verify a Paystack payment and create ticket(s) if successful
         """
-        paystack_secret_key = config("PAYSTACK_SECRET_KEY")
+        paystack_secret_key = settings.PAYSTACK_SECRET_KEY
         paystack_url = f'https://api.paystack.co/transaction/verify/{reference}'
         
         headers = {
@@ -703,9 +702,6 @@ def social_login(request):
             {'error': 'An unexpected error occurred', 'debug': str(e)},
             status=500,
         )
-
-
-logger = logging.getLogger(__name__)
 
 
 # class EventViewSet(viewsets.ModelViewSet):
