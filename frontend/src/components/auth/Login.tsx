@@ -10,8 +10,8 @@ import { useRouter } from "next/navigation";
 export default function Login() {
   const { connect, isConnected, loading: connectLoading, error: connectError } = useWeb3AuthConnect();
   const { disconnect, loading: disconnectLoading, error: disconnectError } = useWeb3AuthDisconnect();
-  const { userInfo } = useWeb3AuthUser();
-  const { address, connector } = useAccount();
+  // const { userInfo } = useWeb3AuthUser();
+  // const { address, connector } = useAccount();
   const router = useRouter();
 
   useEffect(() => {
