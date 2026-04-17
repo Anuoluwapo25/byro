@@ -3,22 +3,25 @@ import React, { useState, useRef, useEffect } from "react";
 import { searchIcon, eventIcon } from "../app/assets/index";
 import Image from "next/image";
 import Link from "next/link";
-import { usePrivy } from "@privy-io/react-auth";
+import { useWeb3AuthConnect } from "@web3auth/modal/react";
 import { FaRegUserCircle } from "react-icons/fa";
 import { usePathname } from "next/navigation";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import API from "@/services/api";
 import SignupButton from "./SignupButton";
+import { signOut } from "@/redux/auth/authSlice";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDesktopSearchOpen, setIsDesktopSearchOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
-  const { authenticated, logout } = usePrivy();
+  const { connect } = useWeb3AuthConnect();
   const pathname = usePathname();
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const profileDropdownRef = useRef(null);
   const { user, token } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
+  const authenticated = !!token;
 
   useEffect(() => {
     if (token) {
@@ -82,7 +85,7 @@ const Navbar = () => {
   };
 
   const handleLogout = async () => {
-    await logout();
+    dispatch(signOut());
     setIsProfileDropdownOpen(false);
   };
 
@@ -146,12 +149,12 @@ const Navbar = () => {
                 )}
               </div>
 
-              <Link
-                href="/login"
-                className="bg-white border border-[#EDEDED] hover:bg-blue-700 hover:text-white text-black font-medium text-xs py-2 px-6 rounded-full transition duration-300 ease-in-out shadow-md hover:shadow-lg"
+              <button
+                onClick={() => connect()}
+                className="bg-white border border-[#EDEDED] hover:bg-blue-700 hover:text-white text-black font-medium text-xs py-2 px-6 rounded-full transition duration-300 ease-in-out shadow-md hover:shadow-lg cursor-pointer"
               >
                 Sign In
-              </Link>
+              </button>
             </div>
 
             {/* Mobile View */}
@@ -169,12 +172,12 @@ const Navbar = () => {
                 </div>
 
                 <div className="flex items-center space-x-3">
-                  <Link
-                    href="/login"
-                    className="bg-white border border-[#EDEDED] hover:bg-blue-700 hover:text-white text-black font-medium text-xs py-2 px-6 rounded-full transition duration-300 ease-in-out shadow-md hover:shadow-lg"
+                  <button
+                    onClick={() => connect()}
+                    className="bg-white border border-[#EDEDED] hover:bg-blue-700 hover:text-white text-black font-medium text-xs py-2 px-6 rounded-full transition duration-300 ease-in-out shadow-md hover:shadow-lg cursor-pointer"
                   >
                     Sign In
-                  </Link>
+                  </button>
 
                   <button
                     aria-label="hamburger-menu"

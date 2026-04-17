@@ -11,9 +11,10 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
-    "@privy-io/react-auth": "^2.13.5",
     "@reduxjs/toolkit": "^2.9.0",
     "@supabase/supabase-js": "^2.57.4",
+    "@tanstack/react-query": "^5.99.0",
+    "@web3auth/modal": "^10.15.0",
     "axios": "^1.9.0",
     "lucide-react": "^0.508.0",
     "next": "^16.1.1",
@@ -27,6 +28,8 @@
     "react-toastify": "^11.0.5",
     "redux-persist": "^6.0.0",
     "sonner": "^2.0.7",
+    "viem": "^2.48.0",
+    "wagmi": "^3.6.2",
     "yup": "^1.6.1"
   },
   "devDependencies": {

@@ -269,6 +269,39 @@ const API = {
     }
   },
 
+  // Web3Auth
+  authenticateWithWeb3Auth: async ({ user_id, email, name }) => {
+    try {
+      const response = await axiosInstance.post(
+        "/auth/web3auth/",
+        {
+          email,
+          user_id,
+          name,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+        }
+      );
+
+      // Store the auth token if provided
+      if (response.data?.access || response.data?.access_token) {
+        setAuthToken(response.data.access || response.data.access_token);
+      }
+
+      return response.data;
+    } catch (error) {
+      if (error.response?.status === 400) {
+        const errorMessage = error.response.data?.message || "Invalid authentication data";
+        throw new Error(errorMessage);
+      }
+      throw handleApiError(error);
+    }
+  },
+
   // Waitlist
   joinWaitlist: async (data) => {
     try {
