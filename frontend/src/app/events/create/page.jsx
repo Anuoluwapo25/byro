@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useEffect } from "react";
-// Privy import removed - using Web3Auth instead
+import { useWeb3AuthConnect } from "@web3auth/modal/react";
 import { useRouter } from "next/navigation";
 import EventCreationForm from "../../../components/events/EventCreationForm";
 import AppLayout from "@/layout/app";
@@ -9,55 +9,42 @@ import API from "@/services/api";
 import { toast } from "react-toastify";
 
 export default function CreateEventPage() {
-  const { ready, authenticated, login, getAccessToken } = usePrivy();
+  const { connect, isConnected } = useWeb3AuthConnect();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
 
-  // Handle auth
   useEffect(() => {
-    if (ready) {
-      if (!authenticated) {
-        login();
-      }
+    if (!isConnected) {
+      connect();
+    } else {
       setIsLoading(false);
     }
-  }, [ready, authenticated, router]);
+  }, [isConnected, connect]);
 
   const handleEventCreated = useCallback(
     async (eventData) => {
       try {
         setIsLoading(true);
 
-        // get token from Privy
-        const raw = await getAccessToken();
-        console.log('[CreateEvent] raw token:', raw ? '[REDACTED]' : raw);
-
-        if (!raw) {
-          await login();
-          const retry = await getAccessToken();
-          if (!retry) throw new Error('Unable to obtain access token');
-          API.setAuthToken(retry);
-        } else {
-          API.setAuthToken(raw);
+        const token = localStorage.getItem("authToken");
+        if (!token) {
+          connect();
+          throw new Error("Not authenticated");
         }
+        API.setAuthToken(token);
 
-        // optional: verify axios header
-        console.log('[CreateEvent] axios auth header:', axios.defaults.headers?.common?.Authorization);
-
-        // now create event (createEvent will use axios defaults)
         const created = await API.createEvent(eventData);
-        console.log('Event created', created);
+        console.log("Event created", created);
         toast.success("Event created successfully!");
         router.push("/events");
       } catch (error) {
         console.error("Create event failed:", error);
         toast.error("Failed to create event");
-        // handle error display
       } finally {
         setIsLoading(false);
       }
     },
-    [getAccessToken, login, router]
+    [connect, router]
   );
 
   return (

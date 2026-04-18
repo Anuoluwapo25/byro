@@ -56,24 +56,12 @@ class Web3AuthService(AuthProviderService):
             client = get_jwks_client()
             signing_key = client.get_signing_key_from_jwt(token)
 
-            client_id = getattr(settings, "WEB3AUTH_CLIENT_ID", None)
-
-            decode_options = {"verify_aud": bool(client_id)}
             decode_kwargs = {
                 "algorithms": ["ES256"],
-                "options": decode_options,
+                "options": {"verify_aud": False},
             }
-            if client_id:
-                decode_kwargs["audience"] = client_id
 
             decoded = jwt.decode(token, signing_key.key, **decode_kwargs)
-
-            # Loose issuer check — accept any Web3Auth host
-            iss = decoded.get("iss", "")
-            if "web3auth.io" not in iss:
-                logger.error(f"Web3Auth token issuer invalid: {iss}")
-                return None
-
             return decoded
 
         except jwt.ExpiredSignatureError:
@@ -90,11 +78,14 @@ class Web3AuthService(AuthProviderService):
     def extract_user_info(decoded: dict) -> dict:
         """Return normalised user fields from a verified Web3Auth payload."""
         external_id = decoded.get("sub", "")
-        email = decoded.get("email")
-        name = decoded.get("name")
 
-        # For wallet logins the name may come from aggregator_verifier
-        if not name:
-            name = decoded.get("aggregateVerifier")
+        # Wallet-connector tokens have no sub — use wallet address instead
+        if not external_id:
+            wallets = decoded.get("wallets", [])
+            if wallets:
+                external_id = wallets[0].get("address", "")
+
+        email = decoded.get("email")
+        name = decoded.get("name") or decoded.get("aggregateVerifier")
 
         return {"external_id": external_id, "email": email, "name": name}

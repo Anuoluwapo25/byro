@@ -3,24 +3,28 @@
 "use client";
 
 import { useEffect } from "react";
-import { useWeb3AuthConnect, useWeb3AuthDisconnect, useWeb3AuthUser } from "@web3auth/modal/react";
-import { useAccount } from "wagmi";
+import { useWeb3AuthConnect } from "@web3auth/modal/react";
 import { useRouter } from "next/navigation";
+import { useSelector } from "react-redux";
 
 export default function Login() {
-  const { connect, isConnected, loading: connectLoading, error: connectError } = useWeb3AuthConnect();
-  const { disconnect, loading: disconnectLoading, error: disconnectError } = useWeb3AuthDisconnect();
-  // const { userInfo } = useWeb3AuthUser();
-  // const { address, connector } = useAccount();
+  const { connect, isConnected, error: connectError } = useWeb3AuthConnect();
+  const { token } = useSelector((state: any) => state.auth);
   const router = useRouter();
 
+  // Trigger Web3Auth modal if not yet connected
   useEffect(() => {
-    if (isConnected) {
-      router.push("/events");
-    } else {
+    if (!isConnected && !token) {
       connect();
     }
-  }, [isConnected, connect, router]);
+  }, []);
+
+  // Redirect once backend token is set (by Navbar's useEffect)
+  useEffect(() => {
+    if (token) {
+      router.push("/events");
+    }
+  }, [token, router]);
 
   const loggedInView = (
     <div className="flex items-center justify-center min-h-screen bg-white">

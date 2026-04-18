@@ -6,19 +6,20 @@ import { useEffect, useState } from "react";
 import { LuCircleUserRound } from "react-icons/lu";
 import { MdLogout, MdOutlineNotificationsActive } from "react-icons/md";
 import { wallet } from "../assets";
-// Privy imports removed - using Web3Auth instead
+import { useWeb3AuthConnect, useWeb3AuthDisconnect, useWeb3AuthUser } from "@web3auth/modal/react";
 import { useRouter } from "next/navigation";
 
 const ProfileSettings = () => {
   const [isEditing, setIsEditing] = useState(false);
-  const { ready, authenticated } = usePrivy();
+  const { connect, isConnected } = useWeb3AuthConnect();
+  const { disconnect } = useWeb3AuthDisconnect();
+  const { userInfo } = useWeb3AuthUser();
   const router = useRouter();
-  const { wallets } = useWallets();
   const [formData, setFormData] = useState({
-    firstName: "Alex",
-    lastName: "Young",
-    email: "Alex@byronafrica.com",
-    phone: "+234 802 7393 0049",
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
   });
 
   const [notifications, setNotifications] = useState({
@@ -27,15 +28,19 @@ const ProfileSettings = () => {
     marketingUpdates: false,
   });
 
-  const embeddedWallet = wallets.find(
-    (wallet) => wallet.walletClientType === "privy",
-  );
-
   useEffect(() => {
-    if (!authenticated) {
+    if (!isConnected) {
       router.push("/");
+    } else if (userInfo) {
+      const [firstName = "", lastName = ""] = (userInfo.name || "").split(" ");
+      setFormData((prev) => ({
+        ...prev,
+        firstName,
+        lastName,
+        email: userInfo.email || "",
+      }));
     }
-  }, []);
+  }, [isConnected, userInfo, router]);
 
   const handleEdit = () => {
     setIsEditing(true);
@@ -96,8 +101,7 @@ const ProfileSettings = () => {
                     <span className="text-[14px] text-[#707070]">
                       <strong>
                         {" "}
-                        {embeddedWallet?.address.slice(0, 6)} ...{" "}
-                        {embeddedWallet?.address.slice(-4)}
+                        {userInfo?.name || userInfo?.email || "Connected"}
                       </strong>
                     </span>
                   </div>
@@ -132,7 +136,7 @@ const ProfileSettings = () => {
                     Save Changes
                   </button>
                 )}
-                <button className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-[#007AFF] rounded-[20px] hover:bg-gray-50 transition-colors flex items-center gap-2 w-full sm:w-auto">
+                <button onClick={disconnect} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-[#007AFF] rounded-[20px] hover:bg-gray-50 transition-colors flex items-center gap-2 w-full sm:w-auto">
                   <svg
                     className="w-4 h-4"
                     fill="none"

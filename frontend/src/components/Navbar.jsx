@@ -3,25 +3,57 @@ import React, { useState, useRef, useEffect } from "react";
 import { searchIcon, eventIcon } from "../app/assets/index";
 import Image from "next/image";
 import Link from "next/link";
-import { useWeb3AuthConnect } from "@web3auth/modal/react";
+import { useWeb3AuthConnect, useIdentityToken } from "@web3auth/modal/react";
 import { FaRegUserCircle } from "react-icons/fa";
 import { usePathname } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
 import API from "@/services/api";
 import SignupButton from "./SignupButton";
-import { signOut } from "@/redux/auth/authSlice";
+import { signOut, authSuccess } from "@/redux/auth/authSlice";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDesktopSearchOpen, setIsDesktopSearchOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
-  const { connect } = useWeb3AuthConnect();
+  const { connect, loading: connectLoading } = useWeb3AuthConnect();
+  const { getIdentityToken } = useIdentityToken();
   const pathname = usePathname();
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const profileDropdownRef = useRef(null);
   const { user, token } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const authenticated = !!token;
+
+  // After Web3Auth connects, exchange idToken for Django JWT
+  const handleSignIn = async () => {
+    try {
+      const provider = await connect();
+      if (!provider) return;
+
+      const idToken = await getIdentityToken();
+      if (!idToken) {
+        console.error("[Auth] no idToken after connect");
+        return;
+      }
+
+      const res = await fetch(`${API_URL}/api/auth/social/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider: "web3auth", token: idToken }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        API.setAuthToken(data.tokens.access);
+        dispatch(authSuccess({ user: data.user, token: data.tokens.access }));
+      } else {
+        console.error("[Auth] backend rejected:", data.error);
+      }
+    } catch (err) {
+      console.error("[Auth] sign in failed:", err);
+    }
+  };
 
   useEffect(() => {
     if (token) {
@@ -150,10 +182,11 @@ const Navbar = () => {
               </div>
 
               <button
-                onClick={() => connect()}
-                className="bg-white border border-[#EDEDED] hover:bg-blue-700 hover:text-white text-black font-medium text-xs py-2 px-6 rounded-full transition duration-300 ease-in-out shadow-md hover:shadow-lg cursor-pointer"
+                onClick={handleSignIn}
+                disabled={connectLoading}
+                className="bg-white border border-[#EDEDED] hover:bg-blue-700 hover:text-white text-black font-medium text-xs py-2 px-6 rounded-full transition duration-300 ease-in-out shadow-md hover:shadow-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Sign In
+                {connectLoading ? "Connecting..." : "Sign In"}
               </button>
             </div>
 
@@ -362,10 +395,12 @@ const Navbar = () => {
                       <Link href={"/profile"}>
                         <div className="p-4 border-b">
                           <div className="font-bold text-lg text-[#1e1e1e]">
-                            {user?.username || "No Name"}
+                            {user?.display_name || (user?.external_id ? `${user.external_id.slice(0, 6)}...${user.external_id.slice(-4)}` : "My Account")}
                           </div>
-                          <div className="text-sm text-gray-500">
-                            {user?.email || "No Email"}
+                          <div className="text-sm text-gray-500 truncate max-w-[200px]">
+                            {user?.email?.endsWith("@web3auth.user")
+                              ? (user?.external_id ? `${user.external_id.slice(0, 10)}...` : "Wallet")
+                              : (user?.email || "No Email")}
                           </div>
                         </div>
                       </Link>
